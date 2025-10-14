@@ -1,5 +1,6 @@
 ﻿@page "/po-transfer/items-on-order"
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.AspNetCore.Components.Web
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Models
 @using Prototype.Components.Pages.POXfer.Models
@@ -10,147 +11,172 @@
 @inject ISidebarState Sidebar
 
 <div class="ioo-wrap">
-    <h3 class="ioo-title">Items On Order</h3>
+    <header class="ioo-header">
+        <h3 class="ioo-title">Items On Order</h3>
+    </header>
 
-    <div class="ioo-table">
-        <table>
-            <thead>
-                <tr>
-                    <th class="w-item">Item</th>
-                    <th>Description</th>
-                    <th class="num">On Order Open</th>
-                    <th class="num">In Transit</th>
-                    <th class="num">Alloc</th>
-                    <th class="num">BKO</th>
-                    <th class="num">Total Open Cost</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var r in FilteredRows)
-                {
-                    var isSelected = string.Equals(SelectedItem, r.Item, StringComparison.OrdinalIgnoreCase);
-                    <tr class="row-clickable @(isSelected ? "row-selected" : null)"
-                        @onclick="() => ToggleItemSelection(r.Item)"
-                        title="Show PO lines for this item">
-                        <td>
-                            <button class="link-button" @onclick:stopPropagation="true" @onclick="() => ToggleItemSelection(r.Item)">
-                                @r.Item
-                            </button>
-                        </td>
-                        <td>@r.Description</td>
-                        <td class="num">@r.OnOrderOpen</td>
-                        <td class="num">@r.InTransit</td>
-                        <td class="num">@r.Alloc</td>
-                        <td class="num @HighlightIf(r.BKO > 0)">@r.BKO</td>
-                        <td class="num">@r.TotalOpenCost.ToString("C")</td>
+    <!-- Items table -->
+    <section class="card">
+        <div class="table-wrap">
+            <table class="tbl tbl-items" role="grid" aria-label="Items on order">
+                <thead>
+                    <tr>
+                        <th class="w-item">Item</th>
+                        <th>Description</th>
+                        <th class="num">On Order Open</th>
+                        <th class="num">In Transit</th>
+                        <th class="num">Alloc</th>
+                        <th class="num">BKO</th>
+                        <th class="num">Total Open Cost</th>
                     </tr>
-                }
-            </tbody>
-            <tfoot>
-                <tr class="totals">
-                    <td colspan="2">
-                        Totals:
-                        @if (!string.IsNullOrWhiteSpace(SelectedItem))
-                        {
-                            <span class="filter-chip" title="Clear item filter">
-                                Filtering by <strong>@SelectedItem</strong>
-                                <button class="chip-x" @onclick="ClearItemFilter" aria-label="Clear filter">×</button>
-                            </span>
-                        }
-                    </td>
-                    <td class="num">@FilteredRows.Sum(x => x.OnOrderOpen)</td>
-                    <td class="num">@FilteredRows.Sum(x => x.InTransit)</td>
-                    <td class="num">@FilteredRows.Sum(x => x.Alloc)</td>
-                    <td class="num">@FilteredRows.Sum(x => x.BKO)</td>
-                    <td class="num">
-                        @FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")
-                    </td>
-                </tr>
-                <tr class="totals-sub">
-                    <td colspan="7">
-                        In Transit: <strong>@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
-                        &nbsp; | &nbsp; Backorders Awaiting Release: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
-                        &nbsp; | &nbsp; Backordered: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
-                        &nbsp; | &nbsp; Unacknowledged: <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
-                        &nbsp; | &nbsp; Open Items: <strong>@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    <div class="oplines" id="oplines" @ref="_oplinesSection">
-        <h4>Open PO Lines</h4>
-
-        @if (!string.IsNullOrWhiteSpace(SelectedItem))
-        {
-            <div class="active-filter">
-                Showing PO lines for <strong>@SelectedItem</strong>
-                <button class="chip-x" @onclick="ClearItemFilter" aria-label="Clear filter">Clear</button>
-            </div>
-        }
-
-        <table>
-            <thead>
-                <tr>
-                    <th class="w-po">PO#</th>
-                    <th class="w-ln">Ln</th>
-                    <th class="w-so">SO#</th>
-                    <th>Vendor</th>
-                    <th class="w-date">Date</th>
-                    <th class="num">Qty Ord</th>
-                    <th class="num">Open</th>
-                    <th class="num">In Transit</th>
-                    <th class="num">Alloc</th>
-                    <th class="num">BKO</th>
-                    <th class="num">Unit Cost</th>
-                    <th class="num">Total Open Cost</th>
-                    <th class="num">Rcv</th>
-                    <th class="w-status">Status</th>
-                    <th class="w-cancel">Cancel</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (VisibleOpenLines.Count == 0)
-                {
-                    <tr><td colspan="15" class="muted">No open PO lines @(string.IsNullOrWhiteSpace(SelectedItem) ? "" : $"for {SelectedItem}").</td></tr>
-                }
-                else
-                {
-                    @foreach (var p in VisibleOpenLines)
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < FilteredRows.Count; i++)
                     {
-                        <tr>
+                        var r = FilteredRows[i];
+                        var isSelected = SelectedItems.Contains(r.Item);
+                        <tr class="row-clickable @(isSelected ? "row-selected" : null)"
+                            @onclick="(MouseEventArgs e) => HandleRowClick(r.Item, e)"
+                            title="Select item (Ctrl/Cmd for multi, Shift for range)">
                             <td>
-                                <button class="link-button" title="Open PO details"
-                                        @onclick="() => OpenPODetails(p.PONumber)">
-                                    @p.PONumber
+                                <button class="link-button"
+                                        @onclick:stopPropagation="true"
+                                        @onclick="(MouseEventArgs e) => HandleRowClick(r.Item, e)">
+                                    @r.Item
                                 </button>
                             </td>
-                            <td class="num">@p.Line</td>
-                            <td>@p.SONumber</td>
-                            <td>@p.Vendor</td>
-                            <td>@p.Date.ToString("MM/dd/yyyy")</td>
-                            <td class="num">@p.QtyOrdered</td>
-                            <td class="num">@p.Open</td>
-                            <td class="num">@p.InTransit</td>
-                            <td class="num">@p.Alloc</td>
-                            <td class="num">@p.BKO</td>
-                            <td class="num">@p.UnitCost.ToString("C")</td>
-                            <td class="num">@p.TotalOpenCost.ToString("C")</td>
-                            <td class="num">@p.Rcv</td>
-                            <td>@p.Status</td>
-                            <td><button class="btn-danger" @onclick="() => CancelLine(p)">Cancel</button></td>
+                            <td>@r.Description</td>
+                            <td class="num">@r.OnOrderOpen</td>
+                            <td class="num">@r.InTransit</td>
+                            <td class="num">@r.Alloc</td>
+                            <td class="num @HighlightIf(r.BKO > 0)">@r.BKO</td>
+                            <td class="num">@r.TotalOpenCost.ToString("C")</td>
                         </tr>
                     }
-                }
-            </tbody>
-        </table>
-
-        <div class="oplines-actions">
-            <button class="btn-danger" @onclick="CancelSelected">Cancel PO Line(s)</button>
-            <button class="btn-primary" @onclick="Print">Print</button>
+                </tbody>
+                <tfoot>
+                    <tr class="totals">
+                        <td colspan="2">
+                            <div class="chips-row">
+                                @if (SelectedItems.Count > 0)
+                                {
+                                    <div class="chips">
+                                        <span class="chips-label">Filtering by</span>
+                                        @foreach (var it in SelectedItems.OrderBy(x => x))
+                                        {
+                                            <span class="chip" title="Remove filter">
+                                                <strong>@it</strong>
+                                                <button class="chip-x" @onclick="() => RemoveItem(it)" aria-label="Remove">×</button>
+                                            </span>
+                                        }
+                                        <button class="chip-clear" @onclick="ClearItemFilter" aria-label="Clear all">Clear all</button>
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td class="num">@FilteredRows.Sum(x => x.OnOrderOpen)</td>
+                        <td class="num">@FilteredRows.Sum(x => x.InTransit)</td>
+                        <td class="num">@FilteredRows.Sum(x => x.Alloc)</td>
+                        <td class="num">@FilteredRows.Sum(x => x.BKO)</td>
+                        <td class="num">@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</td>
+                    </tr>
+                    <tr class="totals-sub">
+                        <td colspan="7">
+                            In Transit: <strong>@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
+                            &nbsp; | &nbsp; Backorders Awaiting Release: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+                            &nbsp; | &nbsp; Backordered: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+                            &nbsp; | &nbsp; Unacknowledged: <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
+                            &nbsp; | &nbsp; Open Items: <strong>@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
-    </div>
+    </section>
+
+    <!-- PO lines -->
+    <section class="card" id="oplines" @ref="_oplinesSection">
+        <header class="section-header">
+            <h4>Open PO Lines</h4>
+            @if (SelectedItems.Count > 0)
+            {
+                <div class="chips compact">
+                    <span class="chips-label">Showing PO lines for:</span>
+                    @foreach (var it in SelectedItems.OrderBy(x => x))
+                    {
+                        <span class="chip" title="Remove filter">
+                            <strong>@it</strong>
+                            <button class="chip-x" @onclick="() => RemoveItem(it)" aria-label="Remove">×</button>
+                        </span>
+                    }
+                    <button class="chip-clear" @onclick="ClearItemFilter" aria-label="Clear all">Clear</button>
+                </div>
+            }
+        </header>
+
+        <div class="table-wrap">
+            <table class="tbl tbl-lines" role="grid" aria-label="Open PO lines">
+                <thead>
+                    <tr>
+                        <th class="w-po">PO#</th>
+                        <th class="w-ln">Ln</th>
+                        <th class="w-so">SO#</th>
+                        <th>Vendor</th>
+                        <th class="w-date">Date</th>
+                        <th class="num">Qty Ord</th>
+                        <th class="num">Open</th>
+                        <th class="num">In Transit</th>
+                        <th class="num">Alloc</th>
+                        <th class="num">BKO</th>
+                        <th class="num">Unit Cost</th>
+                        <th class="num">Total Open Cost</th>
+                        <th class="num">Rcv</th>
+                        <th class="w-status">Status</th>
+                        @* <th class="w-cancel">Cancel</th> *@
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (VisibleOpenLines.Count == 0)
+                    {
+                        <tr><td colspan="15" class="muted">No open PO lines @(SelectedItems.Count == 0 ? "" : $"for {string.Join(", ", SelectedItems.OrderBy(x => x))}").</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var p in VisibleOpenLines)
+                        {
+                            <tr>
+                                <td>
+                                    <button class="link-button" title="Open PO details"
+                                            @onclick="() => OpenPODetails(p.PONumber)">
+                                        @p.PONumber
+                                    </button>
+                                </td>
+                                <td class="num">@p.Line</td>
+                                <td>@p.SONumber</td>
+                                <td>@p.Vendor</td>
+                                <td>@p.Date.ToString("MM/dd/yyyy")</td>
+                                <td class="num">@p.QtyOrdered</td>
+                                <td class="num">@p.Open</td>
+                                <td class="num">@p.InTransit</td>
+                                <td class="num">@p.Alloc</td>
+                                <td class="num">@p.BKO</td>
+                                <td class="num">@p.UnitCost.ToString("C")</td>
+                                <td class="num">@p.TotalOpenCost.ToString("C")</td>
+                                <td class="num">@p.Rcv</td>
+                                <td>@p.Status</td>
+                                @* <td><button class="btn-danger" @onclick="() => CancelLine(p)">Cancel</button></td> *@
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="oplines-actions">
+            @* <button class="btn-danger" @onclick="CancelSelected">Cancel PO Line(s)</button> *@
+            <button class="btn-primary" @onclick="Print">Print</button>
+        </footer>
+    </section>
 </div>
 
 @code {
@@ -166,7 +192,6 @@
         {
             Status = MapStatus(item.Text);
             Sidebar.SetSelection("status", item.Text);
-            // persist selected status in URL (SidebarSections already does this, but doing it here is harmless)
             UpdateUrl(new Dictionary<string, string?> { ["status"] = item.Text });
         }
         else if (string.Equals(key, "option", StringComparison.OrdinalIgnoreCase))
@@ -188,7 +213,6 @@
 
     // ======== STATUS ========
     public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
-
     private static StatusKind MapStatus(string s) => s switch
     {
         "Backorders" => StatusKind.Backorders,
@@ -196,24 +220,23 @@
         "Unacknowledged" => StatusKind.Unacknowledged,
         _ => StatusKind.All
     };
-
-    // ======== DATA ========
     [Parameter] public StatusKind Status { get; set; } = StatusKind.All;
 
+    // ======== DATA ========
     private readonly List<Row> Rows = new();
     private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
-
     private readonly List<OpenPOLine> OpenLines = new();
 
-    // -------- SINGLE-SELECTION STATE VIA URL --------
-    private string? SelectedItem { get; set; } // reflected in ?item=<sku>
+    // ======== MULTI-SELECTION VIA URL ========
+    private readonly HashSet<string> SelectedItems = new(StringComparer.OrdinalIgnoreCase);
+    private int? _anchorIndex; // last anchor row index for shift-range
 
     private ElementReference _oplinesSection;
 
     private List<OpenPOLine> VisibleOpenLines =>
-        string.IsNullOrWhiteSpace(SelectedItem)
+        SelectedItems.Count == 0
             ? OpenLines
-            : OpenLines.Where(x => string.Equals(x.Item, SelectedItem, StringComparison.OrdinalIgnoreCase)).ToList();
+            : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
 
     protected override void OnInitialized()
     {
@@ -228,13 +251,10 @@
         Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
         Sidebar.StateChanged += OnSidebarChanged;
 
-        // Initial URL -> state
         ReadUrlState();
-
-        // Keep state in sync on browser back/forward
         Nav.LocationChanged += OnLocationChanged;
 
-        // Demo seed data (trimmed). Replace with your real data source.
+        // Demo seed data (replace with your real source)
         Rows.AddRange(new[]
         {
             new Row("A02", "1/4\" Drive (F) x 3/8\" (M) Adapter", 1, 0, 0, 1, 23.50m),
@@ -282,31 +302,29 @@
         InvokeAsync(StateHasChanged);
     }
 
-    // ----- URL <-> State sync -----
     private void ReadUrlState()
     {
         var abs = Nav.ToAbsoluteUri(Nav.Uri);
-        var query = QueryHelpers.ParseQuery(abs.Query);
+        var q = QueryHelpers.ParseQuery(abs.Query);
 
-        // status (already driven by SidebarSections, but we read for safety / deep links)
-        if (query.TryGetValue("status", out var sVal) && !string.IsNullOrWhiteSpace(sVal))
+        if (q.TryGetValue("status", out var sVal) && !string.IsNullOrWhiteSpace(sVal))
             Status = MapStatus(sVal!);
         else
             Status = StatusKind.All;
 
-        // item (single-selection)
-        if (query.TryGetValue("item", out var iVal))
+        SelectedItems.Clear();
+        if (q.TryGetValue("items", out var itemsVals))
         {
-            var v = iVal.LastOrDefault();
-            SelectedItem = string.IsNullOrWhiteSpace(v) ? null : v;
-        }
-        else
-        {
-            SelectedItem = null;
+            foreach (var raw in itemsVals)
+            {
+                if (string.IsNullOrWhiteSpace(raw)) continue;
+                foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    SelectedItems.Add(part);
+            }
         }
     }
 
-    private void UpdateUrl(IDictionary<string, string?> updates, bool replace = false)
+    private void UpdateUrl(IDictionary<string, string?> scalarUpdates, bool replace = false)
     {
         var abs = Nav.ToAbsoluteUri(Nav.Uri);
         var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
@@ -314,39 +332,92 @@
         var cut = rel.IndexOfAny(new[] { '?', '#' });
         var pathOnly = cut >= 0 ? rel[..cut] : rel;
 
-        var q = QueryHelpers.ParseQuery(abs.Query)
-            .ToDictionary(k => k.Key, v => v.Value.LastOrDefault(), StringComparer.OrdinalIgnoreCase);
-
-        foreach (var kv in updates)
+        var parsed = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(abs.Query);
+        var scalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in parsed)
         {
-            if (string.IsNullOrWhiteSpace(kv.Value))
-                q.Remove(kv.Key);
-            else
-                q[kv.Key] = kv.Value;
+            if (!string.Equals(kv.Key, "items", StringComparison.OrdinalIgnoreCase))
+                scalars[kv.Key] = kv.Value.LastOrDefault();
         }
 
-        var qs = string.Join("&", q
-            .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
-            .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}".Replace("%20", "+")));
+        foreach (var kv in scalarUpdates)
+        {
+            if (string.IsNullOrWhiteSpace(kv.Value))
+                scalars.Remove(kv.Key);
+            else
+                scalars[kv.Key] = kv.Value;
+        }
 
+        var pairs = new List<string>();
+        foreach (var kv in scalars.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)))
+            pairs.Add($"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}".Replace("%20", "+"));
+
+        foreach (var it in SelectedItems)
+            pairs.Add($"items={Uri.EscapeDataString(it)}");
+
+        var qs = string.Join("&", pairs);
         var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
+
         Nav.NavigateTo(href, replace);
     }
 
-    private async Task ToggleItemSelection(string item)
+    // ===== Click handling with Ctrl/Cmd and Shift support =====
+    private async Task HandleRowClick(string item, MouseEventArgs e)
     {
-        if (string.Equals(SelectedItem, item, StringComparison.OrdinalIgnoreCase))
+        var list = FilteredRows;
+        var idx = FindIndex(list, item);
+        if (idx < 0) idx = 0;
+
+        bool scrolled = false;
+
+        if (e.ShiftKey && _anchorIndex is int anchor && anchor >= 0 && anchor < list.Count)
         {
-            SelectedItem = null;
-            UpdateUrl(new Dictionary<string, string?> { ["item"] = null }); // remove ?item=
+            // Range select between anchor and current
+            var start = Math.Min(anchor, idx);
+            var end = Math.Max(anchor, idx);
+            for (int i = start; i <= end; i++)
+                SelectedItems.Add(list[i].Item);
+
+            scrolled = true; // likely moving to PO lines after a range selection is useful
+        }
+        else if (e.CtrlKey || e.MetaKey)
+        {
+            // Toggle single without disturbing others
+            if (!SelectedItems.Add(item))
+                SelectedItems.Remove(item);
+
+            // Set anchor to current to define future shift range start
+            _anchorIndex = idx;
         }
         else
         {
-            SelectedItem = item;
-            UpdateUrl(new Dictionary<string, string?> { ["item"] = item }); // set ?item=
-            await ScrollToPOLinesAsync();
+            // Plain click: single select + set anchor
+            SelectedItems.Clear();
+            SelectedItems.Add(item);
+            _anchorIndex = idx;
+            scrolled = true;
         }
 
+        UpdateUrl(new Dictionary<string, string?>(), replace: false);
+
+        if (scrolled)
+            await ScrollToPOLinesAsync();
+
+        StateHasChanged();
+    }
+
+    private static int FindIndex(List<Row> list, string item)
+    {
+        for (int i = 0; i < list.Count; i++)
+            if (string.Equals(list[i].Item, item, StringComparison.OrdinalIgnoreCase))
+                return i;
+        return -1;
+    }
+
+    private void RemoveItem(string item)
+    {
+        if (!SelectedItems.Remove(item)) return;
+        UpdateUrl(new Dictionary<string, string?>(), replace: SelectedItems.Count == 0);
         StateHasChanged();
     }
 
@@ -358,8 +429,27 @@
 
     private void ClearItemFilter()
     {
-        SelectedItem = null;
-        UpdateUrl(new Dictionary<string, string?> { ["item"] = null });
+        if (SelectedItems.Count == 0) return;
+        SelectedItems.Clear();
+        _anchorIndex = null;
+
+        var abs = Nav.ToAbsoluteUri(Nav.Uri);
+        var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
+        var cut = rel.IndexOfAny(new[] { '?', '#' });
+        var pathOnly = cut >= 0 ? rel[..cut] : rel;
+
+        var parsed = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(abs.Query);
+        var remaining = parsed
+            .Where(kv => !string.Equals(kv.Key, "items", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(kv => kv.Key, kv => kv.Value.LastOrDefault(), StringComparer.OrdinalIgnoreCase);
+
+        var qs = string.Join("&", remaining
+            .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+            .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}"));
+
+        var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
+        Nav.NavigateTo(href, replace: true);
+        StateHasChanged();
     }
 
     private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
@@ -367,7 +457,6 @@
     private void CancelSelected() { /* bulk cancel */ }
     private void Print() { /* print/export */ }
 
-    // ---------- Helpers ----------
     private static List<SidebarSection> BuildSections()
     {
         static SidebarItem SI(string text, string url, bool selected = false, string? icon = null) => new SidebarItem
@@ -434,14 +523,10 @@
 
     private string HighlightIf(bool cond) => cond ? "hl" : "";
 
-    // ---------- Models ----------
     private sealed class Row
     {
         public Row(string item, string desc, int onOrderOpen, int inTransit, int alloc, int bko, decimal unitCost)
-        {
-            Item = item; Description = desc;
-            OnOrderOpen = onOrderOpen; InTransit = inTransit; Alloc = alloc; BKO = bko; UnitCost = unitCost;
-        }
+        { Item = item; Description = desc; OnOrderOpen = onOrderOpen; InTransit = inTransit; Alloc = alloc; BKO = bko; UnitCost = unitCost; }
         public string Item { get; set; }
         public string Description { get; set; }
         public int OnOrderOpen { get; set; }
@@ -449,7 +534,6 @@
         public int Alloc { get; set; }
         public int BKO { get; set; }
         public decimal UnitCost { get; set; }
-
         public decimal TotalOpenCost => UnitCost * Math.Max(OnOrderOpen, 0);
         public decimal InTransitCost => UnitCost * InTransit;
         public decimal BackorderCost => UnitCost * BKO;
