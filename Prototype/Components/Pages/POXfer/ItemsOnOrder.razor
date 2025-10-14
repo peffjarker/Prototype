@@ -1,4 +1,5 @@
 ﻿@page "/po-transfer/items-on-order"
+@using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Models
 @using Prototype.Components.Pages.POXfer.Models
@@ -29,10 +30,10 @@
                 {
                     var isSelected = string.Equals(SelectedItem, r.Item, StringComparison.OrdinalIgnoreCase);
                     <tr class="row-clickable @(isSelected ? "row-selected" : null)"
-                        @onclick="() => ShowPOLinesForItem(r.Item)"
+                        @onclick="() => ToggleItemSelection(r.Item)"
                         title="Show PO lines for this item">
                         <td>
-                            <button class="link-button" @onclick:stopPropagation="true" @onclick="() => ShowPOLinesForItem(r.Item)">
+                            <button class="link-button" @onclick:stopPropagation="true" @onclick="() => ToggleItemSelection(r.Item)">
                                 @r.Item
                             </button>
                         </td>
@@ -158,7 +159,6 @@
 
     private async Task OnSidebarItemClicked(SidebarItem item)
     {
-        // Identify the section by key (stable) instead of display title
         var section = Sidebar.Sections.FirstOrDefault(s => s.Items.Contains(item));
         var key = section?.SectionKey ?? section?.Title ?? "";
 
@@ -166,6 +166,8 @@
         {
             Status = MapStatus(item.Text);
             Sidebar.SetSelection("status", item.Text);
+            // persist selected status in URL (SidebarSections already does this, but doing it here is harmless)
+            UpdateUrl(new Dictionary<string, string?> { ["status"] = item.Text });
         }
         else if (string.Equals(key, "option", StringComparison.OrdinalIgnoreCase))
         {
@@ -179,17 +181,13 @@
     public void Dispose()
     {
         Sidebar.StateChanged -= OnSidebarChanged;
+        Nav.LocationChanged -= OnLocationChanged;
         if (ReferenceEquals(Sidebar.ItemSelectedHandler, (Func<SidebarItem, Task>)OnSidebarItemClicked))
             Sidebar.ItemSelectedHandler = null;
     }
 
-    public enum StatusKind
-    {
-        All,
-        Backorders,
-        InTransit,
-        Unacknowledged
-    }
+    // ======== STATUS ========
+    public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
 
     private static StatusKind MapStatus(string s) => s switch
     {
@@ -199,6 +197,177 @@
         _ => StatusKind.All
     };
 
+    // ======== DATA ========
+    [Parameter] public StatusKind Status { get; set; } = StatusKind.All;
+
+    private readonly List<Row> Rows = new();
+    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
+
+    private readonly List<OpenPOLine> OpenLines = new();
+
+    // -------- SINGLE-SELECTION STATE VIA URL --------
+    private string? SelectedItem { get; set; } // reflected in ?item=<sku>
+
+    private ElementReference _oplinesSection;
+
+    private List<OpenPOLine> VisibleOpenLines =>
+        string.IsNullOrWhiteSpace(SelectedItem)
+            ? OpenLines
+            : OpenLines.Where(x => string.Equals(x.Item, SelectedItem, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override void OnInitialized()
+    {
+        Sidebar.SetSections(
+            BuildSections(),
+            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["option"] = "Items On Order",
+                ["status"] = "All"
+            });
+
+        Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
+        Sidebar.StateChanged += OnSidebarChanged;
+
+        // Initial URL -> state
+        ReadUrlState();
+
+        // Keep state in sync on browser back/forward
+        Nav.LocationChanged += OnLocationChanged;
+
+        // Demo seed data (trimmed). Replace with your real data source.
+        Rows.AddRange(new[]
+        {
+            new Row("A02", "1/4\" Drive (F) x 3/8\" (M) Adapter", 1, 0, 0, 1, 23.50m),
+            new Row("A20", "3/8\" Drive (F) x 1/2\" (M) Adapter", 2, 2, 0, 0, 45.00m),
+            new Row("A23", "3/8\" Drive (F) x 1/2\" (M) Adapter", 1, 1, 0, 1, 22.10m),
+            new Row("A35", "1/2\" Drive (F) x 3/4\" (M) Adapter", 1, 0, 0, 0, 18.75m),
+            new Row("AF12201", "1220-1 AIR TOOL OIL PINT", 18, 18, 0, 0, 180.00m),
+            new Row("AP328", "1/2\"Dr.(F) x 1/2\"(M) Imp Adapt,Ball Type", 1, 1, 0, 0, 19.30m),
+            new Row("AS6SB", "Stubby Air Slide Hammer", 1, 1, 0, 0, 159.99m),
+            new Row("CAT3160", "3/16\" Orbital Sander 6\"", 1, 2, 0, 1, 299.00m)
+        });
+
+        OpenLines.AddRange(new[]
+        {
+            new OpenPOLine
+            {
+                Item = "CAT3160",
+                PONumber = "PO-0000100807", Line = 1, SONumber = "0002916666",
+                Vendor = "CQT", Date = new DateTime(2025, 09, 30),
+                QtyOrdered = 2, Open = 2, InTransit = 0, Alloc = 0, BKO = 1,
+                UnitCost = 299.00m, Rcv = 0, Status = "Open"
+            },
+            new OpenPOLine
+            {
+                Item = "A20",
+                PONumber = "PO-0000100821", Line = 3, SONumber = "0002917777",
+                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
+                QtyOrdered = 5, Open = 2, InTransit = 2, Alloc = 0, BKO = 0,
+                UnitCost = 45.00m, Rcv = 3, Status = "Partial"
+            },
+            new OpenPOLine
+            {
+                Item = "A02",
+                PONumber = "PO-0000100821", Line = 4, SONumber = "0002917777",
+                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
+                QtyOrdered = 1, Open = 1, InTransit = 0, Alloc = 0, BKO = 1,
+                UnitCost = 23.50m, Rcv = 0, Status = "Open"
+            }
+        });
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        ReadUrlState();
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ----- URL <-> State sync -----
+    private void ReadUrlState()
+    {
+        var abs = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(abs.Query);
+
+        // status (already driven by SidebarSections, but we read for safety / deep links)
+        if (query.TryGetValue("status", out var sVal) && !string.IsNullOrWhiteSpace(sVal))
+            Status = MapStatus(sVal!);
+        else
+            Status = StatusKind.All;
+
+        // item (single-selection)
+        if (query.TryGetValue("item", out var iVal))
+        {
+            var v = iVal.LastOrDefault();
+            SelectedItem = string.IsNullOrWhiteSpace(v) ? null : v;
+        }
+        else
+        {
+            SelectedItem = null;
+        }
+    }
+
+    private void UpdateUrl(IDictionary<string, string?> updates, bool replace = false)
+    {
+        var abs = Nav.ToAbsoluteUri(Nav.Uri);
+        var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
+
+        var cut = rel.IndexOfAny(new[] { '?', '#' });
+        var pathOnly = cut >= 0 ? rel[..cut] : rel;
+
+        var q = QueryHelpers.ParseQuery(abs.Query)
+            .ToDictionary(k => k.Key, v => v.Value.LastOrDefault(), StringComparer.OrdinalIgnoreCase);
+
+        foreach (var kv in updates)
+        {
+            if (string.IsNullOrWhiteSpace(kv.Value))
+                q.Remove(kv.Key);
+            else
+                q[kv.Key] = kv.Value;
+        }
+
+        var qs = string.Join("&", q
+            .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+            .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}".Replace("%20", "+")));
+
+        var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
+        Nav.NavigateTo(href, replace);
+    }
+
+    private async Task ToggleItemSelection(string item)
+    {
+        if (string.Equals(SelectedItem, item, StringComparison.OrdinalIgnoreCase))
+        {
+            SelectedItem = null;
+            UpdateUrl(new Dictionary<string, string?> { ["item"] = null }); // remove ?item=
+        }
+        else
+        {
+            SelectedItem = item;
+            UpdateUrl(new Dictionary<string, string?> { ["item"] = item }); // set ?item=
+            await ScrollToPOLinesAsync();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ScrollToPOLinesAsync()
+    {
+        try { await JS.InvokeVoidAsync("blazorIoO.scrollIntoView", _oplinesSection); }
+        catch { /* best-effort */ }
+    }
+
+    private void ClearItemFilter()
+    {
+        SelectedItem = null;
+        UpdateUrl(new Dictionary<string, string?> { ["item"] = null });
+    }
+
+    private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
+    private void CancelLine(OpenPOLine line) => Console.WriteLine($"Cancel line {line.PONumber} / {line.Line}");
+    private void CancelSelected() { /* bulk cancel */ }
+    private void Print() { /* print/export */ }
+
+    // ---------- Helpers ----------
     private static List<SidebarSection> BuildSections()
     {
         static SidebarItem SI(string text, string url, bool selected = false, string? icon = null) => new SidebarItem
@@ -253,78 +422,6 @@
         };
     }
 
-    [Parameter] public StatusKind Status { get; set; } = StatusKind.All;
-
-    private readonly List<Row> Rows = new();
-    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
-
-    private readonly List<OpenPOLine> OpenLines = new();
-
-    private string? SelectedItem { get; set; }
-    private ElementReference _oplinesSection;
-
-    private List<OpenPOLine> VisibleOpenLines =>
-        string.IsNullOrWhiteSpace(SelectedItem)
-            ? OpenLines
-            : OpenLines.Where(x => string.Equals(x.Item, SelectedItem, StringComparison.OrdinalIgnoreCase)).ToList();
-
-    protected override void OnInitialized()
-    {
-        // 1) Seed sidebar using the NEW API
-        Sidebar.SetSections(
-            BuildSections(),
-            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["option"] = "Items On Order",
-                ["status"] = "All"
-            });
-
-        // 2) Handle clicks and re-render when state changes.
-        Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
-        Sidebar.StateChanged += OnSidebarChanged;
-
-        // Demo seed data (trimmed). Replace with your real data source.
-        Rows.AddRange(new[]
-        {
-            new Row("A02", "1/4\" Drive (F) x 3/8\" (M) Adapter", 1, 0, 0, 1, 23.50m),
-            new Row("A20", "3/8\" Drive (F) x 1/2\" (M) Adapter", 2, 2, 0, 0, 45.00m),
-            new Row("A23", "3/8\" Drive (F) x 1/2\" (M) Adapter", 1, 1, 0, 1, 22.10m),
-            new Row("A35", "1/2\" Drive (F) x 3/4\" (M) Adapter", 1, 0, 0, 0, 18.75m),
-            new Row("AF12201", "1220-1 AIR TOOL OIL PINT", 18, 18, 0, 0, 180.00m),
-            new Row("AP328", "1/2\"Dr.(F) x 1/2\"(M) Imp Adapt,Ball Type", 1, 1, 0, 0, 19.30m),
-            new Row("AS6SB", "Stubby Air Slide Hammer", 1, 1, 0, 0, 159.99m),
-            new Row("CAT3160", "3/16\" Orbital Sander 6\"", 1, 2, 0, 1, 299.00m)
-        });
-
-        OpenLines.AddRange(new[]
-        {
-            new OpenPOLine
-            {
-                Item = "CAT3160",
-                PONumber = "PO-0000100807", Line = 1, SONumber = "0002916666",
-                Vendor = "CQT", Date = new DateTime(2025, 09, 30),
-                QtyOrdered = 2, Open = 2, InTransit = 0, Alloc = 0, BKO = 1,
-                UnitCost = 299.00m, Rcv = 0, Status = "Open"
-            },
-            new OpenPOLine
-            {
-                Item = "A20",
-                PONumber = "PO-0000100821", Line = 3, SONumber = "0002917777",
-                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
-                QtyOrdered = 5, Open = 2, InTransit = 2, Alloc = 0, BKO = 0,
-                UnitCost = 45.00m, Rcv = 3, Status = "Partial"
-            },
-            new OpenPOLine
-            {
-                Item = "A02",
-                PONumber = "PO-0000100821", Line = 4, SONumber = "0002917777",
-                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
-                QtyOrdered = 1, Open = 1, InTransit = 0, Alloc = 0, BKO = 1,
-                UnitCost = 23.50m, Rcv = 0, Status = "Open"
-            }
-        });
-    }
-
     private static List<Row> ApplyStatusFilter(List<Row> source, StatusKind status) =>
         status switch
         {
@@ -336,30 +433,6 @@
         };
 
     private string HighlightIf(bool cond) => cond ? "hl" : "";
-
-    private async Task ShowPOLinesForItem(string item)
-    {
-        if (string.Equals(SelectedItem, item, StringComparison.OrdinalIgnoreCase))
-            SelectedItem = null;
-        else
-            SelectedItem = item;
-
-        await ScrollToPOLinesAsync();
-        StateHasChanged();
-    }
-
-    private async Task ScrollToPOLinesAsync()
-    {
-        try { await JS.InvokeVoidAsync("blazorIoO.scrollIntoView", _oplinesSection); }
-        catch { /* best-effort */ }
-    }
-
-    private void ClearItemFilter() => SelectedItem = null;
-
-    private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
-    private void CancelLine(OpenPOLine line) => Console.WriteLine($"Cancel line {line.PONumber} / {line.Line}");
-    private void CancelSelected() { /* bulk cancel */ }
-    private void Print() { /* print/export */ }
 
     // ---------- Models ----------
     private sealed class Row
