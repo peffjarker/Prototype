@@ -65,16 +65,14 @@ public sealed partial class SidebarSections : ComponentBase, IDisposable
         // If this section is mapped to a query key, selection is query-driven.
         if (SectionQueryKeys.TryGetValue(sk, out var qkey) && !string.IsNullOrWhiteSpace(qkey))
         {
-            if (!_query.TryGetValue(qkey!, out var qval) || string.IsNullOrWhiteSpace(qval))
+            if (_query.TryGetValue(qkey!, out var qval) && !string.IsNullOrWhiteSpace(qval))
             {
-                // Default to first item or one named "All"
-                if (string.Equals(item.Text, "All", StringComparison.OrdinalIgnoreCase))
-                    return true;
-                // If no "All", nothing selected by query—fall back to two-way binding below
+                return string.Equals(item.Text, qval, StringComparison.OrdinalIgnoreCase);
             }
             else
             {
-                return string.Equals(item.Text, qval, StringComparison.OrdinalIgnoreCase);
+                // Default state: highlight "All" only if there's no status in URL
+                return string.Equals(item.Text, "All", StringComparison.OrdinalIgnoreCase);
             }
         }
 
@@ -120,7 +118,7 @@ public sealed partial class SidebarSections : ComponentBase, IDisposable
             // Update query only
             var href = UpdateQuery(new Dictionary<string, string?>
             {
-                [qkey!] = string.Equals(item.Text, "All", StringComparison.OrdinalIgnoreCase) ? null : item.Text
+                [qkey!] = item.Text
             });
             Nav.NavigateTo(href, replace: false);
         }
