@@ -1,0 +1,394 @@
+﻿@page "/po-transfer/items-on-order"
+@using Prototype.Components.Layout
+@using Prototype.Components.Layout.Models
+@using Prototype.Components.Pages.POXfer.Models
+@using Prototype.Components.Services
+@inherits ComponentBase
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject ISidebarState Sidebar
+
+<div class="ioo-wrap">
+    <h3 class="ioo-title">Items On Order</h3>
+
+    <div class="ioo-table">
+        <table>
+            <thead>
+                <tr>
+                    <th class="w-item">Item</th>
+                    <th>Description</th>
+                    <th class="num">On Order Open</th>
+                    <th class="num">In Transit</th>
+                    <th class="num">Alloc</th>
+                    <th class="num">BKO</th>
+                    <th class="num">Total Open Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in FilteredRows)
+                {
+                    var isSelected = string.Equals(SelectedItem, r.Item, StringComparison.OrdinalIgnoreCase);
+                    <tr class="row-clickable @(isSelected ? "row-selected" : null)"
+                        @onclick="() => ShowPOLinesForItem(r.Item)"
+                        title="Show PO lines for this item">
+                        <td>
+                            <button class="link-button" @onclick:stopPropagation="true" @onclick="() => ShowPOLinesForItem(r.Item)">
+                                @r.Item
+                            </button>
+                        </td>
+                        <td>@r.Description</td>
+                        <td class="num">@r.OnOrderOpen</td>
+                        <td class="num">@r.InTransit</td>
+                        <td class="num">@r.Alloc</td>
+                        <td class="num @HighlightIf(r.BKO > 0)">@r.BKO</td>
+                        <td class="num">@r.TotalOpenCost.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="totals">
+                    <td colspan="2">
+                        Totals:
+                        @if (!string.IsNullOrWhiteSpace(SelectedItem))
+                        {
+                            <span class="filter-chip" title="Clear item filter">
+                                Filtering by <strong>@SelectedItem</strong>
+                                <button class="chip-x" @onclick="ClearItemFilter" aria-label="Clear filter">×</button>
+                            </span>
+                        }
+                    </td>
+                    <td class="num">@FilteredRows.Sum(x => x.OnOrderOpen)</td>
+                    <td class="num">@FilteredRows.Sum(x => x.InTransit)</td>
+                    <td class="num">@FilteredRows.Sum(x => x.Alloc)</td>
+                    <td class="num">@FilteredRows.Sum(x => x.BKO)</td>
+                    <td class="num">
+                        @FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")
+                    </td>
+                </tr>
+                <tr class="totals-sub">
+                    <td colspan="7">
+                        In Transit: <strong>@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
+                        &nbsp; | &nbsp; Backorders Awaiting Release: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+                        &nbsp; | &nbsp; Backordered: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+                        &nbsp; | &nbsp; Unacknowledged: <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
+                        &nbsp; | &nbsp; Open Items: <strong>@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="oplines" id="oplines" @ref="_oplinesSection">
+        <h4>Open PO Lines</h4>
+
+        @if (!string.IsNullOrWhiteSpace(SelectedItem))
+        {
+            <div class="active-filter">
+                Showing PO lines for <strong>@SelectedItem</strong>
+                <button class="chip-x" @onclick="ClearItemFilter" aria-label="Clear filter">Clear</button>
+            </div>
+        }
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="w-po">PO#</th>
+                    <th class="w-ln">Ln</th>
+                    <th class="w-so">SO#</th>
+                    <th>Vendor</th>
+                    <th class="w-date">Date</th>
+                    <th class="num">Qty Ord</th>
+                    <th class="num">Open</th>
+                    <th class="num">In Transit</th>
+                    <th class="num">Alloc</th>
+                    <th class="num">BKO</th>
+                    <th class="num">Unit Cost</th>
+                    <th class="num">Total Open Cost</th>
+                    <th class="num">Rcv</th>
+                    <th class="w-status">Status</th>
+                    <th class="w-cancel">Cancel</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (VisibleOpenLines.Count == 0)
+                {
+                    <tr><td colspan="15" class="muted">No open PO lines @(string.IsNullOrWhiteSpace(SelectedItem) ? "" : $"for {SelectedItem}").</td></tr>
+                }
+                else
+                {
+                    @foreach (var p in VisibleOpenLines)
+                    {
+                        <tr>
+                            <td>
+                                <button class="link-button" title="Open PO details"
+                                        @onclick="() => OpenPODetails(p.PONumber)">
+                                    @p.PONumber
+                                </button>
+                            </td>
+                            <td class="num">@p.Line</td>
+                            <td>@p.SONumber</td>
+                            <td>@p.Vendor</td>
+                            <td>@p.Date.ToString("MM/dd/yyyy")</td>
+                            <td class="num">@p.QtyOrdered</td>
+                            <td class="num">@p.Open</td>
+                            <td class="num">@p.InTransit</td>
+                            <td class="num">@p.Alloc</td>
+                            <td class="num">@p.BKO</td>
+                            <td class="num">@p.UnitCost.ToString("C")</td>
+                            <td class="num">@p.TotalOpenCost.ToString("C")</td>
+                            <td class="num">@p.Rcv</td>
+                            <td>@p.Status</td>
+                            <td><button class="btn-danger" @onclick="() => CancelLine(p)">Cancel</button></td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div class="oplines-actions">
+            <button class="btn-danger" @onclick="CancelSelected">Cancel PO Line(s)</button>
+            <button class="btn-primary" @onclick="Print">Print</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    // ======== SIDEBAR INTEGRATION ========
+    private void OnSidebarChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task OnSidebarItemClicked(SidebarItem item)
+    {
+        // Identify the section by key (stable) instead of display title
+        var section = Sidebar.Sections.FirstOrDefault(s => s.Items.Contains(item));
+        var key = section?.SectionKey ?? section?.Title ?? "";
+
+        if (string.Equals(key, "status", StringComparison.OrdinalIgnoreCase))
+        {
+            Status = MapStatus(item.Text);
+            Sidebar.SetSelection("status", item.Text);
+        }
+        else if (string.Equals(key, "option", StringComparison.OrdinalIgnoreCase))
+        {
+            Sidebar.SetSelection("option", item.Text);
+        }
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        Sidebar.StateChanged -= OnSidebarChanged;
+        if (ReferenceEquals(Sidebar.ItemSelectedHandler, (Func<SidebarItem, Task>)OnSidebarItemClicked))
+            Sidebar.ItemSelectedHandler = null;
+    }
+
+    public enum StatusKind
+    {
+        All,
+        Backorders,
+        InTransit,
+        Unacknowledged
+    }
+
+    private static StatusKind MapStatus(string s) => s switch
+    {
+        "Backorders" => StatusKind.Backorders,
+        "In Transit" => StatusKind.InTransit,
+        "Unacknowledged" => StatusKind.Unacknowledged,
+        _ => StatusKind.All
+    };
+
+    private static List<SidebarSection> BuildSections()
+    {
+        static SidebarItem SI(string text, string url, bool selected = false, string? icon = null) => new SidebarItem
+        {
+            Text = text,
+            Url = url,
+            Selected = selected,
+            Icon = icon
+        };
+
+        const string Base = "/po-transfer";
+
+        return new()
+        {
+            new SidebarSection
+            {
+                SectionKey = "option",
+                Title = "Option",
+                Items =
+                {
+                    SI("Items On Order",        $"{Base}/items-on-order", selected: true),
+                    SI("Purchase Orders",       $"{Base}/purchase-orders"),
+                    SI("Receipt of Product",    $"{Base}/receipt-of-product")
+                }
+            },
+            new SidebarSection
+            {
+                SectionKey = "status",
+                Title = "Status",
+                Items =
+                {
+                    SI("All",            $"{Base}/items-on-order?status=All",           selected: true),
+                    SI("Backorders",     $"{Base}/items-on-order?status=Backorders"),
+                    SI("In Transit",     $"{Base}/items-on-order?status=In%20Transit"),
+                    SI("Unacknowledged", $"{Base}/items-on-order?status=Unacknowledged")
+                }
+            },
+            new SidebarSection
+            {
+                SectionKey = "legend",
+                Title = "Item Legend",
+                IsLegend = true,
+                Items =
+                {
+                    new SidebarItem { Text = "Discontinued",   ColorHex = "#e11d48" },
+                    new SidebarItem { Text = "Price Confirm",  ColorHex = "#111827" },
+                    new SidebarItem { Text = "CSI",            ColorHex = "#2563eb" },
+                    new SidebarItem { Text = "Drop Ship",      ColorHex = "#f59e0b" },
+                    new SidebarItem { Text = "Special Orders", ColorHex = "#eab308" }
+                }
+            }
+        };
+    }
+
+    [Parameter] public StatusKind Status { get; set; } = StatusKind.All;
+
+    private readonly List<Row> Rows = new();
+    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
+
+    private readonly List<OpenPOLine> OpenLines = new();
+
+    private string? SelectedItem { get; set; }
+    private ElementReference _oplinesSection;
+
+    private List<OpenPOLine> VisibleOpenLines =>
+        string.IsNullOrWhiteSpace(SelectedItem)
+            ? OpenLines
+            : OpenLines.Where(x => string.Equals(x.Item, SelectedItem, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override void OnInitialized()
+    {
+        // 1) Seed sidebar using the NEW API
+        Sidebar.SetSections(
+            BuildSections(),
+            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["option"] = "Items On Order",
+                ["status"] = "All"
+            });
+
+        // 2) Handle clicks and re-render when state changes.
+        Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
+        Sidebar.StateChanged += OnSidebarChanged;
+
+        // Demo seed data (trimmed). Replace with your real data source.
+        Rows.AddRange(new[]
+        {
+            new Row("A02", "1/4\" Drive (F) x 3/8\" (M) Adapter", 1, 0, 0, 1, 23.50m),
+            new Row("A20", "3/8\" Drive (F) x 1/2\" (M) Adapter", 2, 2, 0, 0, 45.00m),
+            new Row("A23", "3/8\" Drive (F) x 1/2\" (M) Adapter", 1, 1, 0, 1, 22.10m),
+            new Row("A35", "1/2\" Drive (F) x 3/4\" (M) Adapter", 1, 0, 0, 0, 18.75m),
+            new Row("AF12201", "1220-1 AIR TOOL OIL PINT", 18, 18, 0, 0, 180.00m),
+            new Row("AP328", "1/2\"Dr.(F) x 1/2\"(M) Imp Adapt,Ball Type", 1, 1, 0, 0, 19.30m),
+            new Row("AS6SB", "Stubby Air Slide Hammer", 1, 1, 0, 0, 159.99m),
+            new Row("CAT3160", "3/16\" Orbital Sander 6\"", 1, 2, 0, 1, 299.00m)
+        });
+
+        OpenLines.AddRange(new[]
+        {
+            new OpenPOLine
+            {
+                Item = "CAT3160",
+                PONumber = "PO-0000100807", Line = 1, SONumber = "0002916666",
+                Vendor = "CQT", Date = new DateTime(2025, 09, 30),
+                QtyOrdered = 2, Open = 2, InTransit = 0, Alloc = 0, BKO = 1,
+                UnitCost = 299.00m, Rcv = 0, Status = "Open"
+            },
+            new OpenPOLine
+            {
+                Item = "A20",
+                PONumber = "PO-0000100821", Line = 3, SONumber = "0002917777",
+                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
+                QtyOrdered = 5, Open = 2, InTransit = 2, Alloc = 0, BKO = 0,
+                UnitCost = 45.00m, Rcv = 3, Status = "Partial"
+            },
+            new OpenPOLine
+            {
+                Item = "A02",
+                PONumber = "PO-0000100821", Line = 4, SONumber = "0002917777",
+                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
+                QtyOrdered = 1, Open = 1, InTransit = 0, Alloc = 0, BKO = 1,
+                UnitCost = 23.50m, Rcv = 0, Status = "Open"
+            }
+        });
+    }
+
+    private static List<Row> ApplyStatusFilter(List<Row> source, StatusKind status) =>
+        status switch
+        {
+            StatusKind.All => source,
+            StatusKind.Backorders => source.Where(r => r.BKO > 0).ToList(),
+            StatusKind.InTransit => source.Where(r => r.InTransit > 0).ToList(),
+            StatusKind.Unacknowledged => source.Where(r => r.IsUnacknowledged).ToList(),
+            _ => source
+        };
+
+    private string HighlightIf(bool cond) => cond ? "hl" : "";
+
+    private async Task ShowPOLinesForItem(string item)
+    {
+        if (string.Equals(SelectedItem, item, StringComparison.OrdinalIgnoreCase))
+            SelectedItem = null;
+        else
+            SelectedItem = item;
+
+        await ScrollToPOLinesAsync();
+        StateHasChanged();
+    }
+
+    private async Task ScrollToPOLinesAsync()
+    {
+        try { await JS.InvokeVoidAsync("blazorIoO.scrollIntoView", _oplinesSection); }
+        catch { /* best-effort */ }
+    }
+
+    private void ClearItemFilter() => SelectedItem = null;
+
+    private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
+    private void CancelLine(OpenPOLine line) => Console.WriteLine($"Cancel line {line.PONumber} / {line.Line}");
+    private void CancelSelected() { /* bulk cancel */ }
+    private void Print() { /* print/export */ }
+
+    // ---------- Models ----------
+    private sealed class Row
+    {
+        public Row(string item, string desc, int onOrderOpen, int inTransit, int alloc, int bko, decimal unitCost)
+        {
+            Item = item; Description = desc;
+            OnOrderOpen = onOrderOpen; InTransit = inTransit; Alloc = alloc; BKO = bko; UnitCost = unitCost;
+        }
+        public string Item { get; set; }
+        public string Description { get; set; }
+        public int OnOrderOpen { get; set; }
+        public int InTransit { get; set; }
+        public int Alloc { get; set; }
+        public int BKO { get; set; }
+        public decimal UnitCost { get; set; }
+
+        public decimal TotalOpenCost => UnitCost * Math.Max(OnOrderOpen, 0);
+        public decimal InTransitCost => UnitCost * InTransit;
+        public decimal BackorderCost => UnitCost * BKO;
+        public bool IsUnacknowledged => OnOrderOpen > 0 && InTransit == 0 && BKO == 0 && Alloc == 0;
+        public decimal UnacknowledgedCost => IsUnacknowledged ? TotalOpenCost : 0m;
+    }
+}
+
+<script>
+    window.blazorIoO = window.blazorIoO || {};
+    window.blazorIoO.scrollIntoView = function (el) {
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+    };
+</script>

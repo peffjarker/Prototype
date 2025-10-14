@@ -1,0 +1,112 @@
+﻿@using Prototype.Components.Services
+@using Prototype.Components.Layout
+@using Prototype.Components.Layout.Models
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject ISidebarState Sidebar
+
+<TelerikRootComponent>
+    <NavMenu />
+
+    <div class="ptl-page">
+        <!-- Sidebar -->
+        <aside class="ptl-sidebar">
+            <SidebarSections Width="255px"
+                             Sections="Sidebar.Sections"
+                             SectionQueryKeys="@(new Dictionary<string,string?>(StringComparer.OrdinalIgnoreCase)
+                             {
+                                 ["option"] = null,      // navigate via item.Url
+                                 ["status"] = "status"   // sync ?status query param
+                             })"
+                             SelectedBySection="selected"
+                             SelectedBySectionChanged="@(v => selected = v)"
+                             OnItemSelected="Sidebar.ItemSelectedHandler" />
+        </aside>
+
+        <!-- Main content area -->
+        <main class="ptl-content">
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    </div>
+
+    <!-- Default Blazor error UI -->
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+</TelerikRootComponent>
+
+@code {
+    // Local mirror of the current sidebar selection
+    private Dictionary<string, string?> selected = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override void OnInitialized()
+    {
+        // CRITICAL: keeps the layout reactive when pages call Sidebar.SetSections(...)
+        Sidebar.StateChanged += OnSidebarChanged;
+    }
+
+    private void OnSidebarChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Sidebar.StateChanged -= OnSidebarChanged;
+    }
+}
+
+<style>
+    /* ===== Layout Grid ===== */
+    .ptl-page {
+        display: grid;
+        grid-template-columns: 260px 1fr; /* fixed sidebar width + fluid content */
+        min-height: calc(100vh - 52px); /* account for top app bar height */
+    }
+
+    /* ===== Sidebar ===== */
+    .ptl-sidebar {
+        border-right: 1px solid #e5e7eb;
+        background: #f9fafb;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    /* ===== Main Content ===== */
+    .ptl-content {
+        background: #fff;
+        overflow: auto;
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    /* ===== Blazor error UI ===== */
+    #blazor-error-ui {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffefef;
+        color: #a33;
+        padding: 0.75rem 1rem;
+        border-top: 1px solid #e5e7eb;
+        font-size: 0.9rem;
+        display: none;
+    }
+
+        #blazor-error-ui .reload {
+            margin-right: 1rem;
+            text-decoration: underline;
+        }
+
+        #blazor-error-ui .dismiss {
+            float: right;
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+</style>

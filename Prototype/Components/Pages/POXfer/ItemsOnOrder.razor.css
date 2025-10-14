@@ -1,0 +1,151 @@
+﻿.ioo-title {
+    margin: .25rem 0 .5rem 0;
+}
+
+.ioo-table table, .oplines table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.ioo-table th, .ioo-table td, .oplines th, .oplines td {
+    border: 1px solid #e5e7eb;
+    padding: .4rem .5rem;
+}
+
+.ioo-table thead th {
+    background: #f3f4f6;
+    font-weight: 600;
+}
+
+.num {
+    text-align: right;
+}
+
+.w-item {
+    width: 140px;
+}
+
+.w-po {
+    width: 140px;
+}
+
+.w-ln {
+    width: 60px;
+}
+
+.w-so {
+    width: 140px;
+}
+
+.w-date {
+    width: 120px;
+}
+
+.w-status {
+    width: 100px;
+}
+
+.w-cancel {
+    width: 120px;
+    text-align: center;
+}
+
+.hl {
+    background: #eaffb3;
+}
+
+tfoot .totals td {
+    background: #fff7ed;
+    font-weight: 600;
+}
+
+tfoot .totals-sub td {
+    background: #f9fafb;
+}
+
+.oplines {
+    margin-top: 1rem;
+}
+
+    .oplines h4 {
+        margin: .75rem 0 .5rem;
+    }
+
+.oplines-actions {
+    display: flex;
+    gap: .5rem;
+    margin-top: .5rem;
+    justify-content: flex-end;
+}
+
+.btn-primary, .btn-danger {
+    border: 1px solid transparent;
+    padding: .35rem .6rem;
+    border-radius: .375rem;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #0c5ea8;
+    color: #fff;
+}
+
+.btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+.row-clickable {
+    cursor: pointer;
+}
+
+    .row-clickable:hover {
+        background: #f5faff;
+    }
+
+.row-selected {
+    outline: 2px solid #0c5ea8;
+    outline-offset: -2px;
+}
+
+.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: #0c5ea8;
+    text-decoration: underline;
+    font: inherit;
+}
+
+    .link-button:hover {
+        text-decoration: none;
+    }
+
+.filter-chip, .active-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    background: #eef6ff;
+    color: #0b4a8a;
+    border: 1px solid #cfe3ff;
+    padding: .15rem .4rem;
+    border-radius: 999px;
+    margin-left: .5rem;
+}
+
+.chip-x {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0 .2rem;
+    color: #0b4a8a;
+}
+
+.muted {
+    color: #6b7280;
+}
+

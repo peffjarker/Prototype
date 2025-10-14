@@ -1,0 +1,33 @@
+﻿@page "/"
+@using Prototype.Components.Layout.Models
+@using Prototype.Components.Services
+@using static Prototype.Components.Layout.SidebarSections
+@inherits LayoutComponentBase
+@inject ISidebarState Sidebar
+
+<PageTitle>Home</PageTitle>
+
+<div class="layout-no-sidebar">
+    <header class="top-nav">
+        <h2>IBN Dealer Suite</h2>
+    </header>
+
+    <main class="main-content">
+        <h1>Welcome</h1>
+        <p>This page intentionally does not include the sidebar.</p>
+    </main>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Fully reset shared sidebar state when landing here
+        Sidebar.SetSections(Enumerable.Empty<SidebarSection>());
+
+        // Reset all tracked selections (use your section keys)
+        Sidebar.SetSelection("option", null);
+        Sidebar.SetSelection("status", null);
+
+        Sidebar.NotifyStateChanged();
+    }
+}

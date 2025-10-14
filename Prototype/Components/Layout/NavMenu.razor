@@ -1,0 +1,382 @@
+﻿@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@inject NavigationManager Nav
+
+<TelerikAppBar Position="AppBarPosition.Top" Class="appbar">
+    <AppBarSection Class="left">
+        <a href="/" class="brand" aria-label="Home">
+            <div class="logo">
+                <TelerikSvgIcon Icon="@SvgIcon.Globe" />
+            </div>
+            <div class="brand-stack">
+                <span class="brand-text">IBN</span>
+                <span class="brand-sub">Dealer Suite</span>
+            </div>
+        </a>
+    </AppBarSection>
+
+    <AppBarSection Class="right">
+        <div class="desktop-menu">
+            <TelerikMenu TItem="MenuLink"
+                         Data="@MenuItems"
+                         Orientation="MenuOrientation.Horizontal"
+                         Class="main-menu">
+                <ItemTemplate Context="item">
+                    <a href="@item.Href" class="k-link">
+                        <TelerikSvgIcon Icon="@item.Icon" />
+                        <span style="margin-left:.4rem">@item.Text</span>
+                    </a>
+                </ItemTemplate>
+            </TelerikMenu>
+        </div>
+
+        <TelerikButton Class="hamburger"
+                       Icon="@SvgIcon.Menu"
+                       Title="Open menu"
+                       FillMode="ButtonFillMode.Outline"
+                       Rounded="Rounded.Large"
+                       OnClick="@ToggleDrawer" />
+    </AppBarSection>
+</TelerikAppBar>
+
+<!-- Mobile Drawer -->
+<TelerikDrawer TItem="object"
+               @bind-Expanded="drawerOpen"
+               Mode="DrawerMode.Overlay"
+               Width="300px"
+               Class="mobile-drawer">
+    <Template>
+        <div class="drawer-header">
+            <div class="logo small">
+                <TelerikSvgIcon Icon="@SvgIcon.Globe" />
+            </div>
+            <div class="brand-stack">
+                <span class="brand-text">IBN</span>
+                <span class="brand-sub">Dealer Suite</span>
+            </div>
+        </div>
+
+        <div class="k-drawer-items">
+            @foreach (var item in MenuItems)
+            {
+                <div class="k-drawer-item">
+                    <div class="k-drawer-item-body @GetActiveClass(item.Href)" @onclick="@(() => Navigate(item.Href))">
+                        <TelerikSvgIcon Icon="@item.Icon" />
+                        <span style="margin-left:.65rem">@item.Text</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="drawer-footer">
+            <a href="/settings">
+                <TelerikSvgIcon Icon="@SvgIcon.Gear" /> <span>Settings</span>
+            </a>
+            <a href="/help">
+                <TelerikSvgIcon Icon="@SvgIcon.InfoCircle" /> <span>Help</span>
+            </a>
+        </div>
+    </Template>
+
+    <DrawerContent />
+</TelerikDrawer>
+
+@* Popup rendered to a root container to avoid clipping by tabs/content *@
+<TelerikPopup AnchorSelector="#quick-btn"
+              Class="quick-popup">
+    <div class="quick-menu" role="menu">
+        <a role="menuitem" href="/shortcuts/new-order" @onclick="CloseQuick">
+            <TelerikSvgIcon Icon="@SvgIcon.Cart" />
+            <span>New Order</span>
+        </a>
+        <a role="menuitem" href="/shortcuts/new-customer" @onclick="CloseQuick">
+            <TelerikSvgIcon Icon="@SvgIcon.User" />
+            <span>New Customer</span>
+        </a>
+        <a role="menuitem" href="/shortcuts/collect-payment" @onclick="CloseQuick">
+            <TelerikSvgIcon Icon="@SvgIcon.MoneyExchange" />
+            <span>Collect Payment</span>
+        </a>
+        @* Add more here; the popup won’t clip *@
+    </div>
+</TelerikPopup>
+
+@code {
+    private bool drawerOpen;
+    private bool quickOpen;
+    private string? currentPath;
+    private string? searchText;
+
+    protected override void OnInitialized()
+    {
+        currentPath = Nav.ToBaseRelativePath(Nav.Uri);
+        Nav.LocationChanged += (_, __) =>
+        {
+            currentPath = Nav.ToBaseRelativePath(Nav.Uri);
+            StateHasChanged();
+        };
+    }
+
+    private void ToggleDrawer() => drawerOpen = !drawerOpen;
+    private void ToggleQuick() => quickOpen = !quickOpen;
+
+    private void OnQuickKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key is "Escape" or "Esc")
+        {
+            quickOpen = false;
+            StateHasChanged();
+        }
+    }
+
+    private Task CloseQuick(MouseEventArgs _)
+    {
+        quickOpen = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private void Navigate(string href)
+    {
+        drawerOpen = false;
+        Nav.NavigateTo(href);
+    }
+
+    private string GetActiveClass(string href)
+        => IsActive(href) ? "is-active" : string.Empty;
+
+    private bool IsActive(string href)
+    {
+        if (string.IsNullOrWhiteSpace(currentPath)) return href == "/";
+        var rel = "/" + currentPath.TrimStart('/');
+        return string.Equals(rel, href, StringComparison.OrdinalIgnoreCase)
+               || (href != "/" && rel.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private Task OnSearch()
+    {
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            Nav.NavigateTo($"/search?q={Uri.EscapeDataString(searchText!)}");
+            searchText = string.Empty;
+        }
+        return Task.CompletedTask;
+    }
+
+    private readonly List<MenuLink> MenuItems =
+    [
+        new("Home",          "/",              SvgIcon.Home),
+        // new("Route",         "/route",         SvgIcon.Myspace),
+        // new("Customers",     "/customers",     SvgIcon.User),
+        // new("Tech-Card",     "/tech-card",     SvgIcon.MoneyExchange),
+        new("Product",       "/product",       SvgIcon.Wrench),
+        new("PO / Transfer", "/po-transfer/items-on-order/?status=All",   SvgIcon.ArrowsSwap),
+        // new("My Business",   "/my-business",   SvgIcon.GridLayout),
+        // new("Reporting",     "/reporting",     SvgIcon.ChartLine),
+        // new("Settings",      "/settings",      SvgIcon.Gear),
+        new("Help",          "/help",          SvgIcon.Gear)
+    ];
+
+    public class MenuLink
+    {
+        public string Text { get; set; }
+        public string Href { get; set; }
+        public ISvgIcon Icon { get; set; }
+        public MenuLink(string text, string href, ISvgIcon icon)
+        { Text = text; Href = href; Icon = icon; }
+    }
+}
+
+<style>
+    .appbar {
+        position: sticky;
+        top: 0;
+        z-index: 4000; /* higher than tab strip/cards */
+        backdrop-filter: saturate(1.05) blur(8px);
+        background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 88%, transparent);
+        border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent);
+    }
+
+        .appbar .left, .appbar .right, .appbar .center {
+            display: flex;
+            align-items: center;
+            gap: .8rem;
+        }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        background: linear-gradient(180deg, color-mix(in oklab, var(--kendo-color-surface, #fff) 92%, transparent), transparent);
+        box-shadow: 0 4px 14px rgba(2,6,23,.06) inset;
+        color: blue;
+    }
+
+        .logo.small {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+        }
+
+    .brand-stack {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.05;
+    }
+
+    .brand-text {
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: .2px;
+        color: blue;
+    }
+
+    .brand-sub {
+        font-size: .72rem;
+        opacity: .65;
+        color: blue;
+    }
+
+    /* Quick Links Popup */
+    .quick-menu {
+        min-width: 240px;
+        padding: 8px;
+        background: var(--kendo-color-surface, #fff);
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 14px;
+        box-shadow: 0 18px 40px rgba(2,6,23,.15);
+    }
+
+        .quick-menu a {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            padding: 10px 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--kendo-color-on-surface, #111827);
+        }
+
+            .quick-menu a:hover {
+                background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
+            }
+
+    /* Search */
+    .search {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 999px;
+        padding: .35rem .75rem;
+        min-width: 360px;
+        background: var(--kendo-color-surface, #fff);
+    }
+
+        .search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font: inherit;
+            padding: .05rem 0;
+        }
+
+    /* Desktop Menu */
+    .desktop-menu {
+        display: flex;
+    }
+
+    .main-menu .k-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .45rem .7rem;
+        border-radius: 10px;
+        transition: background .15s ease;
+    }
+
+        .main-menu .k-link:hover {
+            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+        }
+
+    /* Drawer */
+    .hamburger {
+        display: none;
+    }
+
+    .mobile-drawer .k-drawer-wrapper {
+        background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 94%, transparent);
+        backdrop-filter: saturate(1.05) blur(6px);
+    }
+
+    .mobile-drawer .k-drawer-item-body {
+        padding: .75rem .85rem;
+        border-radius: 10px;
+        margin: .15rem .35rem;
+    }
+
+        .mobile-drawer .k-drawer-item-body:hover {
+            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
+        }
+
+    .drawer-header {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .9rem .75rem;
+        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+    }
+
+    .drawer-footer {
+        display: flex;
+        gap: .6rem;
+        padding: .75rem .6rem;
+        border-top: 1px solid var(--kendo-color-border, #e5e7eb);
+    }
+
+        .drawer-footer a {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            text-decoration: none;
+            padding: .5rem .6rem;
+            border-radius: 10px;
+        }
+
+            .drawer-footer a:hover {
+                background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+            }
+
+    /* Fallbacks */
+    .hide-on-mobile {
+        display: flex;
+    }
+
+    .main-menu ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .main-menu .k-menu-horizontal > .k-menu-item {
+        display: inline-flex;
+    }
+
+    .main-menu .k-menu-item > .k-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
+</style>
