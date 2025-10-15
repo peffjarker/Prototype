@@ -5,8 +5,6 @@
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Services
-igation.Sidebar
-@using Prototype.Components.Services
 @inherits ComponentBase
 
 @inject NavigationManager Nav
@@ -36,7 +34,6 @@ igation.Sidebar
         </div>
     </header>
 
-    <!-- Grid placeholder (replace with your real data grid) -->
     <section class="card rop-card">
         <header class="section-header">
             <h4>Shipping Notifications</h4>
@@ -104,33 +101,50 @@ igation.Sidebar
 
 @code
 {
-    // ======== URL-bound state ========
+    // ===== URL-bound state =====
     public enum ReceiptStatus { Open, Closed }
+
     [Parameter] public ReceiptStatus Status { get; set; } = ReceiptStatus.Open;
 
-    private string? SelectedAsnId;     // e.g., "0044501566"
+    private string? SelectedAsnId;                 // e.g. "0044501566"
     private IReadOnlyList<AsnSummary> AsnList = Array.Empty<AsnSummary>();
+    private List<AsnSummary> _filteredAsns = new();
 
-    // Derived UI fields (show under header)
-    private string SelectedAsnDisplay => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Display ?? "";
-    private decimal SelectedAsnTotal => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Total ?? 0m;
-    private string SelectedAsnShipFrom => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipFrom ?? "";
-    private DateTime? SelectedAsnShipDate => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipDate;
+    // Derived UI fields
+    private string SelectedAsnDisplay => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Display ?? "";
+    private decimal SelectedAsnTotal => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Total ?? 0m;
+    private string SelectedAsnShipFrom => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipFrom ?? "";
+    private DateTime? SelectedAsnShipDate => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipDate;
 
-    // Lines for the selected ASN (demo; replace with query)
     private List<AsnLine> CurrentLines = new();
 
-    // ======== Lifecycle ========
+    // ===== Lifecycle =====
     protected override void OnInitialized()
     {
         AsnList = DemoAsns().OrderByDescending(a => a.ShipDate).ToList();
+
         ReadUrlState();
+
+        // 1) Filter by Status
+        _filteredAsns = GetFilteredAsns();
+
+        // 2) Ensure SelectedAsnId is valid within the filtered set
+        if (string.IsNullOrWhiteSpace(SelectedAsnId) || !_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
+        {
+            SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
+            // reflect into URL if needed
+            UpdateUrl(new Dictionary<string, string?>
+            {
+                ["status"] = Status.ToString(),
+                ["asn"] = SelectedAsnId
+            }, replace: true);
+        }
 
         Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
         Sidebar.StateChanged += OnSidebarChanged;
 
         Sidebar.SetSections(
-            BuildSections(AsnList, SelectedAsnId, Status),   // <- pass selection
+            BuildSections(_filteredAsns, SelectedAsnId, Status),
             new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["option"] = "Receipt of Product",
@@ -140,7 +154,6 @@ igation.Sidebar
         LoadLinesFor(SelectedAsnId);
     }
 
-
     public void Dispose()
     {
         Sidebar.StateChanged -= OnSidebarChanged;
@@ -148,17 +161,13 @@ igation.Sidebar
             Sidebar.ItemSelectedHandler = null;
     }
 
-    // ======== Sidebar ========
+    // ===== Sidebar =====
     private void OnSidebarChanged() => InvokeAsync(StateHasChanged);
 
-    static string ExtractAsnId(string? text)
+    private static string ExtractAsnId(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text))
-            return string.Empty;
-
-        // Expect "0044501566 - 08/22/2025" -> take the first token of the left part
+        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
         var left = text.Split('-', 2)[0].Trim();
-        // Strip any spaces just in case
         return left.Replace(" ", "", StringComparison.Ordinal);
     }
 
@@ -169,8 +178,22 @@ igation.Sidebar
 
         if (string.Equals(key, "status", StringComparison.OrdinalIgnoreCase))
         {
+            // Update status
             Status = Enum.TryParse<ReceiptStatus>(item.Text, true, out var parsed) ? parsed : ReceiptStatus.Open;
-            UpdateUrl(new Dictionary<string, string?> { ["status"] = Status.ToString() });
+
+            // Re-filter ASNs based on status
+            _filteredAsns = GetFilteredAsns();
+
+            // Keep or reset selected ASN to a valid one
+            if (!_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
+                SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
+
+            // Reflect both status and asn into URL
+            UpdateUrl(new Dictionary<string, string?>
+            {
+                ["status"] = Status.ToString(),
+                ["asn"] = SelectedAsnId
+            });
         }
         else if (string.Equals(key, "asn", StringComparison.OrdinalIgnoreCase))
         {
@@ -184,9 +207,9 @@ igation.Sidebar
                 Nav.NavigateTo(item.Url);
         }
 
-        // Rebuild the sidebar so only the active entries are marked Selected
+        // Rebuild the sidebar from the filtered list only
         Sidebar.SetSections(
-            BuildSections(AsnList, SelectedAsnId, Status),
+            BuildSections(_filteredAsns, SelectedAsnId, Status),
             new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["option"] = "Receipt of Product",
@@ -197,10 +220,19 @@ igation.Sidebar
         await Task.CompletedTask;
     }
 
+    // ===== Filtering & sections =====
+    private List<AsnSummary> GetFilteredAsns()
+    {
+        return AsnList
+            .Where(a => a.Status == Status)
+            .OrderByDescending(a => a.ShipDate)
+            .ToList();
+    }
+
     private static List<SidebarSection> BuildSections(
-    IReadOnlyList<AsnSummary> asns,
-    string? selectedAsnId,
-    ReceiptStatus selectedStatus)
+        IReadOnlyList<AsnSummary> asnsFiltered,
+        string? selectedAsnId,
+        ReceiptStatus selectedStatus)
     {
         static SidebarItem Item(string text, string url, string? key = null, bool selected = false) => new()
         {
@@ -213,32 +245,29 @@ igation.Sidebar
         const string Base = "/po-transfer";
         var sections = new List<SidebarSection>();
 
-        // Option
         sections.Add(new SidebarSection
         {
             SectionKey = "option",
             Title = "Option",
             Items =
-        {
-            Item("Items On Order",  $"{Base}/items-on-order"),
-            Item("Purchase Orders", $"{Base}/purchase-orders"),
-            Item("Receipt of Product", $"{Base}/receipt-of-product")
-        }
+            {
+                Item("Items On Order",  $"{Base}/items-on-order"),
+                Item("Purchase Orders", $"{Base}/purchase-orders"),
+                Item("Receipt of Product", $"{Base}/receipt-of-product")
+            }
         });
 
-        // Status (mark the active one)
         sections.Add(new SidebarSection
         {
             SectionKey = "status",
             Title = "Status",
             Items =
-        {
-            Item("Open",   $"{Base}/receipt-of-product?status=Open",   selected: selectedStatus == ReceiptStatus.Open),
-            Item("Closed", $"{Base}/receipt-of-product?status=Closed", selected: selectedStatus == ReceiptStatus.Closed)
-        }
+            {
+                Item("Open",   $"{Base}/receipt-of-product?status=Open",   selected: selectedStatus == ReceiptStatus.Open),
+                Item("Closed", $"{Base}/receipt-of-product?status=Closed", selected: selectedStatus == ReceiptStatus.Closed)
+            }
         });
 
-        // ASN (mark only the currently selected id)
         var asnSection = new SidebarSection
         {
             SectionKey = "asn",
@@ -246,7 +275,7 @@ igation.Sidebar
             Items = new List<SidebarItem>()
         };
 
-        foreach (var a in asns)
+        foreach (var a in asnsFiltered)
         {
             var text = $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}";
             var url = $"{Base}/receipt-of-product?status={selectedStatus}&asn={Uri.EscapeDataString(a.AsnId)}";
@@ -263,7 +292,7 @@ igation.Sidebar
         return sections;
     }
 
-    // ======== URL sync ========
+    // ===== URL sync =====
     private void ReadUrlState()
     {
         var abs = Nav.ToAbsoluteUri(Nav.Uri);
@@ -277,7 +306,7 @@ igation.Sidebar
         if (q.TryGetValue("asn", out var asnVal) && !string.IsNullOrWhiteSpace(asnVal))
             SelectedAsnId = asnVal!;
         else
-            SelectedAsnId = AsnList.FirstOrDefault()?.AsnId; // default to latest
+            SelectedAsnId = null; // we’ll pick the first valid one after filtering
     }
 
     private void UpdateUrl(IDictionary<string, string?> scalars, bool replace = false)
@@ -306,15 +335,15 @@ igation.Sidebar
         Nav.NavigateTo(href, replace);
     }
 
-    // ======== Data / Demo ========
+    // ===== Demo data =====
     private static IEnumerable<AsnSummary> DemoAsns()
     {
-        yield return new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 185.46m);
-        yield return new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m);
-        yield return new AsnSummary("004424954", new DateTime(2025, 8, 13), "1DC", 410.00m);
-        yield return new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m);
-        yield return new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m);
-        // add as many as you like; the sidebar will scroll
+        // Mark each ASN with the status it belongs to
+        yield return new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 185.46m, ReceiptStatus.Open);
+        yield return new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m, ReceiptStatus.Open);
+        yield return new AsnSummary("004424954", new DateTime(2025, 8, 13), "1DC", 410.00m, ReceiptStatus.Closed);
+        yield return new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m, ReceiptStatus.Closed);
+        yield return new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m, ReceiptStatus.Open);
     }
 
     private void LoadLinesFor(string? asnId)
@@ -345,77 +374,14 @@ igation.Sidebar
         }
     }
 
-    private static List<SidebarSection> BuildSections(IReadOnlyList<AsnSummary> asns)
-    {
-        static SidebarItem Item(string text, string url, string? key = null, bool selected = false) => new()
-        {
-            Text = text,
-            Url = url,
-            Selected = selected,
-            Key = key
-        };
-
-        const string Base = "/po-transfer";
-        var sections = new List<SidebarSection>();
-
-        // Option
-        sections.Add(new SidebarSection
-        {
-            SectionKey = "option",
-            Title = "Option",
-            Items =
-            {
-                Item("Items On Order",        $"{Base}/items-on-order"),
-                // Item("Replenish Inventory",   $"{Base}/replenish-inventory"),
-                // Item("Acknowledgements",      $"{Base}/acknowledgements"),
-                Item("Purchase Orders",       $"{Base}/purchase-orders"),
-                // Item("Vendor Purchase Orders",$"{Base}/vendor-purchase-orders"),
-                Item("Receipt of Product",    $"{Base}/receipt-of-product")
-                // Item("Transfer Orders",       $"{Base}/transfer-orders"),
-                // Item("Repairs and Returns",   $"{Base}/repairs-returns"),
-                // Item("Vendors",               $"{Base}/vendors")
-            }
-        });
-
-        // Status
-        sections.Add(new SidebarSection
-        {
-            SectionKey = "status",
-            Title = "Status",
-            Items =
-            {
-                Item("Open",   $"{Base}/receipt-of-product?status=Open"),
-                Item("Closed", $"{Base}/receipt-of-product?status=Closed")
-            }
-        });
-
-        // ASN list (long list – the Sidebar component should make it scrollable)
-        var asnSection = new SidebarSection
-        {
-            SectionKey = "asn",
-            Title = "ASN",
-            Items = new List<SidebarItem>()
-        };
-
-        foreach (var a in asns)
-        {
-            var text = $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}";
-            var url = $"{Base}/receipt-of-product?status=Open&asn={Uri.EscapeDataString(a.AsnId)}";
-            asnSection.Items.Add(Item(text, url, key: a.AsnId));
-        }
-
-        sections.Add(asnSection);
-        return sections;
-    }
-
-    // ======== Actions (stub) ========
+    // ===== Actions (stub) =====
     private Task SelectAll() => Task.CompletedTask;
     private Task UnselectAll() => Task.CompletedTask;
     private Task PrintPriceLabels() => Task.CompletedTask;
     private Task Receive() => Task.CompletedTask;
 
-    // ======== Models ========
-    private sealed record AsnSummary(string AsnId, DateTime ShipDate, string ShipFrom, decimal Total)
+    // ===== Models =====
+    private sealed record AsnSummary(string AsnId, DateTime ShipDate, string ShipFrom, decimal Total, ReceiptStatus Status)
     {
         public string Display => $"{AsnId} - {ShipDate:MM/dd/yyyy}";
     }
