@@ -1,4 +1,4 @@
-﻿namespace Prototype.Components.Layout.Navigation;
+﻿namespace Prototype.Components.Layout.Navigation.Sidebar;
 
 public interface ISidebarState
 {

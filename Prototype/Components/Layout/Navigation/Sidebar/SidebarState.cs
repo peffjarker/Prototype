@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace Prototype.Components.Layout.Navigation;
+namespace Prototype.Components.Layout.Navigation.Sidebar;
 
 /// <summary>
 /// App-wide sidebar state. Reusable across many pages.

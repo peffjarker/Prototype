@@ -1,12 +1,12 @@
-﻿@using Prototype.Components.Layout.Navigation
+﻿@using Prototype.Components.Layout
+@using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Services
-@using Prototype.Components.Layout
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject ISidebarState Sidebar
 
 <TelerikRootComponent>
-    <NavMenu />
+    <Prototype.Components.Layout.Navigation.NavMenu />
 
     <div class="ptl-page">
         <!-- Sidebar -->

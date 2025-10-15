@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 
-namespace Prototype.Components.Layout.Navigation;
+namespace Prototype.Components.Layout.Navigation.Sidebar;
 
 public sealed partial class SidebarSections : ComponentBase, IDisposable
 {
@@ -83,7 +83,7 @@ public sealed partial class SidebarSections : ComponentBase, IDisposable
                 ?.Items.FirstOrDefault();
             var firstAsn = firstAsnItem is null
                 ? null
-                : (!string.IsNullOrWhiteSpace(firstAsnItem.Key) ? firstAsnItem.Key : ExtractAsnId(firstAsnItem.Text));
+                : !string.IsNullOrWhiteSpace(firstAsnItem.Key) ? firstAsnItem.Key : ExtractAsnId(firstAsnItem.Text);
 
             return !string.IsNullOrWhiteSpace(firstAsn) &&
                    string.Equals(itemAsn, firstAsn, StringComparison.OrdinalIgnoreCase);

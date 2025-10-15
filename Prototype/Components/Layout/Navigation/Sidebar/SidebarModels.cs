@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace Prototype.Components.Layout.Navigation
+namespace Prototype.Components.Layout.Navigation.Sidebar
 {
     public class SidebarSection
     {
