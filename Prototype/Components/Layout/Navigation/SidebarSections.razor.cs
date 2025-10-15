@@ -121,9 +121,13 @@ public sealed partial class SidebarSections : ComponentBase, IDisposable
             }
         }
 
-        // ---- Two-way bound fallback (rarely used with the above scheme) ----
-        if (SelectedBySection.TryGetValue(sk, out var chosen) && !string.IsNullOrWhiteSpace(chosen))
+        // ---- Two-way bound fallback (only for non-option sections) ----
+        if (!skKey.Equals("option", StringComparison.Ordinal) &&
+            SelectedBySection.TryGetValue(sk, out var chosen) &&
+            !string.IsNullOrWhiteSpace(chosen))
+        {
             return string.Equals(item.Text, chosen, StringComparison.OrdinalIgnoreCase);
+        }
 
         // ---- Legacy Selected flag ----
         return item.Selected;
