@@ -516,9 +516,9 @@
                 Title = "Option",
                 Items =
                 {
-                    SI("Items On Order",        $"{Base}/items-on-order", selected: true),
+                    SI("Items On Order",        $"{Base}/items-on-order?status=All"),
                     SI("Purchase Orders",       $"{Base}/purchase-orders"),
-                    SI("Receipt of Product",    $"{Base}/receipt-of-product?status=Open")
+                    SI("Receipt of Product",    $"{Base}/receipt-of-product?status=All")
                 }
             },
             new SidebarSection
@@ -527,7 +527,7 @@
                 Title = "Status",
                 Items =
                 {
-                    SI("All",            $"{Base}/items-on-order?status=All",           selected: true),
+                    SI("All",            $"{Base}/items-on-order?status=All"),
                     SI("Backorders",     $"{Base}/items-on-order?status=Backorders"),
                     SI("In Transit",     $"{Base}/items-on-order?status=In%20Transit"),
                     SI("Unacknowledged", $"{Base}/items-on-order?status=Unacknowledged")
