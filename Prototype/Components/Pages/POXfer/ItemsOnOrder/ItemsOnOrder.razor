@@ -21,7 +21,7 @@
     <!-- Items table -->
     <section class="card">
         <div class="table-wrap">
-            <table class="tbl tbl-items" role="grid" aria-label="Items on order">
+            <table class="tbl tbl-items panel" role="grid" aria-label="Items on order">
                 <thead>
                     <tr>
                         <th class="w-item">Item</th>
@@ -98,7 +98,7 @@
     </section>
 
     <!-- PO lines -->
-    <section class="card" id="oplines" @ref="_oplinesSection">
+    <section class="panel" id="oplines" @ref="_oplinesSection">
         <header class="section-header">
             <h4>Open PO Lines</h4>
             @if (SelectedItems.Count > 0)
@@ -175,7 +175,7 @@
             </table>
         </div>
 
-        <footer class="oplines-actions">
+        <footer class="actions">
             <button style="border: 1px solid black;" class="btn" @onclick="Print">Print</button>
             @* <button class="btn-danger" @onclick="CancelSelected">Cancel PO Line(s)</button> *@
         </footer>
@@ -518,7 +518,7 @@
                 {
                     SI("Items On Order",        $"{Base}/items-on-order", selected: true),
                     SI("Purchase Orders",       $"{Base}/purchase-orders"),
-                    SI("Receipt of Product",    $"{Base}/receipt-of-product")
+                    SI("Receipt of Product",    $"{Base}/receipt-of-product?status=Open")
                 }
             },
             new SidebarSection

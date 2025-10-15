@@ -1,118 +1,108 @@
-﻿/* Page wrapper */
+﻿/* ---- Layout shell ---- */
 .rop-wrap {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
-/* Header row with small summary fields */
 .rop-header {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 12px;
 }
 
 .rop-title {
     margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: .2px;
 }
 
+/* ---- Top meta grid ---- */
 .rop-meta {
+    padding: 12px;
     display: grid;
-    grid-template-columns: repeat(4, minmax(180px, 1fr));
-    gap: 8px;
-    align-items: center;
+    grid-template-columns: repeat(8,minmax(150px,1fr));
+    gap: 14px;
+    align-items: start;
+    grid-auto-flow: dense;
 }
 
+    .rop-meta .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+        .rop-meta .field.inline {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+        }
+
+    .rop-meta .span-2 {
+        grid-column: span 2;
+    }
+
+    .rop-meta .field.narrow {
+        max-width: 120px;
+    }
+
+    /* Labels */
     .rop-meta label {
+        font-size: .85rem;
         font-weight: 600;
-        margin-right: 6px;
+        color: #111827;
     }
 
-    .rop-meta input {
-        width: 100%;
-        padding: 4px 6px;
-        border: 1px solid var(--ioo-border, #e5e7eb);
-        border-radius: 4px;
+    /* Inputs / selects / buttons – unify height & look */
+    .rop-meta input,
+    .rop-meta select {
+        appearance: none;
+        height: 36px;
+        padding: 6px 10px;
+        border: 1px solid rgba(0,0,0,.14);
+        border-radius: 10px;
         background: #fff;
+        font-size: .95rem;
+        outline: none;
+        transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
     }
 
-/* Card + table */
-.rop-card {
-    padding: 0;
-}
+        .rop-meta input[readonly] {
+            background: #f9fafb;
+        }
 
-.section-header {
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--ioo-border, #e5e7eb);
-    background: #f8fafc;
-}
+        .rop-meta input:focus,
+        .rop-meta select:focus {
+            border-color: #6aa5ff;
+            box-shadow: 0 0 0 3px rgba(26,115,232,.15);
+        }
 
-.table-wrap {
-    overflow: auto;
-}
-
-.tbl {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.95rem;
-}
-
-    .tbl thead th {
-        text-align: left;
-        border-bottom: 1px solid var(--ioo-border, #e5e7eb);
-        padding: 8px 10px;
-        white-space: nowrap;
+    /* Checkbox aligns nicely with label */
+    .rop-meta .rop-pno {
+        width: 18px;
+        height: 18px;
     }
 
-    .tbl tbody td {
-        padding: 8px 10px;
-        border-bottom: 1px solid #f2f2f2;
-    }
-
-    .tbl .num {
-        text-align: right;
-    }
-
-    .tbl .w-label {
-        width: 70px;
-    }
-
-    .tbl .w-po {
-        width: 130px;
-    }
-
-    .tbl .w-ln {
-        width: 70px;
-    }
-
-    .tbl .w-status {
-        width: 120px;
-    }
-
-.muted {
-    color: #6b7280;
-}
-
-/* Footer buttons */
-.rop-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    padding: 10px 12px;
-    border-top: 1px solid var(--ioo-border, #e5e7eb);
-    background: #fafafa;
-}
-
+/* Track button */
 .btn {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,.14);
     background: #fff;
+    color: #111827;
+    font-weight: 600;
     cursor: pointer;
+    transition: transform .03s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
 }
 
-    .btn.outline {
-        background: #fff;
+    .btn:hover {
+        background: #f3f4f6;
+    }
+
+    .btn:active {
+        transform: translateY(1px);
     }
 
     .btn.primary {
@@ -121,8 +111,124 @@
         border-color: #1f6feb;
     }
 
+        .btn.primary:hover {
+            filter: brightness(0.95);
+        }
+
     .btn.success {
         background: #19a974;
         color: #fff;
         border-color: #19a974;
     }
+
+    .btn.outline {
+        background: #fff;
+        color: #111827;
+    }
+
+    .btn:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+
+/* Align Track button baseline with inputs */
+.rop-meta .field.align-end {
+    align-self: end;
+}
+
+/* ---- Table ---- */
+.table-wrap {
+    overflow: auto;
+}
+
+.tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .95rem;
+}
+
+    .tbl thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #fbfcfe;
+        border-bottom: 1px solid rgba(0,0,0,.08);
+        padding: 10px 12px;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .tbl tbody td {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(0,0,0,.06);
+    }
+
+    .tbl tbody tr:hover {
+        background: #fafbff;
+    }
+
+    .tbl .num {
+        text-align: right;
+    }
+
+    .tbl .w-label {
+        width: 72px;
+    }
+
+    .tbl .w-po {
+        width: 140px;
+    }
+
+    .tbl .w-ln {
+        width: 76px;
+    }
+
+    .tbl .w-status {
+        width: 120px;
+    }
+
+/* ---- Muted text ---- */
+.muted {
+    color: #6b7280;
+}
+
+/* ---- Responsive ---- */
+@media (max-width:1200px) {
+    .rop-meta {
+        grid-template-columns: repeat(6,minmax(140px,1fr));
+    }
+}
+
+@media (max-width:900px) {
+    .rop-meta {
+        grid-template-columns: repeat(4,minmax(140px,1fr));
+    }
+}
+
+@media (max-width:640px) {
+    .rop-meta {
+        grid-template-columns: repeat(2,minmax(140px,1fr));
+    }
+
+    .section-header {
+        flex-wrap: wrap;
+    }
+
+        .section-header .badge {
+            margin-left: 0;
+        }
+}
+
+/* a11y helper if you keep it elsewhere */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}

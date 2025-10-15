@@ -1,5 +1,6 @@
 ﻿@page "/po-transfer/receipt-of-product"
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Navigation
@@ -14,20 +15,58 @@
 <div class="rop-wrap">
     <header class="rop-header">
         <h3 class="rop-title">Receipt of Product</h3>
-        <div class="rop-meta">
-            <div>
+
+        <div class="panel rop-meta">
+            <div class="field span-2">
                 <label>ASN#:</label>
                 <input readonly class="rop-asn" value="@SelectedAsnDisplay" />
             </div>
-            <div>
+
+            <div class="field inline">
+                <label>Print Needs Only:</label>
+                <input type="checkbox" class="rop-pno" @bind="PrintNeedsOnly" />
+            </div>
+
+            <div class="field">
                 <label>Total:</label>
                 <input readonly class="rop-total" value="@SelectedAsnTotal.ToString("C")" />
             </div>
-            <div>
+
+            <div class="field">
+                <label>Received:</label>
+                <input class="rop-received" type="number" step="0.01" inputmode="decimal"
+                       @bind-value="ReceivedAmount" @bind-value:event="onchange" />
+            </div>
+
+            <div class="field">
+                <label>Tracking#:</label>
+                <input class="rop-tracking" @bind="TrackingNumber" />
+            </div>
+
+            <div class="field">
+                <label>Carrier:</label>
+                <select class="rop-carrier" @bind="SelectedCarrier">
+                    @foreach (var c in Carriers)
+                    {
+                        <option value="@c">@c</option>
+                    }
+                </select>
+            </div>
+
+            <div class="field inline narrow align-end">
+                <button class="btn"
+                        @onclick="TrackPackageAsync"
+                        disabled="@string.IsNullOrWhiteSpace(TrackingNumber)">
+                    Track
+                </button>
+            </div>
+
+            <div class="field">
                 <label>Ship From:</label>
                 <input readonly class="rop-shipfrom" value="@SelectedAsnShipFrom" />
             </div>
-            <div>
+
+            <div class="field">
                 <label>Ship Date:</label>
                 <input readonly class="rop-shipdate" value="@SelectedAsnShipDate?.ToString("MM/dd/yyyy")" />
             </div>
@@ -35,8 +74,9 @@
     </header>
 
     <section class="card rop-card">
-        <header class="section-header">
+        <header class="section-header panel">
             <h4>Shipping Notifications</h4>
+            <span class="badge" style="margin-left:auto;">Label Count: @LabelCountTotal</span>
         </header>
 
         <div class="table-wrap">
@@ -90,67 +130,108 @@
             </table>
         </div>
 
-        <footer class="rop-actions">
+        <footer class="actions">
             <button class="btn outline" @onclick="SelectAll">Select All</button>
             <button class="btn outline" @onclick="UnselectAll">Un-Select All</button>
-            <button class="btn primary" @onclick="PrintPriceLabels">Print Price Labels</button>
+            <button class="btn primary" @onclick="PrintPriceLabels" disabled="@(!PrintNeedsOnly)">Print Price Labels</button>
             <button class="btn success" @onclick="Receive">Receive</button>
         </footer>
     </section>
 </div>
 
-@code
-{
+@code {
     // ===== URL-bound state =====
-    public enum ReceiptStatus { Open, Closed }
-
+    public enum ReceiptStatus { All, Open, Closed }
     [Parameter] public ReceiptStatus Status { get; set; } = ReceiptStatus.Open;
 
-    private string? SelectedAsnId;                 // e.g. "0044501566"
+    private string? SelectedAsnId;
     private IReadOnlyList<AsnSummary> AsnList = Array.Empty<AsnSummary>();
     private List<AsnSummary> _filteredAsns = new();
 
-    // Derived UI fields
+    // Derived UI fields (read-only from selected ASN)
     private string SelectedAsnDisplay => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Display ?? "";
     private decimal SelectedAsnTotal => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Total ?? 0m;
     private string SelectedAsnShipFrom => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipFrom ?? "";
     private DateTime? SelectedAsnShipDate => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipDate;
 
+    // Top-row editable/local state
+    private bool PrintNeedsOnly;
+    private decimal ReceivedAmount;
+    private string TrackingNumber = "";
+    private string SelectedCarrier = "UPS";
+    private readonly string[] Carriers = new[] { "UPS", "USPS", "FedEx", "DHL", "OnTrac", "Other" };
+
     private List<AsnLine> CurrentLines = new();
+    private int LabelCountTotal => CurrentLines.Sum(x => x.LabelCount);
 
     // ===== Lifecycle =====
     protected override void OnInitialized()
     {
         AsnList = DemoAsns().OrderByDescending(a => a.ShipDate).ToList();
-
-        ReadUrlState();
-
-        // 1) Filter by Status
-        _filteredAsns = GetFilteredAsns();
-
-        // 2) Ensure SelectedAsnId is valid within the filtered set
-        if (string.IsNullOrWhiteSpace(SelectedAsnId) || !_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
-        {
-            SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
-            // reflect into URL if needed
-            UpdateUrl(new Dictionary<string, string?>
-            {
-                ["status"] = Status.ToString(),
-                ["asn"] = SelectedAsnId
-            }, replace: true);
-        }
-
         Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
         Sidebar.StateChanged += OnSidebarChanged;
 
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        // Only handle receipts route
+        var rel = Nav.ToBaseRelativePath(e.Location);
+        if (!rel.StartsWith("po-transfer/receipt-of-product", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        InvokeAsync(() =>
+        {
+            ReadUrlState();
+            _filteredAsns = GetFilteredAsns();
+
+            if (string.IsNullOrWhiteSpace(SelectedAsnId) ||
+                !_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
+            {
+                SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
+            }
+
+            Sidebar.SetSections(
+                BuildSections(_filteredAsns, SelectedAsnId, Status),
+                new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["option"] = "Receipt of Product",
+                    ["status"] = Status.ToString(),
+                    ["asn"] = SelectedAsnId
+                });
+
+            LoadHeaderFor(SelectedAsnId);
+            LoadLinesFor(SelectedAsnId);
+            StateHasChanged();
+        });
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Pull latest route params
+        ReadUrlState();
+
+        // Filter list based on status (All/Open/Closed) and ensure a valid ASN is selected
+        _filteredAsns = GetFilteredAsns();
+
+        if (string.IsNullOrWhiteSpace(SelectedAsnId) ||
+            !_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
+        {
+            SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
+        }
+
+        // Build sidebar and load page data AFTER navigation/parameters settle
         Sidebar.SetSections(
             BuildSections(_filteredAsns, SelectedAsnId, Status),
             new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["option"] = "Receipt of Product",
-                ["status"] = Status.ToString()
+                ["status"] = Status.ToString(),
+                ["asn"] = SelectedAsnId
             });
 
+        LoadHeaderFor(SelectedAsnId);
         LoadLinesFor(SelectedAsnId);
     }
 
@@ -159,6 +240,8 @@
         Sidebar.StateChanged -= OnSidebarChanged;
         if (ReferenceEquals(Sidebar.ItemSelectedHandler, (Func<SidebarItem, Task>)OnSidebarItemClicked))
             Sidebar.ItemSelectedHandler = null;
+
+        Nav.LocationChanged -= OnLocationChanged;
     }
 
     // ===== Sidebar =====
@@ -171,76 +254,81 @@
         return left.Replace(" ", "", StringComparison.Ordinal);
     }
 
-    private async Task OnSidebarItemClicked(SidebarItem item)
+    private Task OnSidebarItemClicked(SidebarItem item)
     {
-        var section = Sidebar.Sections.FirstOrDefault(s => s.Items.Contains(item));
-        var key = section?.SectionKey ?? section?.Title ?? string.Empty;
+        var href = item.Url ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(href))
+            return Task.CompletedTask;
 
-        if (string.Equals(key, "status", StringComparison.OrdinalIgnoreCase))
+        var abs = Nav.ToAbsoluteUri(href);
+        var q = QueryHelpers.ParseQuery(abs.Query);
+
+        var hasStatus = q.TryGetValue("status", out var statusVals);
+        var hasAsn = q.TryGetValue("asn", out var asnVals);
+
+        if (hasStatus && !hasAsn)
         {
-            // Update status
-            Status = Enum.TryParse<ReceiptStatus>(item.Text, true, out var parsed) ? parsed : ReceiptStatus.Open;
+            // Status clicked (All/Open/Closed)
+            var raw = statusVals.ToString();
+            var parsedOk = Enum.TryParse<ReceiptStatus>(raw, true, out var newStatus);
+            if (!parsedOk) newStatus = ReceiptStatus.Open;
 
-            // Re-filter ASNs based on status
-            _filteredAsns = GetFilteredAsns();
-
-            // Keep or reset selected ASN to a valid one
-            if (!_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
-                SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
-
-            // Reflect both status and asn into URL
-            UpdateUrl(new Dictionary<string, string?>
+            string? firstAsn = null;
+            if (newStatus == ReceiptStatus.All)
             {
-                ["status"] = Status.ToString(),
-                ["asn"] = SelectedAsnId
-            });
-        }
-        else if (string.Equals(key, "asn", StringComparison.OrdinalIgnoreCase))
-        {
-            SelectedAsnId = !string.IsNullOrWhiteSpace(item.Key) ? item.Key : ExtractAsnId(item.Text);
-            UpdateUrl(new Dictionary<string, string?> { ["asn"] = SelectedAsnId });
-            LoadLinesFor(SelectedAsnId);
-        }
-        else if (string.Equals(key, "option", StringComparison.OrdinalIgnoreCase))
-        {
-            if (!string.IsNullOrWhiteSpace(item.Url))
-                Nav.NavigateTo(item.Url);
-        }
-
-        // Rebuild the sidebar from the filtered list only
-        Sidebar.SetSections(
-            BuildSections(_filteredAsns, SelectedAsnId, Status),
-            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+                firstAsn = AsnList
+                    .OrderByDescending(a => a.ShipDate)
+                    .FirstOrDefault()
+                    ?.AsnId;
+            }
+            else
             {
-                ["option"] = "Receipt of Product",
-                ["status"] = Status.ToString()
-            });
+                firstAsn = AsnList
+                    .Where(a => a.Status == newStatus)
+                    .OrderByDescending(a => a.ShipDate)
+                    .FirstOrDefault()
+                    ?.AsnId;
+            }
 
-        StateHasChanged();
-        await Task.CompletedTask;
+            var url = $"/po-transfer/receipt-of-product?status={newStatus}"
+                    + (string.IsNullOrWhiteSpace(firstAsn) ? "" : $"&asn={Uri.EscapeDataString(firstAsn)}");
+
+            Nav.NavigateTo(url);
+            return Task.CompletedTask;
+        }
+
+        if (hasAsn)
+        {
+            var newId = asnVals.ToString();
+            if (!string.Equals(newId, SelectedAsnId, StringComparison.OrdinalIgnoreCase))
+            {
+                var url = $"/po-transfer/receipt-of-product?status={Status}&asn={Uri.EscapeDataString(newId)}";
+                Nav.NavigateTo(url);
+            }
+            return Task.CompletedTask;
+        }
+
+        // Option item (plain link)
+        Nav.NavigateTo(href);
+        return Task.CompletedTask;
     }
 
     // ===== Filtering & sections =====
     private List<AsnSummary> GetFilteredAsns()
     {
-        return AsnList
-            .Where(a => a.Status == Status)
-            .OrderByDescending(a => a.ShipDate)
-            .ToList();
+        IEnumerable<AsnSummary> query = AsnList;
+
+        if (Status != ReceiptStatus.All)
+            query = query.Where(a => a.Status == Status);
+
+        return query.OrderByDescending(a => a.ShipDate).ToList();
     }
 
     private static List<SidebarSection> BuildSections(
-        IReadOnlyList<AsnSummary> asnsFiltered,
-        string? selectedAsnId,
-        ReceiptStatus selectedStatus)
+        IReadOnlyList<AsnSummary> asnsFiltered, string? selectedAsnId, ReceiptStatus selectedStatus)
     {
-        static SidebarItem Item(string text, string url, string? key = null, bool selected = false) => new()
-        {
-            Text = text,
-            Url = url,
-            Key = key,
-            Selected = selected
-        };
+        static SidebarItem Item(string text, string url, string? key = null, bool selected = false)
+            => new() { Text = text, Url = url, Key = key, Selected = selected };
 
         const string Base = "/po-transfer";
         var sections = new List<SidebarSection>();
@@ -263,31 +351,19 @@
             Title = "Status",
             Items =
             {
+                Item("All",    $"{Base}/receipt-of-product?status=All",    selected: selectedStatus == ReceiptStatus.All),
                 Item("Open",   $"{Base}/receipt-of-product?status=Open",   selected: selectedStatus == ReceiptStatus.Open),
                 Item("Closed", $"{Base}/receipt-of-product?status=Closed", selected: selectedStatus == ReceiptStatus.Closed)
             }
         });
 
-        var asnSection = new SidebarSection
-        {
-            SectionKey = "asn",
-            Title = "ASN",
-            Items = new List<SidebarItem>()
-        };
-
+        var asnSection = new SidebarSection { SectionKey = "asn", Title = "ASN", Items = new List<SidebarItem>() };
         foreach (var a in asnsFiltered)
         {
             var text = $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}";
             var url = $"{Base}/receipt-of-product?status={selectedStatus}&asn={Uri.EscapeDataString(a.AsnId)}";
-
-            asnSection.Items.Add(Item(
-                text,
-                url,
-                key: a.AsnId,
-                selected: string.Equals(a.AsnId, selectedAsnId, StringComparison.OrdinalIgnoreCase)
-            ));
+            asnSection.Items.Add(Item(text, url, key: a.AsnId, selected: string.Equals(a.AsnId, selectedAsnId, StringComparison.OrdinalIgnoreCase)));
         }
-
         sections.Add(asnSection);
         return sections;
     }
@@ -306,14 +382,13 @@
         if (q.TryGetValue("asn", out var asnVal) && !string.IsNullOrWhiteSpace(asnVal))
             SelectedAsnId = asnVal!;
         else
-            SelectedAsnId = null; // we’ll pick the first valid one after filtering
+            SelectedAsnId = null;
     }
 
     private void UpdateUrl(IDictionary<string, string?> scalars, bool replace = false)
     {
         var abs = Nav.ToAbsoluteUri(Nav.Uri);
         var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
-
         var cut = rel.IndexOfAny(new[] { '?', '#' });
         var pathOnly = cut >= 0 ? rel[..cut] : rel;
 
@@ -327,23 +402,29 @@
             else map[kv.Key] = kv.Value;
         }
 
-        var qs = string.Join("&",
-            map.Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
-               .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}"));
+        var qs = string.Join("&", map.Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+                                     .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}"));
 
         var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
         Nav.NavigateTo(href, replace);
     }
 
-    // ===== Demo data =====
-    private static IEnumerable<AsnSummary> DemoAsns()
+    // ===== Header + Lines loaders =====
+    private void LoadHeaderFor(string? asnId)
     {
-        // Mark each ASN with the status it belongs to
-        yield return new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 185.46m, ReceiptStatus.Open);
-        yield return new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m, ReceiptStatus.Open);
-        yield return new AsnSummary("004424954", new DateTime(2025, 8, 13), "1DC", 410.00m, ReceiptStatus.Closed);
-        yield return new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m, ReceiptStatus.Closed);
-        yield return new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m, ReceiptStatus.Open);
+        // Default/reset
+        PrintNeedsOnly = false;
+        ReceivedAmount = 0m;
+        TrackingNumber = "";
+        SelectedCarrier = "UPS";
+
+        var a = AsnList.FirstOrDefault(x => x.AsnId == asnId);
+        if (a is null) return;
+
+        PrintNeedsOnly = a.PrintNeedsOnly;
+        ReceivedAmount = a.ReceivedAmount;
+        TrackingNumber = a.TrackingNumber ?? "";
+        SelectedCarrier = string.IsNullOrWhiteSpace(a.Carrier) ? "UPS" : a.Carrier;
     }
 
     private void LoadLinesFor(string? asnId)
@@ -351,7 +432,7 @@
         CurrentLines.Clear();
         if (string.IsNullOrWhiteSpace(asnId)) return;
 
-        // DEMO: one line for first ASN; replace with repository query
+        // DEMO data
         if (asnId == "0044501566")
         {
             CurrentLines.Add(new AsnLine
@@ -374,14 +455,46 @@
         }
     }
 
-    // ===== Actions (stub) =====
+    // ===== Actions =====
     private Task SelectAll() => Task.CompletedTask;
     private Task UnselectAll() => Task.CompletedTask;
     private Task PrintPriceLabels() => Task.CompletedTask;
     private Task Receive() => Task.CompletedTask;
 
+    private async Task TrackPackageAsync()
+    {
+        var url = BuildTrackingUrl(SelectedCarrier, TrackingNumber);
+        if (string.IsNullOrWhiteSpace(url)) return;
+
+        await JS.InvokeVoidAsync("open", url, "_blank", "noopener,noreferrer");
+    }
+
+    private static string BuildTrackingUrl(string carrier, string tracking)
+    {
+        if (string.IsNullOrWhiteSpace(tracking)) return "";
+        var enc = Uri.EscapeDataString(tracking.Trim());
+        return carrier?.ToUpperInvariant() switch
+        {
+            "UPS" => $"https://www.ups.com/track?loc=en_US&tracknum={enc}",
+            "USPS" => $"https://tools.usps.com/go/TrackConfirmAction?tLabels={enc}",
+            "FEDEX" => $"https://www.fedex.com/fedextrack/?trknbr={enc}",
+            "DHL" => $"https://www.dhl.com/global-en/home/tracking.html?tracking-id={enc}",
+            "ONTRAC" => $"https://www.ontrac.com/trackingres.asp?tracking_number={enc}",
+            _ => $"https://www.google.com/search?q={Uri.EscapeDataString($"{carrier} {tracking}")}"
+        };
+    }
+
     // ===== Models =====
-    private sealed record AsnSummary(string AsnId, DateTime ShipDate, string ShipFrom, decimal Total, ReceiptStatus Status)
+    private sealed record AsnSummary(
+        string AsnId,
+        DateTime ShipDate,
+        string ShipFrom,
+        decimal Total,
+        ReceiptStatus Status,
+        bool PrintNeedsOnly = false,
+        decimal ReceivedAmount = 0m,
+        string? TrackingNumber = null,
+        string Carrier = "UPS")
     {
         public string Display => $"{AsnId} - {ShipDate:MM/dd/yyyy}";
     }
@@ -402,5 +515,17 @@
         public int PreviouslyReceived { get; set; }
         public int ReceiveQty { get; set; }
         public string Status { get; set; } = "Open";
+    }
+
+    // ===== Demo data =====
+    private static IEnumerable<AsnSummary> DemoAsns()
+    {
+        yield return new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 185.46m, ReceiptStatus.Open,
+                                    PrintNeedsOnly: false, ReceivedAmount: 0m,
+                                    TrackingNumber: "1Z4824G30934141682", Carrier: "UPS");
+        yield return new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m, ReceiptStatus.Open);
+        yield return new AsnSummary("0044249540", new DateTime(2025, 8, 13), "1DC", 410.00m, ReceiptStatus.Closed);
+        yield return new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m, ReceiptStatus.Closed);
+        yield return new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m, ReceiptStatus.Open);
     }
 }
