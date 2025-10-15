@@ -5,7 +5,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 
-namespace Prototype.Components.Services
+namespace Prototype.Components.Layout.Navigation
 {
     public static class UrlState
     {

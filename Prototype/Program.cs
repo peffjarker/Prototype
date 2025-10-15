@@ -1,6 +1,6 @@
 using Prototype.Components;
+using Prototype.Components.Layout.Navigation;
 using Prototype.Components.Pages.POXfer.ItemsOnOrder;
-using Prototype.Components.Services;
 using Prototype.Components.Services.Reports;
 
 var builder = WebApplication.CreateBuilder(args);
