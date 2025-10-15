@@ -1,0 +1,249 @@
+﻿/* ===== Purchase Orders – internal section styling ===== */
+
+/* Container + header */
+.rop-wrap {
+    padding: 16px;
+}
+
+.rop-header {
+    margin-bottom: 8px;
+}
+
+.rop-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+}
+
+/* Card */
+.card {
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+/* Detail section */
+.rop-detail {
+    padding: 14px 16px 8px;
+}
+
+.rop-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* two columns */
+    gap: 14px 28px; /* row / column gap */
+    align-items: start;
+}
+
+/* Columns (optional class hooks if you want specific tweaks later) */
+.rop-detail .col {
+    min-width: 0;
+}
+
+.rop-detail .col-left {
+}
+
+.rop-detail .col-right {
+}
+
+/* Fields */
+.field {
+    display: grid;
+    grid-template-columns: 120px 1fr; /* label / control */
+    align-items: center;
+    gap: 6px 10px;
+    margin-bottom: 6px;
+}
+
+    .field.grid-3 {
+        grid-template-columns: 120px 1fr 1fr 1fr; /* label + 3 controls */
+    }
+
+    .field.check {
+        grid-template-columns: 120px auto; /* label + checkbox */
+    }
+
+    .field.inline {
+        grid-template-columns: auto auto;
+    }
+
+    .field > label {
+        font-size: 12.5px;
+        color: #444;
+        line-height: 1.2;
+        user-select: none;
+    }
+
+    .field > input,
+    .field > textarea,
+    .field > select {
+        width: 100%;
+        font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        padding: 6px 8px;
+        border: 1px solid #cfcfcf;
+        border-radius: 6px;
+        background: #fff;
+        color: #222;
+        outline: none;
+        transition: border-color .12s ease, box-shadow .12s ease;
+    }
+
+    .field > textarea {
+        min-height: 56px;
+        resize: vertical;
+    }
+
+        .field > input:focus,
+        .field > textarea:focus,
+        .field > select:focus {
+            border-color: #8ab4ff;
+            box-shadow: 0 0 0 3px rgba(138, 180, 255, .25);
+        }
+
+        /* Readonly cues (to mimic legacy) */
+        .field > input[readonly],
+        .field > textarea[readonly] {
+            background: #fafafa;
+            color: #222;
+        }
+
+/* Tiny width helpers for state/zip style fields */
+.w-2 {
+    max-width: 46px;
+}
+/* e.g., state */
+.w-4 {
+    max-width: 84px;
+}
+/* e.g., zip  */
+.w-ord {
+    width: 44px;
+}
+/* grid ordinal column */
+.w-item {
+    width: 180px;
+}
+
+.w-defcbx {
+    width: 90px;
+}
+
+/* Link */
+.link {
+    color: #0c5ea8;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+    .link:hover {
+        text-decoration: underline;
+    }
+
+/* Lines grid */
+.table-wrap {
+    margin-top: 14px;
+}
+
+.tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+    font-size: 13px;
+}
+
+    .tbl thead th {
+        text-align: left;
+        padding: 8px 10px;
+        background: #f6f7f9;
+        color: #333;
+        border-bottom: 1px solid #e5e7eb;
+        position: sticky;
+        top: 0; /* stick under the page header if container scrolls */
+        z-index: 1;
+    }
+
+    .tbl tbody td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fff;
+        vertical-align: middle;
+    }
+
+    .tbl tbody tr:hover td {
+        background: #fbfdff;
+    }
+
+    .tbl .num {
+        text-align: right;
+    }
+
+/* Footer actions */
+.rop-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 12px 16px 14px;
+    border-top: 1px solid #eee;
+    background: #fafafa;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.btn {
+    appearance: none;
+    border: 1px solid #cfcfcf;
+    background: #fff;
+    color: #222;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: box-shadow .12s ease, border-color .12s ease, background-color .12s ease;
+}
+
+    .btn:hover {
+        border-color: #a8a8a8;
+        box-shadow: 0 1px 2px rgba(0,0,0,.06);
+    }
+
+    .btn:active {
+        transform: translateY(0.5px);
+    }
+
+    .btn.warn {
+        background: #fff9f1;
+        border-color: #f2c28b;
+        color: #8a5300;
+    }
+
+        .btn.warn:hover {
+            background: #fff3e1;
+        }
+
+    .btn.danger {
+        background: #fff5f5;
+        border-color: #f0a2a2;
+        color: #8a1f1f;
+    }
+
+        .btn.danger:hover {
+            background: #ffeaea;
+        }
+
+/* Responsive: collapse to one column under 1100px */
+@media (max-width: 1100px) {
+    .rop-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rop-footer {
+        justify-content: stretch;
+        flex-wrap: wrap;
+    }
+}
+
+/* Optional: give numeric columns tabular figures for alignment */
+.tbl, .tbl td, .tbl th, .num, input {
+    font-variant-numeric: tabular-nums;
+}

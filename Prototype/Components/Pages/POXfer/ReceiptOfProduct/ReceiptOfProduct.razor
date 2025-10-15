@@ -1,15 +1,14 @@
 ﻿@page "/po-transfer/receipt-of-product"
+
+@using System.Globalization
 @using Microsoft.AspNetCore.Components.Web
-@using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Prototype.Components.Services
-@inherits ComponentBase
 
-@inject NavigationManager Nav
-@inject ISidebarState Sidebar
+@inherits PageWithSidebarBase
+
 @inject IJSRuntime JS
 
 <div class="rop-wrap">
@@ -140,279 +139,125 @@
 </div>
 
 @code {
-    // ===== URL-bound state =====
+    // ===== BasePath for the sidebar builder =====
+    protected override string BasePath => "/po-transfer/receipt-of-product";
+
+    // ===== URL-bound state (singletons) =====
     public enum ReceiptStatus { All, Open, Closed }
-    [Parameter] public ReceiptStatus Status { get; set; } = ReceiptStatus.Open;
+    private ReceiptStatus Status = ReceiptStatus.Open;
 
+    // Current selection
     private string? SelectedAsnId;
-    private IReadOnlyList<AsnSummary> AsnList = Array.Empty<AsnSummary>();
-    private List<AsnSummary> _filteredAsns = new();
 
-    // Derived UI fields (read-only from selected ASN)
-    private string SelectedAsnDisplay => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Display ?? "";
-    private decimal SelectedAsnTotal => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Total ?? 0m;
-    private string SelectedAsnShipFrom => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipFrom ?? "";
-    private DateTime? SelectedAsnShipDate => _filteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipDate;
+    // Data
+    private List<AsnSummary> AsnList = new();
+    private List<AsnSummary> FilteredAsns =>
+        (Status == ReceiptStatus.All ? AsnList : AsnList.Where(a => a.Status == Status))
+        .OrderByDescending(a => a.ShipDate)
+        .ToList();
 
-    // Top-row editable/local state
+    // Derived header fields
+    private string SelectedAsnDisplay => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Display ?? "";
+    private decimal SelectedAsnTotal => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Total ?? 0m;
+    private string SelectedAsnShipFrom => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipFrom ?? "";
+    private DateTime? SelectedAsnShipDate => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipDate;
+
+    // Top-row local/editable
     private bool PrintNeedsOnly;
     private decimal ReceivedAmount;
     private string TrackingNumber = "";
     private string SelectedCarrier = "UPS";
     private readonly string[] Carriers = new[] { "UPS", "USPS", "FedEx", "DHL", "OnTrac", "Other" };
 
+    // Lines
     private List<AsnLine> CurrentLines = new();
     private int LabelCountTotal => CurrentLines.Sum(x => x.LabelCount);
 
-    // ===== Lifecycle =====
-    protected override void OnInitialized()
-    {
-        AsnList = DemoAsns().OrderByDescending(a => a.ShipDate).ToList();
-        Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
-        Sidebar.StateChanged += OnSidebarChanged;
-
-        Nav.LocationChanged += OnLocationChanged;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        // Only handle receipts route
-        var rel = Nav.ToBaseRelativePath(e.Location);
-        if (!rel.StartsWith("po-transfer/receipt-of-product", StringComparison.OrdinalIgnoreCase))
-            return;
-
-        InvokeAsync(() =>
+    // ====== PageWithSidebarBase contract ======
+    protected override IReadOnlyDictionary<string, string?> Scalars =>
+        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
-            ReadUrlState();
-            _filteredAsns = GetFilteredAsns();
+            ["option"] = "Receipt of Product",
+            ["status"] = Status.ToString(),
+            ["asn"] = SelectedAsnId
+        };
 
-            if (string.IsNullOrWhiteSpace(SelectedAsnId) ||
-                !_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
-            {
-                SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
-            }
+    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>(); // none on this page
 
-            Sidebar.SetSections(
-                BuildSections(_filteredAsns, SelectedAsnId, Status),
-                new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["option"] = "Receipt of Product",
-                    ["status"] = Status.ToString(),
-                    ["asn"] = SelectedAsnId
-                });
-
-            LoadHeaderFor(SelectedAsnId);
-            LoadLinesFor(SelectedAsnId);
-            StateHasChanged();
-        });
-    }
-
-    protected override void OnParametersSet()
+    protected override void ReadFromUrl()
     {
-        // Pull latest route params
-        ReadUrlState();
+        var map = QueryStringMap.Read(Nav);
 
-        // Filter list based on status (All/Open/Closed) and ensure a valid ASN is selected
-        _filteredAsns = GetFilteredAsns();
+        Status = (map.TryGetValue("status", out var s) && Enum.TryParse<ReceiptStatus>(s, true, out var parsed))
+            ? parsed : ReceiptStatus.Open;
 
-        if (string.IsNullOrWhiteSpace(SelectedAsnId) ||
-            !_filteredAsns.Any(a => a.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
-        {
-            SelectedAsnId = _filteredAsns.FirstOrDefault()?.AsnId;
-        }
+        SelectedAsnId = map.TryGetValue("asn", out var a) && !string.IsNullOrWhiteSpace(a) ? a : null;
 
-        // Build sidebar and load page data AFTER navigation/parameters settle
-        Sidebar.SetSections(
-            BuildSections(_filteredAsns, SelectedAsnId, Status),
-            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["option"] = "Receipt of Product",
-                ["status"] = Status.ToString(),
-                ["asn"] = SelectedAsnId
-            });
+        // Keep selection valid against current filter
+        var list = FilteredAsns;
+        if (SelectedAsnId is null || !list.Any(x => x.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
+            SelectedAsnId = list.FirstOrDefault()?.AsnId;
 
+        // Load header + lines whenever URL changes
         LoadHeaderFor(SelectedAsnId);
         LoadLinesFor(SelectedAsnId);
     }
 
-    public void Dispose()
+    protected override IEnumerable<Facet> Facets()
     {
-        Sidebar.StateChanged -= OnSidebarChanged;
-        if (ReferenceEquals(Sidebar.ItemSelectedHandler, (Func<SidebarItem, Task>)OnSidebarItemClicked))
-            Sidebar.ItemSelectedHandler = null;
-
-        Nav.LocationChanged -= OnLocationChanged;
-    }
-
-    // ===== Sidebar =====
-    private void OnSidebarChanged() => InvokeAsync(StateHasChanged);
-
-    private static string ExtractAsnId(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return string.Empty;
-        var left = text.Split('-', 2)[0].Trim();
-        return left.Replace(" ", "", StringComparison.Ordinal);
-    }
-
-    private Task OnSidebarItemClicked(SidebarItem item)
-    {
-        var href = item.Url ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(href))
-            return Task.CompletedTask;
-
-        var abs = Nav.ToAbsoluteUri(href);
-        var q = QueryHelpers.ParseQuery(abs.Query);
-
-        var hasStatus = q.TryGetValue("status", out var statusVals);
-        var hasAsn = q.TryGetValue("asn", out var asnVals);
-
-        if (hasStatus && !hasAsn)
-        {
-            // Status clicked (All/Open/Closed)
-            var raw = statusVals.ToString();
-            var parsedOk = Enum.TryParse<ReceiptStatus>(raw, true, out var newStatus);
-            if (!parsedOk) newStatus = ReceiptStatus.Open;
-
-            string? firstAsn = null;
-            if (newStatus == ReceiptStatus.All)
+        // Option facet: use absolute Href so we change the PATH, not just query params
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
             {
-                firstAsn = AsnList
-                    .OrderByDescending(a => a.ShipDate)
-                    .FirstOrDefault()
-                    ?.AsnId;
+            new FacetOption("Items On Order",   "Items On Order", Href: "/po-transfer/items-on-order?status=All"),
+            new FacetOption("Purchase Orders",  "Purchase Orders", Href: "/po-transfer/purchase-orders"),
+            new FacetOption("Receipt of Product","Receipt of Product", Href: "/po-transfer/receipt-of-product?status=All")
             }
-            else
+        );
+
+        yield return new Facet(
+            Key: "status",
+            Title: "Status",
+            Options: () => new[]
             {
-                firstAsn = AsnList
-                    .Where(a => a.Status == newStatus)
-                    .OrderByDescending(a => a.ShipDate)
-                    .FirstOrDefault()
-                    ?.AsnId;
+            new FacetOption("All","All"),
+            new FacetOption("Open","Open"),
+            new FacetOption("Closed","Closed")
             }
+        );
 
-            var url = $"/po-transfer/receipt-of-product?status={newStatus}"
-                    + (string.IsNullOrWhiteSpace(firstAsn) ? "" : $"&asn={Uri.EscapeDataString(firstAsn)}");
-
-            Nav.NavigateTo(url);
-            return Task.CompletedTask;
-        }
-
-        if (hasAsn)
-        {
-            var newId = asnVals.ToString();
-            if (!string.Equals(newId, SelectedAsnId, StringComparison.OrdinalIgnoreCase))
-            {
-                var url = $"/po-transfer/receipt-of-product?status={Status}&asn={Uri.EscapeDataString(newId)}";
-                Nav.NavigateTo(url);
-            }
-            return Task.CompletedTask;
-        }
-
-        // Option item (plain link)
-        Nav.NavigateTo(href);
-        return Task.CompletedTask;
+        yield return new Facet(
+            Key: "asn",
+            Title: "ASN",
+            Options: () => FilteredAsns.Select(a =>
+                new FacetOption($"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}", a.AsnId,
+                    Href: $"/po-transfer/receipt-of-product?status={Status}&asn={Uri.EscapeDataString(a.AsnId)}"))
+        );
     }
 
-    // ===== Filtering & sections =====
-    private List<AsnSummary> GetFilteredAsns()
+    protected override void OnSidebarClick(SidebarItem item)
     {
-        IEnumerable<AsnSummary> query = AsnList;
-
-        if (Status != ReceiptStatus.All)
-            query = query.Where(a => a.Status == Status);
-
-        return query.OrderByDescending(a => a.ShipDate).ToList();
+        // The FacetSections builder encoded the full URL; we can just navigate.
+        if (!string.IsNullOrWhiteSpace(item.Url))
+            Nav.NavigateTo(item.Url);
     }
 
-    private static List<SidebarSection> BuildSections(
-        IReadOnlyList<AsnSummary> asnsFiltered, string? selectedAsnId, ReceiptStatus selectedStatus)
+    // ===== Lifecycle =====
+    protected override void OnInitialized()
     {
-        static SidebarItem Item(string text, string url, string? key = null, bool selected = false)
-            => new() { Text = text, Url = url, Key = key, Selected = selected };
+        // Seed demo data (replace with real data source)
+        AsnList = DemoAsns().OrderByDescending(a => a.ShipDate).ToList();
 
-        const string Base = "/po-transfer";
-        var sections = new List<SidebarSection>();
-
-        sections.Add(new SidebarSection
-        {
-            SectionKey = "option",
-            Title = "Option",
-            Items =
-            {
-                Item("Items On Order",  $"{Base}/items-on-order"),
-                Item("Purchase Orders", $"{Base}/purchase-orders"),
-                Item("Receipt of Product", $"{Base}/receipt-of-product?status=All")
-            }
-        });
-
-        sections.Add(new SidebarSection
-        {
-            SectionKey = "status",
-            Title = "Status",
-            Items =
-            {
-                Item("All",    $"{Base}/receipt-of-product?status=All",    selected: selectedStatus == ReceiptStatus.All),
-                Item("Open",   $"{Base}/receipt-of-product?status=Open",   selected: selectedStatus == ReceiptStatus.Open),
-                Item("Closed", $"{Base}/receipt-of-product?status=Closed", selected: selectedStatus == ReceiptStatus.Closed)
-            }
-        });
-
-        var asnSection = new SidebarSection { SectionKey = "asn", Title = "ASN", Items = new List<SidebarItem>() };
-        foreach (var a in asnsFiltered)
-        {
-            var text = $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}";
-            var url = $"{Base}/receipt-of-product?status={selectedStatus}&asn={Uri.EscapeDataString(a.AsnId)}";
-            asnSection.Items.Add(Item(text, url, key: a.AsnId, selected: string.Equals(a.AsnId, selectedAsnId, StringComparison.OrdinalIgnoreCase)));
-        }
-        sections.Add(asnSection);
-        return sections;
+        // Important: base wires Nav/Sidebar and builds initial sections from current URL
+        base.OnInitialized();
     }
 
-    // ===== URL sync =====
-    private void ReadUrlState()
-    {
-        var abs = Nav.ToAbsoluteUri(Nav.Uri);
-        var q = QueryHelpers.ParseQuery(abs.Query);
-
-        if (q.TryGetValue("status", out var sVal) && Enum.TryParse<ReceiptStatus>(sVal, true, out var s))
-            Status = s;
-        else
-            Status = ReceiptStatus.Open;
-
-        if (q.TryGetValue("asn", out var asnVal) && !string.IsNullOrWhiteSpace(asnVal))
-            SelectedAsnId = asnVal!;
-        else
-            SelectedAsnId = null;
-    }
-
-    private void UpdateUrl(IDictionary<string, string?> scalars, bool replace = false)
-    {
-        var abs = Nav.ToAbsoluteUri(Nav.Uri);
-        var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
-        var cut = rel.IndexOfAny(new[] { '?', '#' });
-        var pathOnly = cut >= 0 ? rel[..cut] : rel;
-
-        var parsed = QueryHelpers.ParseQuery(abs.Query);
-        var map = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kv in parsed) map[kv.Key] = kv.Value.LastOrDefault();
-
-        foreach (var kv in scalars)
-        {
-            if (string.IsNullOrWhiteSpace(kv.Value)) map.Remove(kv.Key);
-            else map[kv.Key] = kv.Value;
-        }
-
-        var qs = string.Join("&", map.Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
-                                     .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}"));
-
-        var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
-        Nav.NavigateTo(href, replace);
-    }
-
-    // ===== Header + Lines loaders =====
+    // ===== Data loaders =====
     private void LoadHeaderFor(string? asnId)
     {
-        // Default/reset
+        // defaults
         PrintNeedsOnly = false;
         ReceivedAmount = 0m;
         TrackingNumber = "";
@@ -432,7 +277,7 @@
         CurrentLines.Clear();
         if (string.IsNullOrWhiteSpace(asnId)) return;
 
-        // DEMO data
+        // DEMO lines
         if (asnId == "0044501566")
         {
             CurrentLines.Add(new AsnLine

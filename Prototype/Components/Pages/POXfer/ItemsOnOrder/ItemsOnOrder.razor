@@ -1,16 +1,17 @@
 ﻿@page "/po-transfer/items-on-order"
+
+@using System.Globalization
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Prototype.Components.Pages.POXfer
 @using Prototype.Components.Services
-@inherits ComponentBase
-@inject IJSRuntime JS
-@inject NavigationManager Nav
-@inject ISidebarState Sidebar
 @using Prototype.Components.Services.Reports
+
+@inherits PageWithSidebarBase
+
+@inject IJSRuntime JS
 @inject IItemsOnOrderPdfService ReportService
 
 <div class="ioo-wrap">
@@ -135,7 +136,6 @@
                         <th class="num">Total Open Cost</th>
                         <th class="num">Rcv</th>
                         <th class="w-status">Status</th>
-                        @* <th class="w-cancel">Cancel</th> *@
                     </tr>
                 </thead>
                 <tbody>
@@ -167,7 +167,6 @@
                                 <td class="num">@p.TotalOpenCost.ToString("C")</td>
                                 <td class="num">@p.Rcv</td>
                                 <td>@p.Status</td>
-                                @* <td><button class="btn-danger" @onclick="() => CancelLine(p)">Cancel</button></td> *@
                             </tr>
                         }
                     }
@@ -177,44 +176,15 @@
 
         <footer class="actions">
             <button style="border: 1px solid black;" class="btn" @onclick="Print">Print</button>
-            @* <button class="btn-danger" @onclick="CancelSelected">Cancel PO Line(s)</button> *@
         </footer>
     </section>
 </div>
 
 @code {
-    // ======== SIDEBAR INTEGRATION ========
-    private void OnSidebarChanged() => InvokeAsync(StateHasChanged);
+    // ======= Base wiring =======
+    protected override string BasePath => "/po-transfer/items-on-order";
 
-    private async Task OnSidebarItemClicked(SidebarItem item)
-    {
-        var section = Sidebar.Sections.FirstOrDefault(s => s.Items.Contains(item));
-        var key = section?.SectionKey ?? section?.Title ?? "";
-
-        if (string.Equals(key, "status", StringComparison.OrdinalIgnoreCase))
-        {
-            Status = MapStatus(item.Text);
-            Sidebar.SetSelection("status", item.Text);
-            UpdateUrl(new Dictionary<string, string?> { ["status"] = item.Text });
-        }
-        else if (string.Equals(key, "option", StringComparison.OrdinalIgnoreCase))
-        {
-            Sidebar.SetSelection("option", item.Text);
-        }
-
-        StateHasChanged();
-        await Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-        Sidebar.StateChanged -= OnSidebarChanged;
-        Nav.LocationChanged -= OnLocationChanged;
-        if (ReferenceEquals(Sidebar.ItemSelectedHandler, (Func<SidebarItem, Task>)OnSidebarItemClicked))
-            Sidebar.ItemSelectedHandler = null;
-    }
-
-    // ======== STATUS ========
+    // URL-bound state (via Scalars)
     public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
     private static StatusKind MapStatus(string s) => s switch
     {
@@ -223,41 +193,108 @@
         "Unacknowledged" => StatusKind.Unacknowledged,
         _ => StatusKind.All
     };
-    [Parameter] public StatusKind Status { get; set; } = StatusKind.All;
 
-    // ======== DATA ========
-    private readonly List<Row> Rows = new();
-    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
-    private readonly List<OpenPOLine> OpenLines = new();
+    private StatusKind Status = StatusKind.All;
 
-    // ======== MULTI-SELECTION VIA URL ========
+    // Multi-select (grid-driven)
     private readonly HashSet<string> SelectedItems = new(StringComparer.OrdinalIgnoreCase);
-    private int? _anchorIndex; // last anchor row index for shift-range
+    private int? _anchorIndex; // for shift-range
 
     private ElementReference _oplinesSection;
 
+    // Page data
+    private readonly List<Row> Rows = new();
+    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
+    private readonly List<OpenPOLine> OpenLines = new();
     private List<OpenPOLine> VisibleOpenLines =>
-        SelectedItems.Count == 0
-            ? OpenLines
-            : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
+        SelectedItems.Count == 0 ? OpenLines : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
+
+    // Scalars → what goes into URL as singletons (besides multi 'items')
+    protected override IReadOnlyDictionary<string, string?> Scalars =>
+        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["option"] = "Items On Order",
+            ["status"] = Status.ToString()
+        };
+
+    // Multi facet values (we still encode items=… in the URL for deep links)
+    protected override IReadOnlyCollection<string> MultiValues => SelectedItems;
+
+    // Decode URL → local state
+    protected override void ReadFromUrl()
+    {
+        var abs = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = QueryHelpers.ParseQuery(abs.Query);
+
+        if (q.TryGetValue("status", out var sVal) && !string.IsNullOrWhiteSpace(sVal))
+            Status = MapStatus(sVal!);
+        else
+            Status = StatusKind.All;
+
+        SelectedItems.Clear();
+        if (q.TryGetValue("items", out var itemsVals))
+        {
+            foreach (var raw in itemsVals)
+            {
+                if (string.IsNullOrWhiteSpace(raw)) continue;
+                foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    SelectedItems.Add(part);
+            }
+        }
+    }
+
+    // Declare the sidebar facets this page wants (Option/Status/Legend)
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+            new FacetOption("Items On Order",   "Items On Order", Href: "/po-transfer/items-on-order?status=All"),
+            new FacetOption("Purchase Orders",  "Purchase Orders", Href: "/po-transfer/purchase-orders"),
+            new FacetOption("Receipt of Product","Receipt of Product", Href: "/po-transfer/receipt-of-product?status=All")
+            }
+        );
+
+        yield return new Facet(
+            Key: "status",
+            Title: "Status",
+            Options: () => new[]
+            {
+            new FacetOption("All","All"),
+            new FacetOption("Backorders","Backorders"),
+            new FacetOption("In Transit","In Transit"),
+            new FacetOption("Unacknowledged","Unacknowledged")
+            }
+        );
+
+        yield return new Facet(
+            Key: "legend",
+            Title: "Item Legend",
+            Options: () => new[]
+            {
+            new FacetOption("Discontinued","disc", ColorHex:"#e11d48"),
+            new FacetOption("Price Confirm","price", ColorHex:"#111827"),
+            new FacetOption("CSI","csi", ColorHex:"#2563eb"),
+            new FacetOption("Drop Ship","ds", ColorHex:"#f59e0b"),
+            new FacetOption("Special Orders","so", ColorHex:"#eab308")
+            },
+            IsLegend: true
+        );
+    }
+
+    // No custom sidebar click handling needed for this page;
+    // we only use grid clicks for the multi "items" selection.
+    protected override void OnSidebarClick(SidebarItem item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.Url))
+            Nav.NavigateTo(item.Url);
+    }
 
     protected override void OnInitialized()
     {
-        Sidebar.SetSections(
-            BuildSections(),
-            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["option"] = "Items On Order",
-                ["status"] = "All"
-            });
-
-        Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
-        Sidebar.StateChanged += OnSidebarChanged;
-
-        ReadUrlState();
-        Nav.LocationChanged += OnLocationChanged;
-
-        // Demo seed data (replace with your real source)
+        // Seed demo data (replace with your data source)
         Rows.AddRange(new[]
         {
             new Row("A02", "1/4\" Drive (F) x 3/8\" (M) Adapter", 1, 0, 0, 1, 23.50m),
@@ -297,74 +334,11 @@
                 UnitCost = 23.50m, Rcv = 0, Status = "Open"
             }
         });
+
+        base.OnInitialized(); // wires URL <-> Sidebar once and builds sections
     }
 
-    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
-    {
-        ReadUrlState();
-        InvokeAsync(StateHasChanged);
-    }
-
-    private void ReadUrlState()
-    {
-        var abs = Nav.ToAbsoluteUri(Nav.Uri);
-        var q = QueryHelpers.ParseQuery(abs.Query);
-
-        if (q.TryGetValue("status", out var sVal) && !string.IsNullOrWhiteSpace(sVal))
-            Status = MapStatus(sVal!);
-        else
-            Status = StatusKind.All;
-
-        SelectedItems.Clear();
-        if (q.TryGetValue("items", out var itemsVals))
-        {
-            foreach (var raw in itemsVals)
-            {
-                if (string.IsNullOrWhiteSpace(raw)) continue;
-                foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                    SelectedItems.Add(part);
-            }
-        }
-    }
-
-    private void UpdateUrl(IDictionary<string, string?> scalarUpdates, bool replace = false)
-    {
-        var abs = Nav.ToAbsoluteUri(Nav.Uri);
-        var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
-
-        var cut = rel.IndexOfAny(new[] { '?', '#' });
-        var pathOnly = cut >= 0 ? rel[..cut] : rel;
-
-        var parsed = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(abs.Query);
-        var scalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var kv in parsed)
-        {
-            if (!string.Equals(kv.Key, "items", StringComparison.OrdinalIgnoreCase))
-                scalars[kv.Key] = kv.Value.LastOrDefault();
-        }
-
-        foreach (var kv in scalarUpdates)
-        {
-            if (string.IsNullOrWhiteSpace(kv.Value))
-                scalars.Remove(kv.Key);
-            else
-                scalars[kv.Key] = kv.Value;
-        }
-
-        var pairs = new List<string>();
-        foreach (var kv in scalars.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)))
-            pairs.Add($"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}".Replace("%20", "+"));
-
-        foreach (var it in SelectedItems)
-            pairs.Add($"items={Uri.EscapeDataString(it)}");
-
-        var qs = string.Join("&", pairs);
-        var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
-
-        Nav.NavigateTo(href, replace);
-    }
-
-    // ===== Click handling with Ctrl/Cmd and Shift support =====
+    // ===== Grid click handling with Ctrl/Cmd + Shift =====
     private async Task HandleRowClick(string item, MouseEventArgs e)
     {
         var list = FilteredRows;
@@ -375,33 +349,28 @@
 
         if (e.ShiftKey && _anchorIndex is int anchor && anchor >= 0 && anchor < list.Count)
         {
-            // Range select between anchor and current
             var start = Math.Min(anchor, idx);
             var end = Math.Max(anchor, idx);
             for (int i = start; i <= end; i++)
                 SelectedItems.Add(list[i].Item);
-
-            scrolled = true; // likely moving to PO lines after a range selection is useful
+            scrolled = true;
         }
         else if (e.CtrlKey || e.MetaKey)
         {
-            // Toggle single without disturbing others
             if (!SelectedItems.Add(item))
                 SelectedItems.Remove(item);
-
-            // Set anchor to current to define future shift range start
             _anchorIndex = idx;
         }
         else
         {
-            // Plain click: single select + set anchor
             SelectedItems.Clear();
             SelectedItems.Add(item);
             _anchorIndex = idx;
             scrolled = true;
         }
 
-        UpdateUrl(new Dictionary<string, string?>(), replace: false);
+        // Update URL with current scalars + multi items
+        QueryStringMap.Write(Nav, Scalars, SelectedItems.Select(v => ("items", v)));
 
         if (scrolled)
             await ScrollToPOLinesAsync();
@@ -420,14 +389,14 @@
     private void RemoveItem(string item)
     {
         if (!SelectedItems.Remove(item)) return;
-        UpdateUrl(new Dictionary<string, string?>(), replace: SelectedItems.Count == 0);
+        QueryStringMap.Write(Nav, Scalars, SelectedItems.Select(v => ("items", v)), replace: SelectedItems.Count == 0);
         StateHasChanged();
     }
 
     private async Task ScrollToPOLinesAsync()
     {
         try { await JS.InvokeVoidAsync("blazorIoO.scrollIntoView", _oplinesSection); }
-        catch { /* best-effort */ }
+        catch { /* best effort */ }
     }
 
     private void ClearItemFilter()
@@ -435,34 +404,14 @@
         if (SelectedItems.Count == 0) return;
         SelectedItems.Clear();
         _anchorIndex = null;
-
-        var abs = Nav.ToAbsoluteUri(Nav.Uri);
-        var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
-        var cut = rel.IndexOfAny(new[] { '?', '#' });
-        var pathOnly = cut >= 0 ? rel[..cut] : rel;
-
-        var parsed = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(abs.Query);
-        var remaining = parsed
-            .Where(kv => !string.Equals(kv.Key, "items", StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(kv => kv.Key, kv => kv.Value.LastOrDefault(), StringComparer.OrdinalIgnoreCase);
-
-        var qs = string.Join("&", remaining
-            .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
-            .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}"));
-
-        var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
-        Nav.NavigateTo(href, replace: true);
+        QueryStringMap.Write(Nav, Scalars, Array.Empty<(string key, string val)>(), replace: true);
         StateHasChanged();
     }
 
     private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
-    private void CancelLine(OpenPOLine line) => Console.WriteLine($"Cancel line {line.PONumber} / {line.Line}");
-    private void CancelSelected() { /* bulk cancel */ }
+
     private async Task Print()
     {
-        // var subtitle = $"Status: {Status}"
-        //     + (SelectedItems.Count > 0 ? $" • Items: {string.Join(", ", SelectedItems.OrderBy(x => x))}" : string.Empty);
-
         var report = new ItemsOnOrderReport
         {
             Title = "Items on Order",
@@ -470,20 +419,16 @@
             Company = "IBN Dealer Suite",
             ReportDate = DateTime.Today,
             ShowTotals = true,
-            Culture = System.Globalization.CultureInfo.CurrentCulture,
+            Culture = CultureInfo.CurrentCulture,
             Rows = FilteredRows.Select(r => new ItemsOnOrderRow
             {
                 Item = r.Item,
                 Description = r.Description,
-
-                // Table numeric columns (OK to mirror your “On Order Open” to both)
                 OnOrder = r.OnOrderOpen,
                 Open = r.OnOrderOpen,
                 InTransit = r.InTransit,
                 Alloc = r.Alloc,
                 Bko = r.BKO,
-
-                // >>> Cost fields pulled straight from the grid VM <<<
                 TotalOpenCost = r.TotalOpenCost,
                 InTransitCost = r.InTransitCost,
                 BackorderedCost = r.BackorderCost,
@@ -494,60 +439,6 @@
         var pdfBytes = await ReportService.GenerateAsync(report);
         var fileName = $"ItemsOnOrder_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
         await JS.InvokeVoidAsync("files.save", fileName, Convert.ToBase64String(pdfBytes));
-    }
-
-    private static List<SidebarSection> BuildSections()
-    {
-        static SidebarItem SI(string text, string url, bool selected = false, string? icon = null) => new SidebarItem
-        {
-            Text = text,
-            Url = url,
-            Selected = selected,
-            Icon = icon
-        };
-
-        const string Base = "/po-transfer";
-
-        return new()
-        {
-            new SidebarSection
-            {
-                SectionKey = "option",
-                Title = "Option",
-                Items =
-                {
-                    SI("Items On Order",        $"{Base}/items-on-order?status=All"),
-                    SI("Purchase Orders",       $"{Base}/purchase-orders"),
-                    SI("Receipt of Product",    $"{Base}/receipt-of-product?status=All")
-                }
-            },
-            new SidebarSection
-            {
-                SectionKey = "status",
-                Title = "Status",
-                Items =
-                {
-                    SI("All",            $"{Base}/items-on-order?status=All"),
-                    SI("Backorders",     $"{Base}/items-on-order?status=Backorders"),
-                    SI("In Transit",     $"{Base}/items-on-order?status=In%20Transit"),
-                    SI("Unacknowledged", $"{Base}/items-on-order?status=Unacknowledged")
-                }
-            },
-            new SidebarSection
-            {
-                SectionKey = "legend",
-                Title = "Item Legend",
-                IsLegend = true,
-                Items =
-                {
-                    new SidebarItem { Text = "Discontinued",   ColorHex = "#e11d48" },
-                    new SidebarItem { Text = "Price Confirm",  ColorHex = "#111827" },
-                    new SidebarItem { Text = "CSI",            ColorHex = "#2563eb" },
-                    new SidebarItem { Text = "Drop Ship",      ColorHex = "#f59e0b" },
-                    new SidebarItem { Text = "Special Orders", ColorHex = "#eab308" }
-                }
-            }
-        };
     }
 
     private static List<Row> ApplyStatusFilter(List<Row> source, StatusKind status) =>
@@ -578,6 +469,25 @@
         public decimal BackorderCost => UnitCost * BKO;
         public bool IsUnacknowledged => OnOrderOpen > 0 && InTransit == 0 && BKO == 0 && Alloc == 0;
         public decimal UnacknowledgedCost => IsUnacknowledged ? TotalOpenCost : 0m;
+    }
+
+    private sealed class OpenPOLine
+    {
+        public string Item { get; set; } = "";
+        public string PONumber { get; set; } = "";
+        public int Line { get; set; }
+        public string SONumber { get; set; } = "";
+        public string Vendor { get; set; } = "";
+        public DateTime Date { get; set; }
+        public int QtyOrdered { get; set; }
+        public int Open { get; set; }
+        public int InTransit { get; set; }
+        public int Alloc { get; set; }
+        public int BKO { get; set; }
+        public decimal UnitCost { get; set; }
+        public decimal TotalOpenCost => UnitCost * Math.Max(Open, 0);
+        public int Rcv { get; set; }
+        public string Status { get; set; } = "Open";
     }
 }
 

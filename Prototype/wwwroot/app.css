@@ -116,3 +116,205 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* ===== Purchase Orders – refreshed styling ===== */
+
+/* Theme tokens (tweak here) */
+:root {
+  --po-radius: 12px;
+  --po-gap: 14px;
+  --po-border: #e6e8ec;
+  --po-muted: #6b7280;
+  --po-bg: #ffffff;
+  --po-bg-soft: #fafbfc;
+  --po-focus: 138,180,255; /* rgb tuple */
+}
+
+/* Container + header */
+.rop-wrap { padding: 18px; }
+.rop-header { margin-bottom: 10px; }
+.rop-title {
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: .2px;
+  margin: 0 0 8px 0;
+}
+
+/* Card */
+.card {
+  background: var(--po-bg);
+  border: 1px solid var(--po-border);
+  border-radius: var(--po-radius);
+  box-shadow: 0 6px 18px rgba(17, 24, 39, .06);
+}
+
+/* Detail section */
+.rop-detail { padding: 18px 18px 8px; }
+
+.rop-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 32px;
+  align-items: start;
+  margin-bottom: 6px;
+}
+
+/* Generic fields (label left, control right) */
+.field {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.field > label {
+  font-size: 12.5px;
+  color: var(--po-muted);
+  line-height: 1.15;
+  user-select: none;
+}
+
+.field > input,
+.field > textarea,
+.field > select {
+  width: 100%;
+  font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  padding: 8px 10px;
+  border: 1px solid #d6dae0;
+  border-radius: 10px;
+  background: #fff;
+  color: #111827;
+  outline: none;
+  transition: border-color .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+
+.field > textarea { min-height: 70px; resize: vertical; }
+
+.field > input:focus,
+.field > textarea:focus,
+.field > select:focus {
+  border-color: rgb(var(--po-focus));
+  box-shadow: 0 0 0 3px rgba(var(--po-focus), .25);
+}
+
+.field > input[readonly],
+.field > textarea[readonly] {
+  background: #f8fafc;
+}
+
+/* Checkbox row */
+.field.check { grid-template-columns: 160px auto; }
+
+/* NEW: stacked row with labels above inputs (for City/State/Zip) */
+.field-row {
+  display: grid;
+  grid-template-columns: 1.3fr .4fr .7fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.field-col { display: grid; gap: 6px; }
+.field-col > label {
+  font-size: 12.5px;
+  color: var(--po-muted);
+}
+.field-col.sm { min-width: 72px; max-width: 96px; }
+.field-col.md { min-width: 120px; max-width: 160px; }
+
+/* Small width helpers for other places if you need them */
+.w-ord { width: 44px; }
+.w-item { width: 180px; }
+.w-defcbx { width: 100px; }
+
+/* Link */
+.link {
+  color: #0c5ea8;
+  text-decoration: none;
+  font-size: 13px;
+}
+.link:hover { text-decoration: underline; }
+
+/* Lines grid */
+.table-wrap { margin-top: 16px; }
+
+.tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: auto;
+  font-size: 13px;
+}
+
+.tbl thead th {
+  text-align: left;
+  padding: 10px 12px;
+  background: #f3f5f8;
+  color: #111827;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-weight: 600;
+}
+
+.tbl tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef1f4;
+  background: #fff;
+  vertical-align: middle;
+}
+
+.tbl tbody tr:nth-child(odd) td { background: #fcfdff; }       /* subtle zebra */
+.tbl tbody tr:hover td { background: #f9fbff; }                /* hover */
+
+.tbl .num { text-align: right; }
+
+/* Footer actions */
+.rop-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px 18px 16px;
+  border-top: 1px solid #edf0f3;
+  background: var(--po-bg-soft);
+  border-bottom-left-radius: var(--po-radius);
+  border-bottom-right-radius: var(--po-radius);
+}
+
+/* Buttons */
+.btn {
+  appearance: none;
+  border: 1px solid #d6dae0;
+  background: #ffffff;
+  color: #111827;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: box-shadow .12s ease, border-color .12s ease, background-color .12s ease, transform .04s ease;
+}
+.btn:hover { border-color: #bfc6ce; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.btn:active { transform: translateY(.5px); }
+
+.btn.warn {
+  background: #fff7ec;
+  border-color: #f1c891;
+  color: #7a4a05;
+}
+.btn.warn:hover { background: #fff2e2; }
+
+.btn.danger {
+  background: #fff5f5;
+  border-color: #f2b4b4;
+  color: #8a1f1f;
+}
+.btn.danger:hover { background: #ffecec; }
+
+/* Typography nicety: align digits neatly */
+.tbl, .tbl td, .tbl th, .num, input { font-variant-numeric: tabular-nums; }
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .rop-detail-grid { grid-template-columns: 1fr; }
+  .rop-footer { justify-content: stretch; flex-wrap: wrap; }
+}
