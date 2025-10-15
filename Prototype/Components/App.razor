@@ -1,31 +1,55 @@
 ﻿@using Prototype.Components.Layout
 
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <!-- ===== Meta / Base ===== -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+
+    <!-- ===== Vendor CSS (frameworks & UI libraries) ===== -->
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="Prototype.styles.css" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <script src="_content/Telerik.UI.for.Blazor/js/telerik-blazor.js"></script>
-    <link rel="stylesheet" href="BlazorApp1.styles.css" />
+
+    <!-- Telerik . Prefer local for determinism/version lock. -->
     <link rel="stylesheet" href="_content/Telerik.UI.for.Blazor/css/kendo-theme-default/all.css" />
-    <link href="https://blazor.cdn.telerik.com/blazor/11.1.1/kendo-theme-default/all.css" rel="stylesheet" />
-    <link href="https://blazor.cdn.telerik.com/blazor/11.1.1/kendo-font-icons/font-icons.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!-- Telerik JS (needs to be present when using Telerik components) -->
+    <script src="_content/Telerik.UI.for.Blazor/js/telerik-blazor.js"></script>
+
+    <!-- ===== App Styles (order: library-generated -> your site CSS) ===== -->
+    <!-- Project-scoped generated styles (from RCLs, etc.) -->
+    <link rel="stylesheet" href="Prototype.styles.css" />
+    <link rel="stylesheet" href="BlazorApp1.styles.css" />
+    <!-- Your site CSS (last to allow easy overrides) -->
+    <link rel="stylesheet" href="app.css" />
+
+    <!-- ===== Icons / Fonts (optional) ===== -->
+    <!-- If you actually use Material Icons, keep these; otherwise remove. -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
+    <!-- ===== Favicons ===== -->
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+    <!-- ===== HeadOutlet (for per-page head updates) ===== -->
     <HeadOutlet @rendermode="InteractiveServer" />
+
+    <!-- ===== Small utilities (e.g., file download helper) ===== -->
+    <script src="js/file-download.js"></script>
 </head>
 
 <body>
-    <nav>
+    <!--
+      Main application outlet.
+      In .NET 8 Blazor, <Routes> hosts your routed components.
+      Keep it OUTSIDE <nav>; wrap it with <main> for correct semantics.
+    -->
+    <main>
         <Routes @rendermode="InteractiveServer" />
-    </nav>
+    </main>
+
+    <!-- Blazor bootstrap (must be last in body) -->
     <script src="_framework/blazor.web.js"></script>
 </body>
-
 </html>

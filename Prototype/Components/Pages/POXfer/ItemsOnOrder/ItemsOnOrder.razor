@@ -9,6 +9,8 @@
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 @inject ISidebarState Sidebar
+@using Prototype.Components.Services.Reports
+@inject IItemsOnOrderPdfService ReportService
 
 <div class="ioo-wrap">
     <header class="ioo-header">
@@ -173,8 +175,8 @@
         </div>
 
         <footer class="oplines-actions">
+            <button style="border: 1px solid black;" class="btn" @onclick="Print">Print</button>
             @* <button class="btn-danger" @onclick="CancelSelected">Cancel PO Line(s)</button> *@
-            <button class="btn-primary" @onclick="Print">Print</button>
         </footer>
     </section>
 </div>
@@ -455,7 +457,43 @@
     private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
     private void CancelLine(OpenPOLine line) => Console.WriteLine($"Cancel line {line.PONumber} / {line.Line}");
     private void CancelSelected() { /* bulk cancel */ }
-    private void Print() { /* print/export */ }
+    private async Task Print()
+    {
+        // var subtitle = $"Status: {Status}"
+        //     + (SelectedItems.Count > 0 ? $" • Items: {string.Join(", ", SelectedItems.OrderBy(x => x))}" : string.Empty);
+
+        var report = new ItemsOnOrderReport
+        {
+            Title = "Items on Order",
+            Subtitle = null,
+            Company = "IBN Dealer Suite",
+            ReportDate = DateTime.Today,
+            ShowTotals = true,
+            Culture = System.Globalization.CultureInfo.CurrentCulture,
+            Rows = FilteredRows.Select(r => new ItemsOnOrderRow
+            {
+                Item = r.Item,
+                Description = r.Description,
+
+                // Table numeric columns (OK to mirror your “On Order Open” to both)
+                OnOrder = r.OnOrderOpen,
+                Open = r.OnOrderOpen,
+                InTransit = r.InTransit,
+                Alloc = r.Alloc,
+                Bko = r.BKO,
+
+                // >>> Cost fields pulled straight from the grid VM <<<
+                TotalOpenCost = r.TotalOpenCost,
+                InTransitCost = r.InTransitCost,
+                BackorderedCost = r.BackorderCost,
+                UnacknowledgedCost = r.UnacknowledgedCost
+            }).ToList()
+        };
+
+        var pdfBytes = await ReportService.GenerateAsync(report);
+        var fileName = $"ItemsOnOrder_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
+        await JS.InvokeVoidAsync("files.save", fileName, Convert.ToBase64String(pdfBytes));
+    }
 
     private static List<SidebarSection> BuildSections()
     {

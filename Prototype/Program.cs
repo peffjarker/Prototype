@@ -1,5 +1,7 @@
 using Prototype.Components;
+using Prototype.Components.Pages.POXfer.ItemsOnOrder;
 using Prototype.Components.Services;
+using Prototype.Components.Services.Reports;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +10,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddTelerikBlazor();
 builder.Services.AddScoped<ISidebarState, SidebarState>();
+builder.Services.AddScoped<IItemsOnOrderPdfService, ItemsOnOrderPdfService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
