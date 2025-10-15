@@ -1,5 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using Prototype.Components.Layout.Models;
+using Prototype.Components.Layout.Navigation;
 
 namespace Prototype.Components.Services;
 

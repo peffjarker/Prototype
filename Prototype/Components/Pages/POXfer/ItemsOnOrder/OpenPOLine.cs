@@ -1,4 +1,4 @@
-﻿namespace Prototype.Components.Pages.POXfer.Models
+﻿namespace Prototype.Components.Pages.POXfer.ItemsOnOrder
 {
     public class OpenPOLine
     {

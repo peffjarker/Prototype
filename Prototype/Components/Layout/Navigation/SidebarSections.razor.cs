@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
-using Prototype.Components.Layout.Models;
 
-namespace Prototype.Components.Layout;
+namespace Prototype.Components.Layout.Navigation;
 
 public sealed partial class SidebarSections : ComponentBase, IDisposable
 {
