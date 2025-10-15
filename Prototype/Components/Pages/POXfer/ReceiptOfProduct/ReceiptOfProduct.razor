@@ -1,0 +1,437 @@
+﻿@page "/po-transfer/receipt-of-product"
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@using Prototype.Components.Layout
+@using Prototype.Components.Layout.Navigation
+@using Prototype.Components.Services
+@inherits ComponentBase
+
+@inject NavigationManager Nav
+@inject ISidebarState Sidebar
+@inject IJSRuntime JS
+
+<div class="rop-wrap">
+    <header class="rop-header">
+        <h3 class="rop-title">Receipt of Product</h3>
+        <div class="rop-meta">
+            <div>
+                <label>ASN#:</label>
+                <input readonly class="rop-asn" value="@SelectedAsnDisplay" />
+            </div>
+            <div>
+                <label>Total:</label>
+                <input readonly class="rop-total" value="@SelectedAsnTotal.ToString("C")" />
+            </div>
+            <div>
+                <label>Ship From:</label>
+                <input readonly class="rop-shipfrom" value="@SelectedAsnShipFrom" />
+            </div>
+            <div>
+                <label>Ship Date:</label>
+                <input readonly class="rop-shipdate" value="@SelectedAsnShipDate?.ToString("MM/dd/yyyy")" />
+            </div>
+        </div>
+    </header>
+
+    <!-- Grid placeholder (replace with your real data grid) -->
+    <section class="card rop-card">
+        <header class="section-header">
+            <h4>Shipping Notifications</h4>
+        </header>
+
+        <div class="table-wrap">
+            <table class="tbl tbl-lines" role="grid" aria-label="ASN Lines">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th class="w-label">Label</th>
+                        <th>Description</th>
+                        <th class="num">Unit Cost</th>
+                        <th class="num">Ext. Cost</th>
+                        <th class="w-po">PO #</th>
+                        <th class="w-ln">PO Line</th>
+                        <th>Need For</th>
+                        <th class="num">Qty On Hand</th>
+                        <th class="num">Total Qty Needs</th>
+                        <th class="num">Qty Ship</th>
+                        <th class="num">Prev Rcv Qty</th>
+                        <th class="num">Rcv Qty</th>
+                        <th class="w-status">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (CurrentLines.Count == 0)
+                    {
+                        <tr><td colspan="14" class="muted">No lines for the selected ASN.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var l in CurrentLines)
+                        {
+                            <tr>
+                                <td>@l.Item</td>
+                                <td class="num">@l.LabelCount</td>
+                                <td>@l.Description</td>
+                                <td class="num">@l.UnitCost.ToString("C")</td>
+                                <td class="num">@l.ExtCost.ToString("C")</td>
+                                <td class="w-po">@l.PONumber</td>
+                                <td class="num">@l.POLine</td>
+                                <td>@l.NeedFor</td>
+                                <td class="num">@l.QtyOnHand</td>
+                                <td class="num">@l.TotalQtyNeeds</td>
+                                <td class="num">@l.QtyShip</td>
+                                <td class="num">@l.PreviouslyReceived</td>
+                                <td class="num">@l.ReceiveQty</td>
+                                <td>@l.Status</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="rop-actions">
+            <button class="btn outline" @onclick="SelectAll">Select All</button>
+            <button class="btn outline" @onclick="UnselectAll">Un-Select All</button>
+            <button class="btn primary" @onclick="PrintPriceLabels">Print Price Labels</button>
+            <button class="btn success" @onclick="Receive">Receive</button>
+        </footer>
+    </section>
+</div>
+
+@code
+{
+    // ======== URL-bound state ========
+    public enum ReceiptStatus { Open, Closed }
+    [Parameter] public ReceiptStatus Status { get; set; } = ReceiptStatus.Open;
+
+    private string? SelectedAsnId;     // e.g., "0044501566"
+    private IReadOnlyList<AsnSummary> AsnList = Array.Empty<AsnSummary>();
+
+    // Derived UI fields (show under header)
+    private string SelectedAsnDisplay => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Display ?? "";
+    private decimal SelectedAsnTotal => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Total ?? 0m;
+    private string SelectedAsnShipFrom => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipFrom ?? "";
+    private DateTime? SelectedAsnShipDate => AsnList.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipDate;
+
+    // Lines for the selected ASN (demo; replace with query)
+    private List<AsnLine> CurrentLines = new();
+
+    // ======== Lifecycle ========
+    protected override void OnInitialized()
+    {
+        AsnList = DemoAsns().OrderByDescending(a => a.ShipDate).ToList();
+        ReadUrlState();
+
+        Sidebar.ItemSelectedHandler = OnSidebarItemClicked;
+        Sidebar.StateChanged += OnSidebarChanged;
+
+        Sidebar.SetSections(
+            BuildSections(AsnList, SelectedAsnId, Status),   // <- pass selection
+            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["option"] = "Receipt of Product",
+                ["status"] = Status.ToString()
+            });
+
+        LoadLinesFor(SelectedAsnId);
+    }
+
+
+    public void Dispose()
+    {
+        Sidebar.StateChanged -= OnSidebarChanged;
+        if (ReferenceEquals(Sidebar.ItemSelectedHandler, (Func<SidebarItem, Task>)OnSidebarItemClicked))
+            Sidebar.ItemSelectedHandler = null;
+    }
+
+    // ======== Sidebar ========
+    private void OnSidebarChanged() => InvokeAsync(StateHasChanged);
+
+    static string ExtractAsnId(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        // Expect "0044501566 - 08/22/2025" -> take the first token of the left part
+        var left = text.Split('-', 2)[0].Trim();
+        // Strip any spaces just in case
+        return left.Replace(" ", "", StringComparison.Ordinal);
+    }
+
+    private async Task OnSidebarItemClicked(SidebarItem item)
+    {
+        var section = Sidebar.Sections.FirstOrDefault(s => s.Items.Contains(item));
+        var key = section?.SectionKey ?? section?.Title ?? string.Empty;
+
+        if (string.Equals(key, "status", StringComparison.OrdinalIgnoreCase))
+        {
+            Status = Enum.TryParse<ReceiptStatus>(item.Text, true, out var parsed) ? parsed : ReceiptStatus.Open;
+            UpdateUrl(new Dictionary<string, string?> { ["status"] = Status.ToString() });
+        }
+        else if (string.Equals(key, "asn", StringComparison.OrdinalIgnoreCase))
+        {
+            SelectedAsnId = !string.IsNullOrWhiteSpace(item.Key) ? item.Key : ExtractAsnId(item.Text);
+            UpdateUrl(new Dictionary<string, string?> { ["asn"] = SelectedAsnId });
+            LoadLinesFor(SelectedAsnId);
+        }
+        else if (string.Equals(key, "option", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(item.Url))
+                Nav.NavigateTo(item.Url);
+        }
+
+        // Rebuild the sidebar so only the active entries are marked Selected
+        Sidebar.SetSections(
+            BuildSections(AsnList, SelectedAsnId, Status),
+            new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["option"] = "Receipt of Product",
+                ["status"] = Status.ToString()
+            });
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    private static List<SidebarSection> BuildSections(
+    IReadOnlyList<AsnSummary> asns,
+    string? selectedAsnId,
+    ReceiptStatus selectedStatus)
+    {
+        static SidebarItem Item(string text, string url, string? key = null, bool selected = false) => new()
+        {
+            Text = text,
+            Url = url,
+            Key = key,
+            Selected = selected
+        };
+
+        const string Base = "/po-transfer";
+        var sections = new List<SidebarSection>();
+
+        // Option
+        sections.Add(new SidebarSection
+        {
+            SectionKey = "option",
+            Title = "Option",
+            Items =
+        {
+            Item("Items On Order",  $"{Base}/items-on-order"),
+            Item("Purchase Orders", $"{Base}/purchase-orders"),
+            Item("Receipt of Product", $"{Base}/receipt-of-product")
+        }
+        });
+
+        // Status (mark the active one)
+        sections.Add(new SidebarSection
+        {
+            SectionKey = "status",
+            Title = "Status",
+            Items =
+        {
+            Item("Open",   $"{Base}/receipt-of-product?status=Open",   selected: selectedStatus == ReceiptStatus.Open),
+            Item("Closed", $"{Base}/receipt-of-product?status=Closed", selected: selectedStatus == ReceiptStatus.Closed)
+        }
+        });
+
+        // ASN (mark only the currently selected id)
+        var asnSection = new SidebarSection
+        {
+            SectionKey = "asn",
+            Title = "ASN",
+            Items = new List<SidebarItem>()
+        };
+
+        foreach (var a in asns)
+        {
+            var text = $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}";
+            var url = $"{Base}/receipt-of-product?status={selectedStatus}&asn={Uri.EscapeDataString(a.AsnId)}";
+
+            asnSection.Items.Add(Item(
+                text,
+                url,
+                key: a.AsnId,
+                selected: string.Equals(a.AsnId, selectedAsnId, StringComparison.OrdinalIgnoreCase)
+            ));
+        }
+
+        sections.Add(asnSection);
+        return sections;
+    }
+
+    // ======== URL sync ========
+    private void ReadUrlState()
+    {
+        var abs = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = QueryHelpers.ParseQuery(abs.Query);
+
+        if (q.TryGetValue("status", out var sVal) && Enum.TryParse<ReceiptStatus>(sVal, true, out var s))
+            Status = s;
+        else
+            Status = ReceiptStatus.Open;
+
+        if (q.TryGetValue("asn", out var asnVal) && !string.IsNullOrWhiteSpace(asnVal))
+            SelectedAsnId = asnVal!;
+        else
+            SelectedAsnId = AsnList.FirstOrDefault()?.AsnId; // default to latest
+    }
+
+    private void UpdateUrl(IDictionary<string, string?> scalars, bool replace = false)
+    {
+        var abs = Nav.ToAbsoluteUri(Nav.Uri);
+        var rel = Nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
+
+        var cut = rel.IndexOfAny(new[] { '?', '#' });
+        var pathOnly = cut >= 0 ? rel[..cut] : rel;
+
+        var parsed = QueryHelpers.ParseQuery(abs.Query);
+        var map = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kv in parsed) map[kv.Key] = kv.Value.LastOrDefault();
+
+        foreach (var kv in scalars)
+        {
+            if (string.IsNullOrWhiteSpace(kv.Value)) map.Remove(kv.Key);
+            else map[kv.Key] = kv.Value;
+        }
+
+        var qs = string.Join("&",
+            map.Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+               .Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}"));
+
+        var href = "/" + pathOnly + (string.IsNullOrEmpty(qs) ? "" : "?" + qs);
+        Nav.NavigateTo(href, replace);
+    }
+
+    // ======== Data / Demo ========
+    private static IEnumerable<AsnSummary> DemoAsns()
+    {
+        yield return new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 185.46m);
+        yield return new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m);
+        yield return new AsnSummary("004424954", new DateTime(2025, 8, 13), "1DC", 410.00m);
+        yield return new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m);
+        yield return new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m);
+        // add as many as you like; the sidebar will scroll
+    }
+
+    private void LoadLinesFor(string? asnId)
+    {
+        CurrentLines.Clear();
+        if (string.IsNullOrWhiteSpace(asnId)) return;
+
+        // DEMO: one line for first ASN; replace with repository query
+        if (asnId == "0044501566")
+        {
+            CurrentLines.Add(new AsnLine
+            {
+                Item = "MWE289120",
+                LabelCount = 1,
+                Description = "M18 & M12 Wireless Spkr",
+                UnitCost = 185.46m,
+                ExtCost = 185.46m,
+                PONumber = "PO-200996",
+                POLine = 7,
+                NeedFor = "Truck",
+                QtyOnHand = 0,
+                TotalQtyNeeds = 0,
+                QtyShip = 1,
+                PreviouslyReceived = 0,
+                ReceiveQty = 1,
+                Status = "Open"
+            });
+        }
+    }
+
+    private static List<SidebarSection> BuildSections(IReadOnlyList<AsnSummary> asns)
+    {
+        static SidebarItem Item(string text, string url, string? key = null, bool selected = false) => new()
+        {
+            Text = text,
+            Url = url,
+            Selected = selected,
+            Key = key
+        };
+
+        const string Base = "/po-transfer";
+        var sections = new List<SidebarSection>();
+
+        // Option
+        sections.Add(new SidebarSection
+        {
+            SectionKey = "option",
+            Title = "Option",
+            Items =
+            {
+                Item("Items On Order",        $"{Base}/items-on-order"),
+                // Item("Replenish Inventory",   $"{Base}/replenish-inventory"),
+                // Item("Acknowledgements",      $"{Base}/acknowledgements"),
+                Item("Purchase Orders",       $"{Base}/purchase-orders"),
+                // Item("Vendor Purchase Orders",$"{Base}/vendor-purchase-orders"),
+                Item("Receipt of Product",    $"{Base}/receipt-of-product")
+                // Item("Transfer Orders",       $"{Base}/transfer-orders"),
+                // Item("Repairs and Returns",   $"{Base}/repairs-returns"),
+                // Item("Vendors",               $"{Base}/vendors")
+            }
+        });
+
+        // Status
+        sections.Add(new SidebarSection
+        {
+            SectionKey = "status",
+            Title = "Status",
+            Items =
+            {
+                Item("Open",   $"{Base}/receipt-of-product?status=Open"),
+                Item("Closed", $"{Base}/receipt-of-product?status=Closed")
+            }
+        });
+
+        // ASN list (long list – the Sidebar component should make it scrollable)
+        var asnSection = new SidebarSection
+        {
+            SectionKey = "asn",
+            Title = "ASN",
+            Items = new List<SidebarItem>()
+        };
+
+        foreach (var a in asns)
+        {
+            var text = $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}";
+            var url = $"{Base}/receipt-of-product?status=Open&asn={Uri.EscapeDataString(a.AsnId)}";
+            asnSection.Items.Add(Item(text, url, key: a.AsnId));
+        }
+
+        sections.Add(asnSection);
+        return sections;
+    }
+
+    // ======== Actions (stub) ========
+    private Task SelectAll() => Task.CompletedTask;
+    private Task UnselectAll() => Task.CompletedTask;
+    private Task PrintPriceLabels() => Task.CompletedTask;
+    private Task Receive() => Task.CompletedTask;
+
+    // ======== Models ========
+    private sealed record AsnSummary(string AsnId, DateTime ShipDate, string ShipFrom, decimal Total)
+    {
+        public string Display => $"{AsnId} - {ShipDate:MM/dd/yyyy}";
+    }
+
+    private sealed class AsnLine
+    {
+        public string Item { get; set; } = "";
+        public int LabelCount { get; set; }
+        public string Description { get; set; } = "";
+        public decimal UnitCost { get; set; }
+        public decimal ExtCost { get; set; }
+        public string PONumber { get; set; } = "";
+        public int POLine { get; set; }
+        public string NeedFor { get; set; } = "";
+        public int QtyOnHand { get; set; }
+        public int TotalQtyNeeds { get; set; }
+        public int QtyShip { get; set; }
+        public int PreviouslyReceived { get; set; }
+        public int ReceiveQty { get; set; }
+        public string Status { get; set; } = "Open";
+    }
+}

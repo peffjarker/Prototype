@@ -1,0 +1,128 @@
+﻿/* Page wrapper */
+.rop-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Header row with small summary fields */
+.rop-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.rop-title {
+    margin: 0;
+}
+
+.rop-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 8px;
+    align-items: center;
+}
+
+    .rop-meta label {
+        font-weight: 600;
+        margin-right: 6px;
+    }
+
+    .rop-meta input {
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid var(--ioo-border, #e5e7eb);
+        border-radius: 4px;
+        background: #fff;
+    }
+
+/* Card + table */
+.rop-card {
+    padding: 0;
+}
+
+.section-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--ioo-border, #e5e7eb);
+    background: #f8fafc;
+}
+
+.table-wrap {
+    overflow: auto;
+}
+
+.tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+    .tbl thead th {
+        text-align: left;
+        border-bottom: 1px solid var(--ioo-border, #e5e7eb);
+        padding: 8px 10px;
+        white-space: nowrap;
+    }
+
+    .tbl tbody td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #f2f2f2;
+    }
+
+    .tbl .num {
+        text-align: right;
+    }
+
+    .tbl .w-label {
+        width: 70px;
+    }
+
+    .tbl .w-po {
+        width: 130px;
+    }
+
+    .tbl .w-ln {
+        width: 70px;
+    }
+
+    .tbl .w-status {
+        width: 120px;
+    }
+
+.muted {
+    color: #6b7280;
+}
+
+/* Footer buttons */
+.rop-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 10px 12px;
+    border-top: 1px solid var(--ioo-border, #e5e7eb);
+    background: #fafafa;
+}
+
+.btn {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    cursor: pointer;
+}
+
+    .btn.outline {
+        background: #fff;
+    }
+
+    .btn.primary {
+        background: #1f6feb;
+        color: #fff;
+        border-color: #1f6feb;
+    }
+
+    .btn.success {
+        background: #19a974;
+        color: #fff;
+        border-color: #19a974;
+    }
