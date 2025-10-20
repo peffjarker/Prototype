@@ -1,10 +1,6 @@
 ﻿@page "/"
-@using Prototype.Components.Layout
-@using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Prototype.Components.Services
-@using static Prototype.Components.Layout.Navigation.Sidebar.SidebarSections
-@inherits LayoutComponentBase
+@inherits ComponentBase
 @inject ISidebarState Sidebar
 
 <PageTitle>Home</PageTitle>
@@ -20,15 +16,12 @@
 </div>
 
 @code {
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Fully reset shared sidebar state when landing here
-        Sidebar.SetSections(Enumerable.Empty<SidebarSection>());
-
-        // Reset all tracked selections (use your section keys)
-        Sidebar.SetSelection("option", null);
-        Sidebar.SetSelection("status", null);
-
-        Sidebar.NotifyStateChanged();
+        if (firstRender)
+        {
+            Sidebar.ResetAll(hide: true);
+            StateHasChanged();
+        }
     }
 }

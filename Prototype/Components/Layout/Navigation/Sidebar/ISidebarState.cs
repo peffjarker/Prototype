@@ -16,4 +16,6 @@ public interface ISidebarState
 
     /// <summary>Convenience: get the currently selected text for a given section key.</summary>
     string? GetSelection(string sectionKey);
+
+    void ResetAll(bool hide = true);
 }

@@ -16,12 +16,31 @@ public sealed class SidebarState : ISidebarState
     public IReadOnlyDictionary<string, string?> SelectedBySection =>
         new ReadOnlyDictionary<string, string?>(_selectedBySection);
 
+    public bool HasSections => _sections.Count > 0;
+    public bool IsVisible { get; private set; } = true;
+
     public Func<SidebarItem, Task>? ItemSelectedHandler { get; set; }
     public event Action? StateChanged;
 
     public void NotifyStateChanged() => StateChanged?.Invoke();
 
-    public void SetSections(IEnumerable<SidebarSection> sections, IDictionary<string, string?>? initialSelections = null)
+    /// <summary>
+    /// Reset all sections and selections. Optionally hide sidebar.
+    /// </summary>
+    public void ResetAll(bool hide = true)
+    {
+        _sections.Clear();
+        _selectedBySection.Clear();
+        IsVisible = !hide ? IsVisible : false;
+        NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// Replace current sections and optionally apply initial selections.
+    /// </summary>
+    public void SetSections(
+        IEnumerable<SidebarSection> sections,
+        IDictionary<string, string?>? initialSelections = null)
     {
         _sections.Clear();
         _sections.AddRange(sections?.Select(CloneSection) ?? Enumerable.Empty<SidebarSection>());
@@ -33,11 +52,11 @@ public sealed class SidebarState : ISidebarState
                 _selectedBySection[kv.Key] = kv.Value;
         }
 
-        // Reflect initial selections into item models (optional, for legacy Selected UI)
+        // Reflect selections into items
         foreach (var s in _sections)
         {
             if (s.IsLegend) continue;
-            var key = s.SectionKey ?? s.Title ?? "";
+            var key = s.SectionKey ?? s.Title ?? string.Empty;
             _selectedBySection.TryGetValue(key, out var selectedText);
 
             foreach (var it in s.Items)
@@ -47,9 +66,13 @@ public sealed class SidebarState : ISidebarState
             }
         }
 
-        StateChanged?.Invoke();
+        IsVisible = _sections.Count > 0;
+        NotifyStateChanged();
     }
 
+    /// <summary>
+    /// Set the active selection for a given section key.
+    /// </summary>
     public void SetSelection(string sectionKey, string? selectedText)
     {
         if (string.IsNullOrWhiteSpace(sectionKey)) return;
@@ -66,29 +89,48 @@ public sealed class SidebarState : ISidebarState
                               string.Equals(it.Text, selectedText, StringComparison.OrdinalIgnoreCase);
         }
 
-        StateChanged?.Invoke();
+        NotifyStateChanged();
     }
 
+    /// <summary>
+    /// Get current selection text for a section.
+    /// </summary>
     public string? GetSelection(string sectionKey)
         => _selectedBySection.TryGetValue(sectionKey, out var v) ? v : null;
 
-    private static SidebarSection CloneSection(SidebarSection src)
-        => new()
-        {
-            SectionKey = src.SectionKey, // NEW: stable key
-            Title = src.Title,
-            IsLegend = src.IsLegend,
-            Items = src.Items.Select(CloneItem).ToList()
-        };
+    /// <summary>
+    /// Clear all selections, preserving sections.
+    /// </summary>
+    public void ClearSelections()
+    {
+        _selectedBySection.Clear();
 
-    private static SidebarItem CloneItem(SidebarItem it)
-        => new()
+        foreach (var s in _sections)
         {
-            Text = it.Text,
-            Key = it.Key,
-            Icon = it.Icon,
-            ColorHex = it.ColorHex,
-            Selected = it.Selected,
-            Url = it.Url
-        };
+            foreach (var it in s.Items)
+                it.Selected = false;
+        }
+
+        NotifyStateChanged();
+    }
+
+    // === Internal helpers ===
+
+    private static SidebarSection CloneSection(SidebarSection src) => new()
+    {
+        SectionKey = src.SectionKey,
+        Title = src.Title,
+        IsLegend = src.IsLegend,
+        Items = src.Items.Select(CloneItem).ToList()
+    };
+
+    private static SidebarItem CloneItem(SidebarItem it) => new()
+    {
+        Text = it.Text,
+        Key = it.Key,
+        Icon = it.Icon,
+        ColorHex = it.ColorHex,
+        Selected = it.Selected,
+        Url = it.Url
+    };
 }
