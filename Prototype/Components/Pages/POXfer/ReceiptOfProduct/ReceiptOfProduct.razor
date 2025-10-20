@@ -190,28 +190,6 @@
     // URL-bound state
     private string? DealerId;
 
-    // Helper to carry dealer through links
-    private string AppendDealer(string href)
-    {
-        var abs = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            ? href
-            : Nav.ToAbsoluteUri(href).ToString();
-
-        var uri = new Uri(abs);
-        var dict = QueryHelpers.ParseQuery(uri.Query)
-            .ToDictionary(kv => kv.Key, kv => kv.Value.ToString(), StringComparer.OrdinalIgnoreCase);
-
-        if (!string.IsNullOrWhiteSpace(DealerId))
-            dict["dealer"] = DealerId!;
-        else
-            dict.Remove("dealer");
-
-        var withDealer = QueryHelpers.AddQueryString(uri.GetLeftPart(UriPartial.Path), dict);
-        var rel = Nav.ToBaseRelativePath(withDealer);
-        return "/" + rel.TrimStart('/');
-    }
-
-
     protected override void ReadFromUrl()
     {
         var map = QueryStringMap.Read(Nav);
@@ -243,9 +221,9 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Items On Order",    "Items On Order",    Href: AppendDealer("/po-transfer/items-on-order?status=All")),
-            new FacetOption("Purchase Orders",   "Purchase Orders",   Href: AppendDealer("/po-transfer/purchase-orders")),
-            new FacetOption("Receipt of Product","Receipt of Product",Href: AppendDealer("/po-transfer/receipt-of-product?status=All"))
+            new FacetOption("Items On Order",    "Items On Order",    Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
+            new FacetOption("Purchase Orders",   "Purchase Orders",   Href: AppendPreserved("/po-transfer/purchase-orders")),
+            new FacetOption("Receipt of Product","Receipt of Product",Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
             }
         );
 
@@ -254,9 +232,9 @@
             Title: "Status",
             Options: () => new[]
             {
-            new FacetOption("All","All",       Href: AppendDealer($"{BasePath}?status=All")),
-            new FacetOption("Open","Open",     Href: AppendDealer($"{BasePath}?status=Open")),
-            new FacetOption("Closed","Closed", Href: AppendDealer($"{BasePath}?status=Closed"))
+            new FacetOption("All","All",       Href: AppendPreserved($"{BasePath}?status=All")),
+            new FacetOption("Open","Open",     Href: AppendPreserved($"{BasePath}?status=Open")),
+            new FacetOption("Closed","Closed", Href: AppendPreserved($"{BasePath}?status=Closed"))
             }
         );
 
@@ -267,7 +245,7 @@
                 new FacetOption(
                     $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}",
                     a.AsnId,
-                    Href: AppendDealer($"{BasePath}?status={Status}&asn={Uri.EscapeDataString(a.AsnId)}")
+                    Href: AppendPreserved($"{BasePath}?status={Status}&asn={Uri.EscapeDataString(a.AsnId)}")
                 ))
         );
     }
@@ -275,7 +253,7 @@
     protected override void OnSidebarClick(SidebarItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.Url))
-            Nav.NavigateTo(AppendDealer(item.Url));
+            Nav.NavigateTo(AppendPreserved(item.Url));
     }
 
     // ===== Lifecycle =====

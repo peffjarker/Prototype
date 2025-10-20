@@ -255,26 +255,6 @@
         }
     }
 
-    private string AppendDealer(string href)
-    {
-        var abs = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            ? href
-            : Nav.ToAbsoluteUri(href).ToString();
-
-        var uri = new Uri(abs);
-        var dict = QueryHelpers.ParseQuery(uri.Query)
-            .ToDictionary(kv => kv.Key, kv => kv.Value.ToString(), StringComparer.OrdinalIgnoreCase);
-
-        if (!string.IsNullOrWhiteSpace(DealerId))
-            dict["dealer"] = DealerId!;
-        else
-            dict.Remove("dealer");
-
-        var withDealer = QueryHelpers.AddQueryString(uri.GetLeftPart(UriPartial.Path), dict);
-        var rel = Nav.ToBaseRelativePath(withDealer);
-        return "/" + rel.TrimStart('/');
-    }
-
     // Declare the sidebar facets this page wants (Option/Status/Legend)
     protected override IEnumerable<Facet> Facets()
     {
@@ -283,9 +263,9 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Items On Order",   "Items On Order", Href: AppendDealer("/po-transfer/items-on-order?status=All")),
-            new FacetOption("Purchase Orders",  "Purchase Orders", Href: AppendDealer("/po-transfer/purchase-orders")),
-            new FacetOption("Receipt of Product","Receipt of Product", Href: AppendDealer("/po-transfer/receipt-of-product?status=All"))
+                new FacetOption("Items On Order","Items On Order", Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
+                new FacetOption("Purchase Orders","Purchase Orders", Href: AppendPreserved("/po-transfer/purchase-orders")),
+                new FacetOption("Receipt of Product","Receipt of Product", Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
             }
         );
 
@@ -294,10 +274,10 @@
             Title: "Status",
             Options: () => new[]
             {
-            new FacetOption("All","All",                 Href: AppendDealer($"{BasePath}?status=All")),
-            new FacetOption("Backorders","Backorders",   Href: AppendDealer($"{BasePath}?status=Backorders")),
-            new FacetOption("In Transit","In Transit",   Href: AppendDealer($"{BasePath}?status=In Transit")),
-            new FacetOption("Unacknowledged","Unacknowledged", Href: AppendDealer($"{BasePath}?status=Unacknowledged"))
+                new FacetOption("All","All",                 Href: AppendPreserved($"{BasePath}?status=All")),
+                new FacetOption("Backorders","Backorders",   Href: AppendPreserved($"{BasePath}?status=Backorders")),
+                new FacetOption("In Transit","In Transit",   Href: AppendPreserved($"{BasePath}?status=In Transit")),
+                new FacetOption("Unacknowledged","Unacknowledged", Href: AppendPreserved($"{BasePath}?status=Unacknowledged"))
             }
         );
 
@@ -306,11 +286,11 @@
             Title: "Item Legend",
             Options: () => new[]
             {
-            new FacetOption("Discontinued","disc", ColorHex:"#e11d48"),
-            new FacetOption("Price Confirm","price", ColorHex:"#111827"),
-            new FacetOption("CSI","csi", ColorHex:"#2563eb"),
-            new FacetOption("Drop Ship","ds", ColorHex:"#f59e0b"),
-            new FacetOption("Special Orders","so", ColorHex:"#eab308")
+                new FacetOption("Discontinued","disc", ColorHex:"#e11d48"),
+                new FacetOption("Price Confirm","price", ColorHex:"#111827"),
+                new FacetOption("CSI","csi", ColorHex:"#2563eb"),
+                new FacetOption("Drop Ship","ds", ColorHex:"#f59e0b"),
+                new FacetOption("Special Orders","so", ColorHex:"#eab308")
             },
             IsLegend: true
         );
@@ -321,7 +301,7 @@
     protected override void OnSidebarClick(SidebarItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.Url))
-            Nav.NavigateTo(AppendDealer(item.Url));
+            Nav.NavigateTo(AppendPreserved(item.Url));
     }
 
     protected override void OnInitialized()
@@ -402,7 +382,7 @@
         }
 
         // Update URL with current scalars + multi items
-        Utils.QueryStringMap.Write(Nav, Scalars, SelectedItems.Select(v => ("items", v)));
+        NavigateWithPageState();
 
         if (scrolled)
             await ScrollToPOLinesAsync();
@@ -421,14 +401,8 @@
     private void RemoveItem(string item)
     {
         if (!SelectedItems.Remove(item)) return;
-        QueryStringMap.Write(Nav, Scalars, SelectedItems.Select(v => ("items", v)), replace: SelectedItems.Count == 0);
+        NavigateWithPageState(replace: SelectedItems.Count == 0);
         StateHasChanged();
-    }
-
-    private async Task ScrollToPOLinesAsync()
-    {
-        try { await JS.InvokeVoidAsync("blazorIoO.scrollIntoView", _oplinesSection); }
-        catch { /* best effort */ }
     }
 
     private void ClearItemFilter()
@@ -436,8 +410,14 @@
         if (SelectedItems.Count == 0) return;
         SelectedItems.Clear();
         _anchorIndex = null;
-        QueryStringMap.Write(Nav, Scalars, Array.Empty<(string key, string val)>(), replace: true);
+        NavigateWithPageState(replace: true);
         StateHasChanged();
+    }
+
+    private async Task ScrollToPOLinesAsync()
+    {
+        try { await JS.InvokeVoidAsync("blazorIoO.scrollIntoView", _oplinesSection); }
+        catch { /* best effort */ }
     }
 
     private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
