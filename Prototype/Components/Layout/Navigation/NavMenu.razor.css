@@ -9,3 +9,204 @@
         opacity: 1
     }
 }
+
+/* Components/Layout/NavMenu.razor.css */
+
+.appbar {
+    position: sticky;
+    top: 0;
+    z-index: 4000;
+    backdrop-filter: saturate(1.05) blur(8px);
+    background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 88%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent);
+}
+
+    .appbar .left,
+    .appbar .right,
+    .appbar .center {
+        display: flex;
+        align-items: center;
+        gap: .8rem;
+    }
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--kendo-color-border, #e5e7eb);
+    background: linear-gradient(180deg, color-mix(in oklab, var(--kendo-color-surface, #fff) 92%, transparent), transparent);
+    box-shadow: 0 4px 14px rgba(2,6,23,.06) inset;
+}
+
+    .logo.small {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+    }
+
+.brand-stack {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+.brand-text {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: .2px;
+    color: #0c5ea8;
+}
+
+.brand-sub {
+    font-size: .72rem;
+    opacity: .65;
+    color: #0c5ea8;
+}
+
+/* Desktop Menu */
+.desktop-menu {
+    display: flex;
+}
+
+.main-menu .k-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .45rem .7rem;
+    border-radius: 10px;
+    transition: background .15s ease;
+}
+
+    .main-menu .k-link:hover {
+        background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+    }
+
+/* Drawer */
+.hamburger {
+    display: none;
+}
+
+.mobile-drawer .k-drawer-wrapper {
+    background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 94%, transparent);
+    backdrop-filter: saturate(1.05) blur(6px);
+}
+
+.mobile-drawer .k-drawer-item-body {
+    padding: .75rem .85rem;
+    border-radius: 10px;
+    margin: .15rem .35rem;
+}
+
+    .mobile-drawer .k-drawer-item-body:hover {
+        background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
+    }
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .9rem .75rem;
+    border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+}
+
+.drawer-footer {
+    display: flex;
+    gap: .6rem;
+    padding: .75rem .6rem;
+    border-top: 1px solid var(--kendo-color-border, #e5e7eb);
+}
+
+    .drawer-footer a {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        text-decoration: none;
+        padding: .5rem .6rem;
+        border-radius: 10px;
+    }
+
+        .drawer-footer a:hover {
+            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+        }
+
+/* Franchise selector item */
+.fr-item {
+    display: flex;
+    align-items: baseline;
+    gap: .45rem;
+}
+
+    .fr-item .fr-id {
+        font-weight: 700;
+        letter-spacing: .2px;
+    }
+
+    .fr-item .fr-dot {
+        opacity: .5;
+    }
+
+    .fr-item .fr-client {
+        opacity: .85;
+    }
+
+    .fr-item .fr-name {
+        opacity: .85;
+    }
+
+
+/* Match sidebar selection tokens with safe fallbacks */
+.fr-combo .k-list .k-list-item.k-selected,
+.fr-combo .k-list .k-selected {
+    background: var(--ss-sel-bg, #d9e8ff);
+    border: 1px solid var(--ss-sel-border, #a4c8ff);
+    box-shadow: inset 0 0 0 3px var(--ss-sel-shadow, #cfe2ff);
+    color: var(--ss-sel-text, #0c5ea8);
+}
+
+/* Hover to match sidebar hover tone */
+.fr-combo .k-list .k-list-item.k-hover,
+.fr-combo .k-list .k-hover {
+    background: var(--ss-hover, #f0f5ff);
+}
+
+/* Focus ring on the input to echo the selected styling */
+.fr-combo .k-input:focus-within {
+    border-color: var(--ss-sel-border, #a4c8ff);
+    box-shadow: 0 0 0 3px var(--ss-sel-shadow, #cfe2ff);
+}
+
+/* When there is a value (not placeholder), nudge the text color to the accent */
+.fr-combo .k-input-inner:not(:placeholder-shown) {
+    color: var(--ss-sel-text, #0c5ea8);
+}
+
+/* Keep the custom item row looking tidy */
+.fr-item {
+    display: flex;
+    align-items: baseline;
+    gap: .45rem;
+}
+
+    .fr-item .fr-id {
+        font-weight: 700;
+        letter-spacing: .2px;
+    }
+
+    .fr-item .fr-dot {
+        opacity: .5;
+    }
+
+    .fr-item .fr-client, .fr-item .fr-name {
+        opacity: .85;
+    }
+

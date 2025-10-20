@@ -212,6 +212,7 @@ h1:focus {
   grid-template-columns: 1.3fr .4fr .7fr;
   gap: 12px;
   margin-bottom: 10px;
+  overflow: auto;
 }
 .field-col { display: grid; gap: 6px; }
 .field-col > label {

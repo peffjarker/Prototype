@@ -2,11 +2,10 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
+@using Utils
 
 @inherits PageWithSidebarBase
 
-@inject NavigationManager Nav
-@inject ISidebarState Sidebar
 @inject IJSRuntime JS
 
 <div class="rop-wrap">
@@ -49,17 +48,17 @@
                 </div>
 
                 <div class="field-row">
-                    <div class="field-col">
+                    <div class="field-col sm">
                         <label>City</label>
-                        <input readonly value="@Model.City" />
+                        <input id="city" readonly value="@Model.City" />
                     </div>
                     <div class="field-col sm">
                         <label>State</label>
-                        <input readonly value="@Model.State" />
+                        <input id="state" readonly value="@Model.State" />
                     </div>
-                    <div class="field-col md">
+                    <div class="field-col sm">
                         <label>Zip</label>
-                        <input readonly value="@Model.Zip" />
+                        <input id="zip" readonly value="@Model.Zip" />
                     </div>
                 </div>
 
@@ -228,30 +227,58 @@
 
     // Scalars -> URL map
     protected override IReadOnlyDictionary<string, string?> Scalars =>
-        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["option"] = "Purchase Orders",
-            ["status"] = Status,
-            ["po"] = SelectedPo
-        };
+       new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+       {
+           ["dealer"] = DealerId,            
+           ["option"] = "Purchase Orders",
+           ["status"] = Status,
+           ["po"] = SelectedPo
+       };
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>(); // none
+
+    // URL-bound state
+    private string? DealerId;
+
+    // Always carry dealer through a target href
+    private string AppendDealer(string href)
+    {
+        var abs = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            ? href
+            : Nav.ToAbsoluteUri(href).ToString();
+
+        var uri = new Uri(abs);
+        var dict = QueryHelpers.ParseQuery(uri.Query)
+            .ToDictionary(kv => kv.Key, kv => kv.Value.ToString(), StringComparer.OrdinalIgnoreCase);
+
+        if (!string.IsNullOrWhiteSpace(DealerId))
+            dict["dealer"] = DealerId!;
+        else
+            dict.Remove("dealer");
+
+        var withDealer = QueryHelpers.AddQueryString(uri.GetLeftPart(UriPartial.Path), dict);
+        var rel = Nav.ToBaseRelativePath(withDealer);
+        return "/" + rel.TrimStart('/');
+    }
 
     // Parse URL -> state, then load model
     protected override void ReadFromUrl()
     {
         var map = QueryStringMap.Read(Nav);
 
+        // dealer
+        DealerId = map.TryGetValue("dealer", out var d) && !string.IsNullOrWhiteSpace(d) ? d : null;
+
+        // status
         Status = map.TryGetValue("status", out var s) && !string.IsNullOrWhiteSpace(s) ? s! : "Closed";
+
         var poParam = map.TryGetValue("po", out var p) ? p : null;
 
         if (AllPos.Count == 0)
             SeedPoList();
 
-        // choose from filtered
         var filtered = FilteredPos;
 
-        // SelectedPo holds the *display* value to keep your existing URL & UI consistent
         if (!string.IsNullOrWhiteSpace(poParam) && filtered.Any(x => x.Display.Equals(poParam, StringComparison.OrdinalIgnoreCase)))
             SelectedPo = poParam;
         else
@@ -260,46 +287,37 @@
         LoadPoDetail(SelectedPo);
     }
 
-
     // Sidebar facets
     protected override IEnumerable<Facet> Facets()
     {
-        // Option facet with absolute Hrefs (cross-page)
+        // Option facet (cross-page) – wrap Hrefs with AppendDealer
         yield return new Facet(
             Key: "option",
             Title: "Option",
             Options: () => new[]
             {
-                new FacetOption("Items On Order",     "Items On Order",     Href: "/po-transfer/items-on-order?status=All"),
-                // new FacetOption("Replenish Inventory","Replenish Inventory",Href: "/po-transfer/replenish-inventory"),
-                // new FacetOption("Acknowledgements",   "Acknowledgements",   Href: "/po-transfer/acknowledgements"),
-                new FacetOption("Purchase Orders",    "Purchase Orders",    Href: "/po-transfer/purchase-orders"),
-                // new FacetOption("Vendor Purchase Orders","Vendor Purchase Orders", Href: "/po-transfer/vendor-purchase-orders"),
-                new FacetOption("Receipt of Product", "Receipt of Product", Href: "/po-transfer/receipt-of-product?status=All")
-                // new FacetOption("Transfer Orders",    "Transfer Orders",    Href: "/po-transfer/transfer-orders"),
-                // new FacetOption("Repair Purchase Orders","Repair Purchase Orders", Href: "/po-transfer/repair-purchase-orders"),
-                // new FacetOption("Repairs and Returns","Repairs and Returns",Href: "/po-transfer/repairs-and-returns"),
-                // new FacetOption("Vendors",            "Vendors",            Href: "/po-transfer/vendors")
+            new FacetOption("Items On Order",     "Items On Order",     Href: AppendDealer("/po-transfer/items-on-order?status=All")),
+            new FacetOption("Purchase Orders",    "Purchase Orders",    Href: AppendDealer("/po-transfer/purchase-orders")),
+            new FacetOption("Receipt of Product", "Receipt of Product", Href: AppendDealer("/po-transfer/receipt-of-product?status=All"))
             }
         );
 
-        // Status facet (no Href => builder swaps status in query on same path)
         yield return new Facet(
             Key: "status",
             Title: "Status",
             Options: () => new[]
             {
-                new FacetOption("All","All"),
-                new FacetOption("Pending","Pending"),
-                new FacetOption("In Process","In Process"),
-                new FacetOption("Issued – UnAcknowledged","Issued – UnAcknowledged"),
-                new FacetOption("Open – Acknowledged","Open – Acknowledged"),
-                new FacetOption("Closed","Closed"),
-                new FacetOption("Cancelled","Cancelled")
+            new FacetOption("All","All",                                   Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString("All")}")),
+            new FacetOption("Pending","Pending",                           Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString("Pending")}")),
+            new FacetOption("In Process","In Process",                     Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString("In Process")}")),
+            new FacetOption("Issued – UnAcknowledged","Issued – UnAcknowledged", Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString("Issued – UnAcknowledged")}")),
+            new FacetOption("Open – Acknowledged","Open – Acknowledged",   Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString("Open – Acknowledged")}")),
+            new FacetOption("Closed","Closed",                             Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString("Closed")}")),
+            new FacetOption("Cancelled","Cancelled",                       Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString("Cancelled")}"))
             }
         );
 
-        // PO facet: absolute Href that preserves current Status
+        // PO facet – preserve current status and dealer
         yield return new Facet(
             Key: "po",
             Title: "PO",
@@ -307,16 +325,15 @@
                 new FacetOption(
                     Text: p.Display,
                     Value: p.Display,
-                    Href: $"/po-transfer/purchase-orders?status={Uri.EscapeDataString(Status)}&po={Uri.EscapeDataString(p.Display)}"
+                    Href: AppendDealer($"{BasePath}?status={Uri.EscapeDataString(Status)}&po={Uri.EscapeDataString(p.Display)}")
                 ))
         );
-
     }
 
     protected override void OnSidebarClick(SidebarItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.Url))
-            Nav.NavigateTo(item.Url);
+            Nav.NavigateTo(AppendDealer(item.Url));
     }
 
     // ===== Lifecycle =====

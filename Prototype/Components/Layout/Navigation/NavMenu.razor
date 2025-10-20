@@ -1,10 +1,19 @@
-﻿@using Telerik.Blazor
+﻿@* Components/Layout/NavMenu.razor *@
+@using System
+@using System.Linq
+@using System.Collections.Generic
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using Services
+@using global::Services
 @inject NavigationManager Nav
+@inject IUrlState Url
 
 <TelerikAppBar Position="AppBarPosition.Top" Class="appbar">
     <AppBarSection Class="left">
-        <a href="/" class="brand" aria-label="Home">
+        <a href="@Url.BuildHref("/")" class="brand" aria-label="Home">
             <img style="width: 40px;" src="Cornwell_Tools_logo.png" alt="IBN Logo" class="brand-logo" />
             <div class="brand-stack">
                 <span class="brand-text">IBN</span>
@@ -13,7 +22,6 @@
         </a>
     </AppBarSection>
 
-
     <AppBarSection Class="right">
         <div class="desktop-menu">
             <TelerikMenu TItem="MenuLink"
@@ -21,13 +29,33 @@
                          Orientation="MenuOrientation.Horizontal"
                          Class="main-menu">
                 <ItemTemplate Context="item">
-                    <a href="@item.Href" class="k-link">
+                    <a href="@Url.BuildHref(item.Href)" class="k-link">
                         <TelerikSvgIcon Icon="@item.Icon" />
                         <span style="margin-left:.4rem">@item.Text</span>
                     </a>
                 </ItemTemplate>
             </TelerikMenu>
         </div>
+
+        <!-- Franchise selector -->
+        <TelerikComboBox TItem="FranchiseOption"
+                         TValue="string"
+                         Data="@Franchises"
+                         TextField="@nameof(FranchiseOption.Display)"
+                         ValueField="@nameof(FranchiseOption.DealerId)"
+                         Placeholder="Select franchise"
+                         Filterable="true"
+                         Class="fr-combo"
+                         @bind-Value="SelectedDealerId">
+            <ItemTemplate Context="f">
+                <div class="fr-item">
+                    <span class="fr-id">@f.DealerId</span>
+                    <span class="fr-dot">•</span>
+                    <span class="fr-client">@f.ClientKey</span>
+                    <span class="fr-name">@f.FirstName @f.LastName</span>
+                </div>
+            </ItemTemplate>
+        </TelerikComboBox>
 
         <TelerikButton Class="hamburger"
                        Icon="@SvgIcon.Menu"
@@ -58,8 +86,9 @@
         <div class="k-drawer-items">
             @foreach (var item in MenuItems)
             {
+                var href = Url.BuildHref(item.Href);
                 <div class="k-drawer-item">
-                    <div class="k-drawer-item-body @GetActiveClass(item.Href)" @onclick="@(() => Navigate(item.Href))">
+                    <div class="k-drawer-item-body @GetActiveClass(item.Href)" @onclick="@(() => Navigate(href))">
                         <TelerikSvgIcon Icon="@item.Icon" />
                         <span style="margin-left:.65rem">@item.Text</span>
                     </div>
@@ -68,10 +97,10 @@
         </div>
 
         <div class="drawer-footer">
-            <a href="/settings">
+            <a href="@Url.BuildHref("/settings")">
                 <TelerikSvgIcon Icon="@SvgIcon.Gear" /> <span>Settings</span>
             </a>
-            <a href="/help">
+            <a href="@Url.BuildHref("/help")">
                 <TelerikSvgIcon Icon="@SvgIcon.InfoCircle" /> <span>Help</span>
             </a>
         </div>
@@ -80,59 +109,81 @@
     <DrawerContent />
 </TelerikDrawer>
 
-@* Popup rendered to a root container to avoid clipping by tabs/content *@
-<TelerikPopup AnchorSelector="#quick-btn"
-              Class="quick-popup">
-    <div class="quick-menu" role="menu">
-        <a role="menuitem" href="/shortcuts/new-order" @onclick="CloseQuick">
-            <TelerikSvgIcon Icon="@SvgIcon.Cart" />
-            <span>New Order</span>
-        </a>
-        <a role="menuitem" href="/shortcuts/new-customer" @onclick="CloseQuick">
-            <TelerikSvgIcon Icon="@SvgIcon.User" />
-            <span>New Customer</span>
-        </a>
-        <a role="menuitem" href="/shortcuts/collect-payment" @onclick="CloseQuick">
-            <TelerikSvgIcon Icon="@SvgIcon.MoneyExchange" />
-            <span>Collect Payment</span>
-        </a>
-        @* Add more here; the popup won’t clip *@
-    </div>
-</TelerikPopup>
+@* Quick menu (unchanged except using Url.BuildHref when you add links) *@
 
-@code {
+@code
+{
+    // ===== Franchise selector state =====
+    private string? _selectedDealerId;
+    private string? SelectedDealerId
+    {
+        get => _selectedDealerId;
+        set
+        {
+            if (_selectedDealerId == value) return;
+            _selectedDealerId = value;
+
+            // find selected franchise and write all three params atomically
+            var sel = Franchises.FirstOrDefault(f => f.DealerId == _selectedDealerId);
+            if (sel is null)
+            {
+                Url.Set(("dealer", null));
+            }
+            else
+            {
+                Url.Set(
+                    ("dealer", sel.DealerId)
+                );
+            }
+        }
+    }
+
+    // Replace with your service
+    private List<FranchiseOption> Franchises =
+    [
+        new("A1B2", "10001", "Alex",   "Meyer"),
+        new("C3D4", "20002", "Jordan", "Price"),
+        new("E5F6", "30003", "Sam",    "Carter"),
+        new("G7H8", "40004", "Taylor", "Nguyen"),
+    ];
+
+    public sealed record FranchiseOption(string DealerId, string ClientKey, string FirstName, string LastName)
+    {
+        public string Display => $"{DealerId} — {FirstName} {LastName}";
+    }
+
+    // ===== Existing menu/drawer code =====
     private bool drawerOpen;
-    private bool quickOpen;
     private string? currentPath;
-    private string? searchText;
 
     protected override void OnInitialized()
     {
         currentPath = Nav.ToBaseRelativePath(Nav.Uri);
-        Nav.LocationChanged += (_, __) =>
-        {
-            currentPath = Nav.ToBaseRelativePath(Nav.Uri);
-            StateHasChanged();
-        };
-    }
 
-    private void ToggleDrawer() => drawerOpen = !drawerOpen;
-    private void ToggleQuick() => quickOpen = !quickOpen;
-
-    private void OnQuickKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key is "Escape" or "Esc")
+        // Initialize selector from URL snapshot
+        if (Url.Current.TryGetValue("dealer", out var dealer) && !string.IsNullOrEmpty(dealer))
         {
-            quickOpen = false;
-            StateHasChanged();
+            if (Franchises.Any(f => string.Equals(f.DealerId, dealer, StringComparison.OrdinalIgnoreCase)))
+                _selectedDealerId = dealer; // set backing field to avoid loop
         }
+
+        // React to external URL changes (sidebar/pages) to keep selector in sync
+        Url.Changed += OnUrlChanged;
     }
 
-    private Task CloseQuick(MouseEventArgs _)
+    private void OnUrlChanged()
     {
-        quickOpen = false;
-        StateHasChanged();
-        return Task.CompletedTask;
+        currentPath = Nav.ToBaseRelativePath(Nav.Uri);
+
+        if (Url.Current.TryGetValue("dealer", out var dealer))
+        {
+            if (!string.Equals(_selectedDealerId, dealer, StringComparison.OrdinalIgnoreCase))
+            {
+                // update from URL without re-writing it
+                _selectedDealerId = dealer;
+                InvokeAsync(StateHasChanged);
+            }
+        }
     }
 
     private void Navigate(string href)
@@ -140,6 +191,8 @@
         drawerOpen = false;
         Nav.NavigateTo(href);
     }
+
+    private void ToggleDrawer() => drawerOpen = !drawerOpen;
 
     private string GetActiveClass(string href)
         => IsActive(href) ? "is-active" : string.Empty;
@@ -152,39 +205,25 @@
                || (href != "/" && rel.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase));
     }
 
-    private Task OnSearch()
-    {
-        if (!string.IsNullOrWhiteSpace(searchText))
-        {
-            Nav.NavigateTo($"/search?q={Uri.EscapeDataString(searchText!)}");
-            searchText = string.Empty;
-        }
-        return Task.CompletedTask;
-    }
-
     private readonly List<MenuLink> MenuItems =
     [
-        new("Home",          "/",              SvgIcon.Home),
-        // new("Route",         "/route",         SvgIcon.Myspace),
-        // new("Customers",     "/customers",     SvgIcon.User),
-        // new("Tech-Card",     "/tech-card",     SvgIcon.MoneyExchange),
-        // new("Product",       "/product",       SvgIcon.Wrench),
-        new("PO / Transfer", "/po-transfer/items-on-order/?status=All",   SvgIcon.ArrowsSwap),
-        // new("My Business",   "/my-business",   SvgIcon.GridLayout),
-        // new("Reporting",     "/reporting",     SvgIcon.ChartLine),
-        // new("Settings",      "/settings",      SvgIcon.Gear),
-        new("Help",          "/help",          SvgIcon.Gear)
+        new("Home",          "/",                                SvgIcon.Home),
+        new("PO / Transfer", "/po-transfer/items-on-order/?status=All", SvgIcon.ArrowsSwap),
+        new("Help",          "/help",                            SvgIcon.Gear)
     ];
 
-    public class MenuLink
+    public sealed class MenuLink
     {
-        public string Text { get; set; }
-        public string Href { get; set; }
-        public ISvgIcon Icon { get; set; }
+        public string Text { get; }
+        public string Href { get; }
+        public ISvgIcon Icon { get; }
         public MenuLink(string text, string href, ISvgIcon icon)
         { Text = text; Href = href; Icon = icon; }
     }
+
+    public void Dispose() => Url.Changed -= OnUrlChanged;
 }
+
 
 <style>
     .appbar {

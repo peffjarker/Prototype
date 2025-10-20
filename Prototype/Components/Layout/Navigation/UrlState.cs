@@ -1,34 +1,114 @@
-﻿// Utils/QueryStringMap.cs
+﻿// Services/UrlState.cs
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
+using Utils;
 
-public static class QueryStringMap
+namespace Services
 {
-    public static Dictionary<string, string?> Read(NavigationManager nav)
+    /// <summary>
+    /// Centralized URL/query manager:
+    /// - Keeps a canonical query snapshot
+    /// - Prevents feedback loops when we write to the URL
+    /// - Exposes BuildHref/Set/Navigate helpers
+    /// - Broadcasts a Changed event
+    /// </summary>
+    public sealed class UrlState : IUrlState, IDisposable
     {
-        var abs = nav.ToAbsoluteUri(nav.Uri);
-        var parsed = QueryHelpers.ParseQuery(abs.Query);
-        return parsed.ToDictionary(kv => kv.Key, kv => kv.Value.LastOrDefault(), StringComparer.OrdinalIgnoreCase);
-    }
+        private readonly NavigationManager _nav;
+        private Dictionary<string, string?> _current = new(StringComparer.OrdinalIgnoreCase);
+        private bool _inFlight;
 
-    public static void Write(NavigationManager nav, IReadOnlyDictionary<string, string?> scalars, IEnumerable<(string key, string val)> multi = default!, bool replace = false)
-    {
-        var abs = nav.ToAbsoluteUri(nav.Uri);
-        var rel = nav.ToBaseRelativePath(abs.ToString()).TrimStart('/');
-        var cut = rel.IndexOfAny(new[] { '?', '#' });
-        var pathOnly = cut >= 0 ? rel[..cut] : rel;
-
-        var qsParts = new List<string>();
-        foreach (var kv in scalars.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)))
-            qsParts.Add($"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value!)}".Replace("%20", "+"));
-
-        if (multi != null)
+        public UrlState(NavigationManager nav)
         {
-            foreach (var (k, v) in multi)
-                qsParts.Add($"{Uri.EscapeDataString(k)}={Uri.EscapeDataString(v)}");
+            _nav = nav;
+            _current = QueryStringMap.Read(_nav);
+            _nav.LocationChanged += OnLocationChanged;
         }
 
-        var qs = string.Join("&", qsParts);
-        nav.NavigateTo("/" + pathOnly + (qs.Length == 0 ? "" : "?" + qs), replace);
+        public IReadOnlyDictionary<string, string?> Current => _current;
+
+        public event Action? Changed;
+
+        public string BuildHref(string baseHref, IReadOnlyDictionary<string, string?>? overrides = null)
+        {
+            // Split baseHref into path and existing query; merge in Current + overrides.
+            var path = baseHref;
+            var merged = new Dictionary<string, string?>(_current, StringComparer.OrdinalIgnoreCase);
+
+            if (baseHref.Contains('?', StringComparison.Ordinal))
+            {
+                var parts = baseHref.Split('?', 2);
+                path = parts[0];
+                var qsDict = QueryHelpers.ParseQuery("?" + parts[1])
+                    .ToDictionary(kv => kv.Key, kv => kv.Value.LastOrDefault(), StringComparer.OrdinalIgnoreCase);
+                foreach (var kv in qsDict)
+                    merged[kv.Key] = kv.Value;
+            }
+
+            if (overrides is not null)
+            {
+                foreach (var kv in overrides)
+                {
+                    if (string.IsNullOrEmpty(kv.Value)) merged.Remove(kv.Key);
+                    else merged[kv.Key] = kv.Value!;
+                }
+            }
+
+            var qs = merged.Count == 0 ? "" : QueryHelpers.AddQueryString("", merged!);
+            return string.IsNullOrEmpty(qs) ? path : path + qs;
+        }
+
+        public void Set(params (string key, string? value)[] overrides)
+        {
+            if (overrides == null || overrides.Length == 0) return;
+            var dict = overrides.ToDictionary(t => t.key, t => t.value, StringComparer.OrdinalIgnoreCase);
+            WriteMerge(dict);
+        }
+
+        public void Navigate(string path, IReadOnlyDictionary<string, string?>? overrides = null)
+        {
+            var href = BuildHref(path, overrides);
+            SafeNavigate(href, replace: false);
+        }
+
+        private void WriteMerge(IReadOnlyDictionary<string, string?> overrides)
+        {
+            if (_inFlight) return;
+            try
+            {
+                _inFlight = true;
+                QueryStringMap.MergeWrite(_nav, overrides, replace: true);
+                // _current will refresh on LocationChanged -> we do not set it here
+            }
+            finally
+            {
+                _inFlight = false;
+            }
+        }
+
+        private void SafeNavigate(string href, bool replace)
+        {
+            if (_inFlight) return;
+            try
+            {
+                _inFlight = true;
+                _nav.NavigateTo(href, replace);
+            }
+            finally
+            {
+                _inFlight = false;
+            }
+        }
+
+        private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+        {
+            _current = QueryStringMap.Read(_nav);
+            Changed?.Invoke();
+        }
+
+        public void Dispose()
+        {
+            _nav.LocationChanged -= OnLocationChanged;
+        }
     }
 }
