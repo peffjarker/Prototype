@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.WebUtilities; // for QueryHelpers
+using Microsoft.AspNetCore.WebUtilities; // QueryHelpers
 using Prototype.Components.Layout.Navigation.Sidebar;
 
 public abstract class PageWithSidebarBase : ComponentBase, IDisposable
@@ -22,31 +22,22 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     protected abstract IReadOnlyDictionary<string, string?> Scalars { get; }     // singletons
     protected abstract IReadOnlyCollection<string> MultiValues { get; }          // repeatable values
     protected abstract void ReadFromUrl();                                       // parse URL -> page fields
-    protected abstract void OnSidebarClick(SidebarItem item);                    // page-specific handling (optional)
+    protected abstract void OnSidebarClick(SidebarItem item);                    // page-specific handling
 
-    // === NEW: centralized URL helpers ===
+    // === URL behavior ===
 
-    /// <summary>
     /// Keys that should always be preserved across navigation (sticky app-wide).
     /// Default keeps "dealer". Override to add more (e.g., "env", "asof").
-    /// </summary>
     protected virtual IReadOnlyCollection<string> PreservedKeys => new[] { "dealer" };
 
-    /// <summary>
-    /// The query key name used to serialize <see cref="MultiValues"/>. Override per page if needed.
-    /// </summary>
-    // Default name for repeatable values (your pages can override)
+    /// The query key name used to serialize MultiValues. Override per page if needed.
     protected virtual string MultiKeyName => "items";
 
+    /// Separator used when collapsing multi values into one parameter (default comma).
+    protected virtual string MultiSeparator => ",";
+
     protected void NavigateWithPageState(bool replace = false)
-    {
-        NavigateWithState(
-            replace: replace,
-            scalars: Scalars,
-            multiKeyName: MultiKeyName,
-            multiValues: MultiValues // may be empty — we'll still purge the key
-        );
-    }
+        => NavigateWithState(replace, Scalars, MultiKeyName, MultiValues);
 
     protected void NavigateWithState(
         bool replace,
@@ -68,25 +59,23 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         foreach (var (k, v) in scalars)
             if (string.IsNullOrWhiteSpace(v)) dict.Remove(k); else dict[k] = v;
 
-        // IMPORTANT: always remove the multi key entirely before re-adding,
-        // so clearing the selection actually clears the query string.
+        // Remove the multi key entirely first
         dict.Remove(multiKeyName);
 
-        // Build base URL with updated scalars
+        // Collapse multi values into a single "items=a,b,c" (stable order helps for UX/deeplinks)
+        var list = multiValues?.ToList() ?? new List<string>();
+        if (list.Count > 0)
+        {
+            // optional: keep insertion order; if you prefer alpha, use: list = list.OrderBy(x => x).ToList();
+            dict[multiKeyName] = string.Join(MultiSeparator, list);
+        }
+
+        // Build final URL
         var url = QueryHelpers.AddQueryString(curUri.GetLeftPart(UriPartial.Path), dict);
-
-        // Append current multi values (if any)
-        foreach (var v in multiValues)
-            url = QueryHelpers.AddQueryString(url, multiKeyName, v);
-
         Nav.NavigateTo(url, replace: replace);
     }
 
-
-    /// <summary>
-    /// Builds a target href that carries current <see cref="PreservedKeys"/> (e.g., dealer).
-    /// Use for facets/links so you don't hand-roll sticky params.
-    /// </summary>
+    /// Builds a target href that carries current PreservedKeys (e.g., dealer).
     protected string AppendPreserved(string href)
     {
         var abs = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
@@ -120,23 +109,23 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         {
             if (HandleMultiFacetClick)
             {
-                OnSidebarClick(item); // page handles multi facet behavior
-                return;
+                OnSidebarClick(item);
             }
-
-            if (!string.IsNullOrWhiteSpace(item.Url))
+            else if (!string.IsNullOrWhiteSpace(item.Url))
             {
                 // default navigate but keep sticky keys (dealer, etc.)
                 Nav.NavigateTo(AppendPreserved(item.Url));
             }
+            await Task.CompletedTask;
         };
 
         _sidebarStateChangedHandler = () => InvokeAsync(StateHasChanged);
+
         _locationChangedHandler = (_, __) =>
         {
             ReadFromUrl();
             RebuildSidebar();
-            InvokeAsync(StateHasChanged);
+            _ = InvokeAsync(StateHasChanged);
         };
 
         Sidebar.ItemSelectedHandler = _itemSelectedHandler;
