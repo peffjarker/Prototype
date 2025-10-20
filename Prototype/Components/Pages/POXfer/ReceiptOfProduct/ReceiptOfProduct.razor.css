@@ -1,4 +1,5 @@
-﻿/* ---- Layout shell ---- */
+﻿/* ===== Receipt of Product – layout & meta grid ===== */
+
 .rop-wrap {
     display: flex;
     flex-direction: column;
@@ -17,16 +18,17 @@
     letter-spacing: .2px;
 }
 
-/* ---- Top meta grid ---- */
+/* Top meta grid */
 .rop-meta {
     padding: 12px;
     display: grid;
-    grid-template-columns: repeat(8,minmax(150px,1fr));
+    grid-template-columns: repeat(8, minmax(150px, 1fr));
     gap: 14px;
     align-items: start;
     grid-auto-flow: dense;
 }
 
+    /* Field stacks specific to ROP (vertical by default) */
     .rop-meta .field {
         display: flex;
         flex-direction: column;
@@ -51,10 +53,10 @@
     .rop-meta label {
         font-size: .85rem;
         font-weight: 600;
-        color: #111827;
+        color: var(--text);
     }
 
-    /* Inputs / selects / buttons – unify height & look */
+    /* Inputs / selects within meta (unified height) */
     .rop-meta input,
     .rop-meta select {
         appearance: none;
@@ -78,137 +80,67 @@
             box-shadow: 0 0 0 3px rgba(26,115,232,.15);
         }
 
-    /* Checkbox aligns nicely with label */
+    /* Checkbox */
     .rop-meta .rop-pno {
         width: 18px;
         height: 18px;
     }
 
-/* Track button */
-.btn {
-    height: 36px;
-    padding: 0 14px;
-    border-radius: 10px;
-    border: 1px solid rgba(0,0,0,.14);
-    background: #fff;
-    color: #111827;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform .03s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+    /* Align action buttons to grid end */
+    .rop-meta .field.align-end {
+        align-self: end;
+    }
+
+/* Tables (header tint just a bit different on this page) */
+.tbl.tbl-rop thead th {
+    background: #fbfcfe;
+    border-bottom: 1px solid rgba(0,0,0,.08);
 }
 
-    .btn:hover {
-        background: #f3f4f6;
-    }
-
-    .btn:active {
-        transform: translateY(1px);
-    }
-
-    .btn.primary {
-        background: #1f6feb;
-        color: #fff;
-        border-color: #1f6feb;
-    }
-
-        .btn.primary:hover {
-            filter: brightness(0.95);
-        }
-
-    .btn.success {
-        background: #19a974;
-        color: #fff;
-        border-color: #19a974;
-    }
-
-    .btn.outline {
-        background: #fff;
-        color: #111827;
-    }
-
-    .btn:disabled {
-        opacity: .55;
-        cursor: not-allowed;
-    }
-
-/* Align Track button baseline with inputs */
-.rop-meta .field.align-end {
-    align-self: end;
+.tbl.tbl-rop tbody td {
+    border-bottom: 1px solid rgba(0,0,0,.06);
 }
 
-/* ---- Table ---- */
-.table-wrap {
-    overflow: auto;
+.tbl.tbl-rop tbody tr:hover {
+    background: #fafbff;
 }
 
-.tbl {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-size: .95rem;
+.tbl.tbl-rop .num {
+    text-align: right;
 }
 
-    .tbl thead th {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-        background: #fbfcfe;
-        border-bottom: 1px solid rgba(0,0,0,.08);
-        padding: 10px 12px;
-        text-align: left;
-        white-space: nowrap;
-    }
-
-    .tbl tbody td {
-        padding: 10px 12px;
-        border-bottom: 1px solid rgba(0,0,0,.06);
-    }
-
-    .tbl tbody tr:hover {
-        background: #fafbff;
-    }
-
-    .tbl .num {
-        text-align: right;
-    }
-
-    .tbl .w-label {
-        width: 72px;
-    }
-
-    .tbl .w-po {
-        width: 140px;
-    }
-
-    .tbl .w-ln {
-        width: 76px;
-    }
-
-    .tbl .w-status {
-        width: 120px;
-    }
-
-/* ---- Muted text ---- */
-.muted {
-    color: #6b7280;
+.tbl.tbl-rop .w-label {
+    width: 72px;
 }
 
-/* ---- Responsive ---- */
+.tbl.tbl-rop .w-po {
+    width: 140px;
+}
+
+.tbl.tbl-rop .w-ln {
+    width: 76px;
+}
+
+.tbl.tbl-rop .w-status {
+    width: 120px;
+}
+
+/* Responsive */
 @media (max-width:1200px) {
     .rop-meta {
-        grid-template-columns: repeat(6,minmax(140px,1fr));
+        grid-template-columns: repeat(6, minmax(140px, 1fr));
     }
 }
 
 @media (max-width:900px) {
     .rop-meta {
-        grid-template-columns: repeat(4,minmax(140px,1fr));
+        grid-template-columns: repeat(4, minmax(140px, 1fr));
     }
 }
 
 @media (max-width:640px) {
     .rop-meta {
-        grid-template-columns: repeat(2,minmax(140px,1fr));
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
     }
 
     .section-header {
@@ -218,17 +150,4 @@
         .section-header .badge {
             margin-left: 0;
         }
-}
-
-/* a11y helper if you keep it elsewhere */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    white-space: nowrap;
-    border: 0;
 }

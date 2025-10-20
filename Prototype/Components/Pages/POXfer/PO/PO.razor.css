@@ -1,6 +1,5 @@
-﻿/* ===== Purchase Orders – internal section styling ===== */
+﻿/* ===== Purchase Orders – layout & form grid ===== */
 
-/* Container + header */
 .rop-wrap {
     padding: 16px;
 }
@@ -15,14 +14,6 @@
     margin: 0 0 6px 0;
 }
 
-/* Card */
-.card {
-    background: #fff;
-    border: 1px solid #e6e6e6;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
-}
-
 /* Detail section */
 .rop-detail {
     padding: 14px 16px 8px;
@@ -30,12 +21,11 @@
 
 .rop-detail-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* two columns */
-    gap: 14px 28px; /* row / column gap */
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 28px;
     align-items: start;
 }
 
-/* Columns (optional class hooks if you want specific tweaks later) */
 .rop-detail .col {
     min-width: 0;
 }
@@ -46,7 +36,7 @@
 .rop-detail .col-right {
 }
 
-/* Fields */
+/* Form fields (PO uses a label/control grid layout) */
 .field {
     display: grid;
     grid-template-columns: 120px 1fr; /* label / control */
@@ -56,11 +46,11 @@
 }
 
     .field.grid-3 {
-        grid-template-columns: 120px 1fr 1fr 1fr; /* label + 3 controls */
+        grid-template-columns: 120px 1fr 1fr 1fr;
     }
 
     .field.check {
-        grid-template-columns: 120px auto; /* label + checkbox */
+        grid-template-columns: 120px auto;
     }
 
     .field.inline {
@@ -100,14 +90,13 @@
             box-shadow: 0 0 0 3px rgba(138, 180, 255, .25);
         }
 
-        /* Readonly cues (to mimic legacy) */
         .field > input[readonly],
         .field > textarea[readonly] {
             background: #fafafa;
             color: #222;
         }
 
-/* Tiny width helpers for state/zip style fields */
+/* Tiny width helpers specific to PO forms */
 .w-2 {
     max-width: 46px;
 }
@@ -123,60 +112,15 @@
 .w-item {
     width: 180px;
 }
-
+/* PO wider item column */
 .w-defcbx {
     width: 90px;
 }
 
-/* Link */
-.link {
-    color: #0c5ea8;
-    text-decoration: none;
-    font-size: 13px;
-}
-
-    .link:hover {
-        text-decoration: underline;
-    }
-
-/* Lines grid */
+/* Table container (table styles are global) */
 .table-wrap {
     margin-top: 14px;
 }
-
-.tbl {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: auto;
-    font-size: 13px;
-}
-
-    .tbl thead th {
-        text-align: left;
-        padding: 8px 10px;
-        background: #f6f7f9;
-        color: #333;
-        border-bottom: 1px solid #e5e7eb;
-        position: sticky;
-        top: 0; /* stick under the page header if container scrolls */
-        z-index: 1;
-    }
-
-    .tbl tbody td {
-        padding: 8px 10px;
-        border-bottom: 1px solid #f0f0f0;
-        background: #fff;
-        vertical-align: middle;
-    }
-
-    .tbl tbody tr:hover td {
-        background: #fbfdff;
-    }
-
-    .tbl .num {
-        text-align: right;
-    }
 
 /* Footer actions */
 .rop-footer {
@@ -190,48 +134,18 @@
     border-bottom-right-radius: 8px;
 }
 
-.btn {
-    appearance: none;
-    border: 1px solid #cfcfcf;
-    background: #fff;
-    color: #222;
-    padding: 8px 14px;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: box-shadow .12s ease, border-color .12s ease, background-color .12s ease;
+/* Button variants used on PO beyond global ones */
+.btn.warn {
+    background: #fff9f1;
+    border-color: #f2c28b;
+    color: #8a5300;
 }
 
-    .btn:hover {
-        border-color: #a8a8a8;
-        box-shadow: 0 1px 2px rgba(0,0,0,.06);
+    .btn.warn:hover {
+        background: #fff3e1;
     }
 
-    .btn:active {
-        transform: translateY(0.5px);
-    }
-
-    .btn.warn {
-        background: #fff9f1;
-        border-color: #f2c28b;
-        color: #8a5300;
-    }
-
-        .btn.warn:hover {
-            background: #fff3e1;
-        }
-
-    .btn.danger {
-        background: #fff5f5;
-        border-color: #f0a2a2;
-        color: #8a1f1f;
-    }
-
-        .btn.danger:hover {
-            background: #ffeaea;
-        }
-
-/* Responsive: collapse to one column under 1100px */
+/* Responsive */
 @media (max-width: 1100px) {
     .rop-detail-grid {
         grid-template-columns: 1fr;
@@ -241,9 +155,4 @@
         justify-content: stretch;
         flex-wrap: wrap;
     }
-}
-
-/* Optional: give numeric columns tabular figures for alignment */
-.tbl, .tbl td, .tbl th, .num, input {
-    font-variant-numeric: tabular-nums;
 }

@@ -170,7 +170,7 @@
     background: var(--ss-sel-bg, #d9e8ff);
     border: 1px solid var(--ss-sel-border, #a4c8ff);
     box-shadow: inset 0 0 0 3px var(--ss-sel-shadow, #cfe2ff);
-    color: var(--ss-sel-text, #0c5ea8);
+    color: var(--ss-sel-text, beige);
 }
 
 /* Hover to match sidebar hover tone */
@@ -188,6 +188,21 @@
 /* When there is a value (not placeholder), nudge the text color to the accent */
 .fr-combo .k-input-inner:not(:placeholder-shown) {
     color: var(--ss-sel-text, #0c5ea8);
+}
+
+/* --- Override Telerik ComboBox highlight color for franchise selector --- */
+.fr-combo .k-focus,
+.fr-combo.k-focus,
+.fr-combo .k-selected,
+.fr-combo .k-input-solid:focus,
+.fr-combo .k-input-inner:focus,
+.fr-combo .k-dropdownlist:focus,
+.fr-combo .k-list-item.k-selected,
+.fr-combo .k-list-item.k-focus {
+    border-color: var(--accent, #0c5ea8) !important;
+    box-shadow: 0 0 0 3px rgba(12, 94, 168, 0.25) !important;
+    color: var(--accent, #0c5ea8) !important;
+    background-color: rgba(12, 94, 168, 0.08) !important;
 }
 
 /* Keep the custom item row looking tidy */
@@ -209,4 +224,3 @@
     .fr-item .fr-client, .fr-item .fr-name {
         opacity: .85;
     }
-

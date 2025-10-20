@@ -37,25 +37,6 @@
             </TelerikMenu>
         </div>
 
-        <!-- Franchise selector -->
-        <TelerikComboBox TItem="FranchiseOption"
-                         TValue="string"
-                         Data="@Franchises"
-                         TextField="@nameof(FranchiseOption.Display)"
-                         ValueField="@nameof(FranchiseOption.DealerId)"
-                         Placeholder="Select franchise"
-                         Filterable="true"
-                         Class="fr-combo"
-                         @bind-Value="SelectedDealerId">
-            <ItemTemplate Context="f">
-                <div class="fr-item">
-                    <span class="fr-id">@f.DealerId</span>
-                    <span class="fr-dot">•</span>
-                    <span class="fr-client">@f.ClientKey</span>
-                    <span class="fr-name">@f.FirstName @f.LastName</span>
-                </div>
-            </ItemTemplate>
-        </TelerikComboBox>
 
         <TelerikButton Class="hamburger"
                        Icon="@SvgIcon.Menu"
@@ -64,6 +45,26 @@
                        Rounded="Rounded.Large"
                        OnClick="@ToggleDrawer" />
     </AppBarSection>
+
+    <!-- Franchise selector -->
+    <TelerikComboBox TItem="FranchiseOption"
+                     TValue="string"
+                     Data="@Franchises"
+                     TextField="@nameof(FranchiseOption.Display)"
+                     ValueField="@nameof(FranchiseOption.DealerId)"
+                     Placeholder="Select franchise"
+                     Filterable="true"
+                     Class="fr-combo"
+                     @bind-Value="SelectedDealerId">
+        <ItemTemplate Context="f">
+            <div class="fr-item">
+                <span class="fr-id">@f.DealerId</span>
+                <span class="fr-dot">•</span>
+                <span class="fr-client">@f.ClientKey</span>
+                <span class="fr-name">@f.FirstName @f.LastName</span>
+            </div>
+        </ItemTemplate>
+    </TelerikComboBox>
 </TelerikAppBar>
 
 <!-- Mobile Drawer -->
