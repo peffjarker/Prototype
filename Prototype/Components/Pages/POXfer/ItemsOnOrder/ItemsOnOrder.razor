@@ -10,6 +10,8 @@
 @using Prototype.Components.Services.Reports
 @using Utils
 @using global::Services
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
 
 @inherits PageWithSidebarBase
 
@@ -19,89 +21,92 @@
 
 <div class="wrap">
     <header class="header">
-        <h3 class="title">Items On Order </h3>
+        <h3 class="title">Items On Order</h3>
     </header>
 
-    <!-- Items table -->
+    <!-- Items Grid -->
     <section class="card">
-        <div class="table-wrap">
-            <table class="tbl tbl-items panel" role="grid" aria-label="Items on order">
-                <thead>
-                    <tr>
-                        <th class="w-item">Item</th>
-                        <th>Description</th>
-                        <th class="num">On Order Open</th>
-                        <th class="num">In Transit</th>
-                        <th class="num">Alloc</th>
-                        <th class="num">BKO</th>
-                        <th class="num">Total Open Cost</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (int i = 0; i < FilteredRows.Count; i++)
-                    {
-                        var r = FilteredRows[i];
-                        var isSelected = SelectedItems.Contains(r.Item);
-                        <tr class="row-clickable @(isSelected ? "row-selected" : null)"
-                            @onclick="(MouseEventArgs e) => HandleRowClick(r.Item, e)"
-                            title="Select item (Ctrl/Cmd for multi, Shift for range)">
-                            <td>
-                                <button class="link-button"
-                                        @onclick:stopPropagation="true"
-                                        @onclick="(MouseEventArgs e) => HandleRowClick(r.Item, e)">
-                                    @r.Item
-                                </button>
-                            </td>
-                            <td>@r.Description</td>
-                            <td class="num">@r.OnOrderOpen</td>
-                            <td class="num">@r.InTransit</td>
-                            <td class="num">@r.Alloc</td>
-                            <td class="num @HighlightIf(r.BKO > 0)">@r.BKO</td>
-                            <td class="num">@r.TotalOpenCost.ToString("C")</td>
-                        </tr>
-                    }
-                </tbody>
-                <tfoot>
-                    <tr class="totals">
-                        <td colspan="2">
-                            <div class="chips-row">
-                                @if (SelectedItems.Count > 0)
-                                {
-                                    <div class="chips">
-                                        <span class="chips-label">Filtering by</span>
-                                        @foreach (var it in SelectedItems.OrderBy(x => x))
-                                        {
-                                            <span class="chip" title="Remove filter">
-                                                <strong>@it</strong>
-                                                <button class="chip-x" @onclick="() => RemoveItem(it)" aria-label="Remove">×</button>
-                                            </span>
-                                        }
-                                        <button class="chip-clear" @onclick="ClearItemFilter" aria-label="Clear all">Clear all</button>
-                                    </div>
-                                }
-                            </div>
-                        </td>
-                        <td class="num">@FilteredRows.Sum(x => x.OnOrderOpen)</td>
-                        <td class="num">@FilteredRows.Sum(x => x.InTransit)</td>
-                        <td class="num">@FilteredRows.Sum(x => x.Alloc)</td>
-                        <td class="num">@FilteredRows.Sum(x => x.BKO)</td>
-                        <td class="num">@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</td>
-                    </tr>
-                    <tr class="totals-sub">
-                        <td colspan="7">
-                            In Transit: <strong>@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
-                            &nbsp; | &nbsp; Backorders Awaiting Release: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
-                            &nbsp; | &nbsp; Backordered: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
-                            &nbsp; | &nbsp; Unacknowledged: <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
-                            &nbsp; | &nbsp; Open Items: <strong>@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
+        <TelerikGrid Data="@FilteredRows"
+                     SelectionMode="@GridSelectionMode.Multiple"
+                     @bind-SelectedItems="@SelectedItemsCollection"
+                     Pageable="false"
+                     Sortable="true"
+                     Resizable="true"
+                     Height="auto"
+                     OnRowClick="@OnRowClickHandler">
+            <GridColumns>
+                <GridColumn Field="@nameof(Row.Item)" Title="Item" Width="120px">
+                    <Template>
+                        @{
+                            var row = (Row)context;
+                            <button class="link-button" @onclick="() => HandleItemClick(row.Item)">
+                                @row.Item
+                            </button>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Row.Description)" Title="Description" />
+                <GridColumn Field="@nameof(Row.OnOrderOpen)" Title="On Order Open" Width="140px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(Row.InTransit)" Title="In Transit" Width="120px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(Row.Alloc)" Title="Alloc" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(Row.BKO)" Title="BKO" Width="100px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var row = (Row)context;
+                            <span class="@HighlightIf(row.BKO > 0)">@row.BKO</span>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(Row.TotalOpenCost)" Title="Total Open Cost" Width="150px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var row = (Row)context;
+                            @row.TotalOpenCost.ToString("C")
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")
+                    </FooterTemplate>
+                </GridColumn>
+            </GridColumns>
+            <GridAggregates>
+                <GridAggregate Field="@nameof(Row.OnOrderOpen)" Aggregate="@GridAggregateType.Sum" />
+                <GridAggregate Field="@nameof(Row.InTransit)" Aggregate="@GridAggregateType.Sum" />
+                <GridAggregate Field="@nameof(Row.Alloc)" Aggregate="@GridAggregateType.Sum" />
+                <GridAggregate Field="@nameof(Row.BKO)" Aggregate="@GridAggregateType.Sum" />
+                <GridAggregate Field="@nameof(Row.TotalOpenCost)" Aggregate="@GridAggregateType.Sum" />
+            </GridAggregates>
+        </TelerikGrid>
+
+        @if (SelectedItems.Count > 0)
+        {
+            <div style="padding: 1rem;">
+                <div class="chips-row">
+                    <div class="chips">
+                        <span class="chips-label">Filtering by</span>
+                        @foreach (var it in SelectedItems.OrderBy(x => x))
+                        {
+                            <span class="chip" title="Remove filter">
+                                <strong>@it</strong>
+                                <button class="chip-x" @onclick="() => RemoveItem(it)" aria-label="Remove">×</button>
+                            </span>
+                        }
+                        <button class="chip-clear" @onclick="ClearItemFilter" aria-label="Clear all">Clear all</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div style="padding: 0 1rem 1rem; font-size: 0.875rem; color: #666;">
+            In Transit: <strong>@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
+            &nbsp; | &nbsp; Backorders Awaiting Release: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+            &nbsp; | &nbsp; Backordered: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+            &nbsp; | &nbsp; Unacknowledged: <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
+            &nbsp; | &nbsp; Open Items: <strong>@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
         </div>
     </section>
 
-    <!-- PO lines -->
+    <!-- PO Lines Grid -->
     <section class="panel" id="oplines" @ref="_oplinesSection">
         <header class="section-header">
             <h4>Open PO Lines</h4>
@@ -121,63 +126,60 @@
             }
         </header>
 
-        <div class="table-wrap">
-            <table class="tbl tbl-lines" role="grid" aria-label="Open PO lines">
-                <thead>
-                    <tr>
-                        <th class="w-po">PO#</th>
-                        <th class="w-ln">Ln</th>
-                        <th class="w-so">SO#</th>
-                        <th>Vendor</th>
-                        <th class="w-date">Date</th>
-                        <th class="num">Qty Ord</th>
-                        <th class="num">Open</th>
-                        <th class="num">In Transit</th>
-                        <th class="num">Alloc</th>
-                        <th class="num">BKO</th>
-                        <th class="num">Unit Cost</th>
-                        <th class="num">Total Open Cost</th>
-                        <th class="num">Rcv</th>
-                        <th class="w-status">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (VisibleOpenLines.Count == 0)
-                    {
-                        <tr><td colspan="15" class="muted">No open PO lines @(SelectedItems.Count == 0 ? "" : $"for {string.Join(", ", SelectedItems.OrderBy(x => x))}").</td></tr>
-                    }
-                    else
-                    {
-                        @foreach (var p in VisibleOpenLines)
-                        {
-                            <tr>
-                                <td>
-                                    <button class="link-button" title="Open PO details"
-                                            @onclick="() => OpenPODetails(p.PONumber)">
-                                        @p.PONumber
-                                    </button>
-                                </td>
-                                <td class="num">@p.Line</td>
-                                <td>@p.SONumber</td>
-                                <td>@p.Vendor</td>
-                                <td>@p.Date.ToString("MM/dd/yyyy")</td>
-                                <td class="num">@p.QtyOrdered</td>
-                                <td class="num">@p.Open</td>
-                                <td class="num">@p.InTransit</td>
-                                <td class="num">@p.Alloc</td>
-                                <td class="num">@p.BKO</td>
-                                <td class="num">@p.UnitCost.ToString("C")</td>
-                                <td class="num">@p.TotalOpenCost.ToString("C")</td>
-                                <td class="num">@p.Rcv</td>
-                                <td>@p.Status</td>
-                            </tr>
+        <TelerikGrid Data="@VisibleOpenLines"
+                     Pageable="false"
+                     Sortable="true"
+                     Resizable="true"
+                     Height="auto">
+            <GridColumns>
+                <GridColumn Field="@nameof(OpenPOLine.PONumber)" Title="PO#" Width="140px">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            <button class="link-button" title="Open PO details" @onclick="() => OpenPODetails(line.PONumber)">
+                                @line.PONumber
+                            </button>
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.Line)" Title="Ln" Width="80px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(OpenPOLine.SONumber)" Title="SO#" Width="120px" />
+                <GridColumn Field="@nameof(OpenPOLine.Vendor)" Title="Vendor" Width="120px" />
+                <GridColumn Field="@nameof(OpenPOLine.Date)" Title="Date" Width="110px">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            @line.Date.ToString("MM/dd/yyyy")
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.QtyOrdered)" Title="Qty Ord" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(OpenPOLine.Open)" Title="Open" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(OpenPOLine.InTransit)" Title="In Transit" Width="110px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(OpenPOLine.Alloc)" Title="Alloc" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(OpenPOLine.BKO)" Title="BKO" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(OpenPOLine.UnitCost)" Title="Unit Cost" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            @line.UnitCost.ToString("C")
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.TotalOpenCost)" Title="Total Open Cost" Width="150px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            @line.TotalOpenCost.ToString("C")
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.Rcv)" Title="Rcv" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(OpenPOLine.Status)" Title="Status" Width="120px" />
+            </GridColumns>
+        </TelerikGrid>
 
-        <footer class="actions">
+        <footer class="actions" style="padding: 1rem;">
             <button style="border: 1px solid black;" class="btn" @onclick="Print">Print</button>
         </footer>
     </section>
@@ -189,7 +191,6 @@
     // ============================================================
     protected override string BasePath => "/po-transfer/items-on-order";
 
-    // Scalars → what goes into URL as singletons (besides multi 'items')
     protected override IReadOnlyDictionary<string, string?> Scalars =>
         new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
@@ -198,27 +199,22 @@
             ["status"] = Status.ToString()
         };
 
-    // Multi facet values (we still encode items=… in the URL for deep links)
     protected override IReadOnlyCollection<string> MultiValues => SelectedItems;
 
-    // Decode URL → local state
     protected override void ReadFromUrl()
     {
         var abs = Nav.ToAbsoluteUri(Nav.Uri);
         var q = QueryHelpers.ParseQuery(abs.Query);
 
-        // dealer
         DealerId = q.TryGetValue("dealer", out var dVal) && !string.IsNullOrWhiteSpace(dVal)
             ? dVal.ToString()
             : null;
 
-        // status
         if (q.TryGetValue("status", out var sVal) && !string.IsNullOrWhiteSpace(sVal))
             Status = MapStatus(sVal!);
         else
             Status = StatusKind.All;
 
-        // items …
         SelectedItems.Clear();
         if (q.TryGetValue("items", out var itemsVals))
         {
@@ -231,7 +227,6 @@
         }
     }
 
-    // Declare the sidebar facets this page wants (Option/Status/Legend)
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -250,9 +245,9 @@
             Title: "Status",
             Options: () => new[]
             {
-                new FacetOption("All","All",                 Href: AppendPreserved($"{BasePath}?status=All")),
-                new FacetOption("Backorders","Backorders",   Href: AppendPreserved($"{BasePath}?status=Backorders")),
-                new FacetOption("In Transit","In Transit",   Href: AppendPreserved($"{BasePath}?status=In Transit")),
+                new FacetOption("All","All", Href: AppendPreserved($"{BasePath}?status=All")),
+                new FacetOption("Backorders","Backorders", Href: AppendPreserved($"{BasePath}?status=Backorders")),
+                new FacetOption("In Transit","In Transit", Href: AppendPreserved($"{BasePath}?status=In Transit")),
                 new FacetOption("Unacknowledged","Unacknowledged", Href: AppendPreserved($"{BasePath}?status=Unacknowledged"))
             }
         );
@@ -272,7 +267,6 @@
         );
     }
 
-    // No custom sidebar click handling needed for this page
     protected override void OnSidebarClick(SidebarItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.Url))
@@ -284,10 +278,9 @@
     // ============================================================
     protected override void OnInitialized()
     {
-        Read();                 // read dealerId snapshot for local field
+        Read();
         Url.Changed += OnUrlChanged;
 
-        // Seed demo data (replace with your data source)
         Rows.AddRange(new[]
         {
             new Row("A02", "1/4\" Drive (F) x 3/8\" (M) Adapter", 1, 0, 0, 1, 23.50m),
@@ -328,7 +321,10 @@
             }
         });
 
-        base.OnInitialized();   // wires URL <-> Sidebar once and builds sections
+        // Initialize selected items from URL
+        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
+
+        base.OnInitialized();
     }
 
     public void Dispose() => Url.Changed -= OnUrlChanged;
@@ -349,7 +345,6 @@
     // ============================================================
     // 3) Page state, data & computed views
     // ============================================================
-    // URL-bound state
     private string? DealerId;
     public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
     private static StatusKind MapStatus(string s) => s switch
@@ -361,61 +356,88 @@
     };
     private StatusKind Status = StatusKind.All;
 
-    // Multi-select (grid-driven)
     private readonly HashSet<string> SelectedItems = new(StringComparer.OrdinalIgnoreCase);
-    private int? _anchorIndex; // for shift-range
+    private IEnumerable<Row> _selectedItemsCollection = new List<Row>();
+    private IEnumerable<Row> SelectedItemsCollection
+    {
+        get => _selectedItemsCollection;
+        set
+        {
+            _selectedItemsCollection = value;
+            SyncSelectedItems();
+        }
+    }
 
-    // DOM refs
     private ElementReference _oplinesSection;
 
-    // Page data
     private readonly List<Row> Rows = new();
     private readonly List<OpenPOLine> OpenLines = new();
 
-    // Computed projections
     private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
     private List<OpenPOLine> VisibleOpenLines =>
         SelectedItems.Count == 0 ? OpenLines : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
 
     // ============================================================
-    // 4) UI event handlers (grid clicks, actions, printing)
+    // 4) UI event handlers
     // ============================================================
-    private async Task HandleRowClick(string item, MouseEventArgs e)
+    private void SyncSelectedItems()
     {
-        var list = FilteredRows;
-        var idx = FindIndex(list, item);
-        if (idx < 0) idx = 0;
-
-        bool scrolled = false;
-
-        if (e.ShiftKey && _anchorIndex is int anchor && anchor >= 0 && anchor < list.Count)
+        var newItems = _selectedItemsCollection.Select(r => r.Item).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var changed = !SelectedItems.SetEquals(newItems);
+        
+        if (changed)
         {
-            var start = Math.Min(anchor, idx);
-            var end = Math.Max(anchor, idx);
-            for (int i = start; i <= end; i++)
-                SelectedItems.Add(list[i].Item);
-            scrolled = true;
+            SelectedItems.Clear();
+            foreach (var item in newItems)
+            {
+                SelectedItems.Add(item);
+            }
+            
+            NavigateWithPageState();
+            
+            if (SelectedItems.Count > 0)
+            {
+                InvokeAsync(async () => await ScrollToPOLinesAsync());
+            }
         }
-        else if (e.CtrlKey || e.MetaKey)
+    }
+
+    private async Task OnRowClickHandler(GridRowClickEventArgs args)
+    {
+        // Grid handles selection automatically, we just need to scroll
+        if (SelectedItems.Count > 0)
         {
-            if (!SelectedItems.Add(item))
-                SelectedItems.Remove(item);
-            _anchorIndex = idx;
+            await ScrollToPOLinesAsync();
+        }
+    }
+
+    private async Task OnSelectedItemsChanged(IEnumerable<Row> selectedRows)
+    {
+        SelectedItems.Clear();
+        foreach (var row in selectedRows)
+        {
+            SelectedItems.Add(row.Item);
+        }
+
+        NavigateWithPageState();
+
+        if (SelectedItems.Count > 0)
+            await ScrollToPOLinesAsync();
+
+        StateHasChanged();
+    }
+
+    private void HandleItemClick(string item)
+    {
+        if (SelectedItems.Contains(item))
+        {
+            SelectedItems.Remove(item);
         }
         else
         {
-            SelectedItems.Clear();
             SelectedItems.Add(item);
-            _anchorIndex = idx;
-            scrolled = true;
         }
-
-        // Update URL with current scalars + multi items
         NavigateWithPageState();
-
-        if (scrolled)
-            await ScrollToPOLinesAsync();
-
         StateHasChanged();
     }
 
@@ -430,7 +452,6 @@
     {
         if (SelectedItems.Count == 0) return;
         SelectedItems.Clear();
-        _anchorIndex = null;
         NavigateWithPageState(replace: true);
         StateHasChanged();
     }
@@ -487,14 +508,6 @@
             _ => source
         };
 
-    private static int FindIndex(List<Row> list, string item)
-    {
-        for (int i = 0; i < list.Count; i++)
-            if (string.Equals(list[i].Item, item, StringComparison.OrdinalIgnoreCase))
-                return i;
-        return -1;
-    }
-
     private string HighlightIf(bool cond) => cond ? "hl" : "";
 
     // ============================================================
@@ -537,9 +550,6 @@
         public string Status { get; set; } = "Open";
     }
 
-    // ============================================================
-    // 7) Local-only URL snapshot (used by lifecycle wiring)
-    // ============================================================
     private string? dealerId;
 }
 
