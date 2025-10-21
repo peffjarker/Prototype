@@ -8,9 +8,9 @@
 
 @inject IJSRuntime JS
 
-<div class="rop-wrap">
-    <header class="rop-header">
-        <h3 class="rop-title">Purchase Order Detail</h3>
+<div class="wrap">
+    <header class="header">
+        <h3 class="title">Purchase Order Detail</h3>
     </header>
 
     <section class="card rop-detail">
@@ -201,44 +201,27 @@
 </div>
 
 @code {
-    // ===== Base wiring =====
+    // ============================================================
+    // 1) Page contract & URL bindings
+    // ============================================================
     protected override string BasePath => "/po-transfer/purchase-orders";
 
     // URL-bound (singletons)
     private string Status = "Closed";      // default from your original page
     private string? SelectedPo;            // "PO-200996 - 07/29/2025"
-
-    // Sidebar PO list
-    private sealed record PoSummary(string Number, DateTime Date, string Status)
-    {
-        public string Display => $"{Number} - {Date:MM/dd/yyyy}";
-    }
-
-    private List<PoSummary> AllPos = new();
-    private List<PoSummary> FilteredPos =>
-        (string.Equals(Status, "All", StringComparison.OrdinalIgnoreCase)
-            ? AllPos
-            : AllPos.Where(p => string.Equals(p.Status, Status, StringComparison.OrdinalIgnoreCase)))
-        .OrderByDescending(p => p.Date)
-        .ToList();
-
-    // Page model (mock)
-    private PurchaseOrder Model { get; set; } = new();
+    private string? DealerId;
 
     // Scalars -> URL map
     protected override IReadOnlyDictionary<string, string?> Scalars =>
        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
        {
-           ["dealer"] = DealerId,            
+           ["dealer"] = DealerId,
            ["option"] = "Purchase Orders",
            ["status"] = Status,
            ["po"] = SelectedPo
        };
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>(); // none
-
-    // URL-bound state
-    private string? DealerId;
 
     // Parse URL -> state, then load model
     protected override void ReadFromUrl()
@@ -266,18 +249,20 @@
         LoadPoDetail(SelectedPo);
     }
 
-    // Sidebar facets
+    // ============================================================
+    // 2) Sidebar facets
+    // ============================================================
     protected override IEnumerable<Facet> Facets()
     {
-        // Option facet (cross-page) – wrap Hrefs with AppendDealer
+        // Option facet (cross-page) – wrap Hrefs with AppendPreserved
         yield return new Facet(
             Key: "option",
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Items On Order",     "Items On Order",     Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
-            new FacetOption("Purchase Orders",    "Purchase Orders",    Href: AppendPreserved("/po-transfer/purchase-orders")),
-            new FacetOption("Receipt of Product", "Receipt of Product", Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
+                new FacetOption("Items On Order",     "Items On Order",     Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
+                new FacetOption("Purchase Orders",    "Purchase Orders",    Href: AppendPreserved("/po-transfer/purchase-orders")),
+                new FacetOption("Receipt of Product", "Receipt of Product", Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
             }
         );
 
@@ -286,13 +271,13 @@
             Title: "Status",
             Options: () => new[]
             {
-            new FacetOption("All","All",                                   Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("All")}")),
-            new FacetOption("Pending","Pending",                           Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Pending")}")),
-            new FacetOption("In Process","In Process",                     Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("In Process")}")),
-            new FacetOption("Issued – UnAcknowledged","Issued – UnAcknowledged", Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Issued – UnAcknowledged")}")),
-            new FacetOption("Open – Acknowledged","Open – Acknowledged",   Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Open – Acknowledged")}")),
-            new FacetOption("Closed","Closed",                             Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Closed")}")),
-            new FacetOption("Cancelled","Cancelled",                       Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Cancelled")}"))
+                new FacetOption("All","All",                                   Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("All")}")),
+                new FacetOption("Pending","Pending",                           Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Pending")}")),
+                new FacetOption("In Process","In Process",                     Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("In Process")}")),
+                new FacetOption("Issued – UnAcknowledged","Issued – UnAcknowledged", Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Issued – UnAcknowledged")}")),
+                new FacetOption("Open – Acknowledged","Open – Acknowledged",   Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Open – Acknowledged")}")),
+                new FacetOption("Closed","Closed",                             Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Closed")}")),
+                new FacetOption("Cancelled","Cancelled",                       Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Cancelled")}"))
             }
         );
 
@@ -315,27 +300,50 @@
             Nav.NavigateTo(AppendPreserved(item.Url));
     }
 
-    // ===== Lifecycle =====
+    // ============================================================
+    // 3) Lifecycle
+    // ============================================================
     protected override void OnInitialized()
     {
         SeedPoList();
         base.OnInitialized(); // wires Nav/Sidebar and builds sections
     }
 
+    // ============================================================
+    // 4) Page state & computed lists
+    // ============================================================
+    private sealed record PoSummary(string Number, DateTime Date, string Status)
+    {
+        public string Display => $"{Number} - {Date:MM/dd/yyyy}";
+    }
+
+    private List<PoSummary> AllPos = new();
+
+    private List<PoSummary> FilteredPos =>
+        (string.Equals(Status, "All", StringComparison.OrdinalIgnoreCase)
+            ? AllPos
+            : AllPos.Where(p => string.Equals(p.Status, Status, StringComparison.OrdinalIgnoreCase)))
+        .OrderByDescending(p => p.Date)
+        .ToList();
+
+    // Page model (mock)
+    private PurchaseOrder Model { get; set; } = new();
+
+    // ============================================================
+    // 5) Data seeding & loading
+    // ============================================================
     private void SeedPoList()
     {
         AllPos = new()
-    {
-        new PoSummary("PO-200996",      new DateTime(2025, 07, 29), "Closed"),
-        new PoSummary("PO-200995",      new DateTime(2025, 07, 24), "Open – Acknowledged"),
-        new PoSummary("PO-200994",      new DateTime(2025, 07, 22), "Pending"),
-        new PoSummary("PO-000010929",   new DateTime(2025, 07, 09), "Closed"),
-        // add more with realistic statuses
-    };
+        {
+            new PoSummary("PO-200996",      new DateTime(2025, 07, 29), "Closed"),
+            new PoSummary("PO-200995",      new DateTime(2025, 07, 24), "Open – Acknowledged"),
+            new PoSummary("PO-200994",      new DateTime(2025, 07, 22), "Pending"),
+            new PoSummary("PO-000010929",   new DateTime(2025, 07, 09), "Closed"),
+            // add more with realistic statuses
+        };
     }
 
-
-    // ===== Data loading =====
     private void LoadPoDetail(string? poDisplay)
     {
         if (string.IsNullOrWhiteSpace(poDisplay))
@@ -401,16 +409,23 @@
         Model.OpenCost = Model.Lines.Where(l => l.Open > 0).Sum(l => l.TotalCost);
     }
 
-    // ===== Actions (stubbed) =====
+    // ============================================================
+    // 6) Actions (stubbed)
+    // ============================================================
     private Task PrintPo() => JS.InvokeVoidAsync("console.log", "Print PO").AsTask();
     private Task CreateNewPo() => JS.InvokeVoidAsync("console.log", "Create New PO").AsTask();
     private Task CancelSelectedLines() => JS.InvokeVoidAsync("console.log", "Cancel Lines").AsTask();
     private Task CancelPo() => JS.InvokeVoidAsync("console.log", "Cancel PO").AsTask();
     private Task ViewActivities() => JS.InvokeVoidAsync("console.log", "View Activities").AsTask();
 
+    // ============================================================
+    // 7) Helpers
+    // ============================================================
     private static string BoolText(bool v) => v ? "Yes" : "No";
 
-    // ===== Simple models for this page =====
+    // ============================================================
+    // 8) Simple models for this page
+    // ============================================================
     private sealed class PurchaseOrder
     {
         public string PoNumber { get; set; } = "";

@@ -82,7 +82,7 @@ namespace Prototype.Components.Services.Reports
                                     h.Cell().Element(HeaderCell).AlignRight().Text("Total Open Cost");
                                 });
 
-                                var zebra = new[] { Colors.Grey.Lighten5, Colors.White };
+                                var zebra = new[] { Colors.Grey.Darken4, Colors.White };
                                 for (int i = 0; i < report.Rows.Count; i++)
                                 {
                                     var r = report.Rows[i];

@@ -1,20 +1,4 @@
-﻿/* ===== Purchase Orders – layout & form grid ===== */
-
-.rop-wrap {
-    padding: 16px;
-}
-
-.rop-header {
-    margin-bottom: 8px;
-}
-
-.rop-title {
-    font-size: 22px;
-    font-weight: 600;
-    margin: 0 0 6px 0;
-}
-
-/* Detail section */
+﻿/* Detail section */
 .rop-detail {
     padding: 14px 16px 8px;
 }
@@ -115,11 +99,6 @@
 /* PO wider item column */
 .w-defcbx {
     width: 90px;
-}
-
-/* Table container (table styles are global) */
-.table-wrap {
-    margin-top: 14px;
 }
 
 /* Footer actions */

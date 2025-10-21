@@ -9,15 +9,17 @@
 @using Prototype.Components.Services
 @using Prototype.Components.Services.Reports
 @using Utils
+@using global::Services
 
 @inherits PageWithSidebarBase
 
 @inject IJSRuntime JS
 @inject IItemsOnOrderPdfService ReportService
+@inject IUrlState Url
 
-<div class="ioo-wrap">
-    <header class="ioo-header">
-        <h3 class="ioo-title">Items On Order</h3>
+<div class="wrap">
+    <header class="header">
+        <h3 class="title">Items On Order </h3>
     </header>
 
     <!-- Items table -->
@@ -182,33 +184,10 @@
 </div>
 
 @code {
-    // ======= Base wiring =======
+    // ============================================================
+    // 1) Page contract & URL bindings (overrides + sidebar + decode)
+    // ============================================================
     protected override string BasePath => "/po-transfer/items-on-order";
-
-    // URL-bound state (via Scalars)
-    public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
-    private static StatusKind MapStatus(string s) => s switch
-    {
-        "Backorders" => StatusKind.Backorders,
-        "In Transit" => StatusKind.InTransit,
-        "Unacknowledged" => StatusKind.Unacknowledged,
-        _ => StatusKind.All
-    };
-
-    private StatusKind Status = StatusKind.All;
-
-    // Multi-select (grid-driven)
-    private readonly HashSet<string> SelectedItems = new(StringComparer.OrdinalIgnoreCase);
-    private int? _anchorIndex; // for shift-range
-
-    private ElementReference _oplinesSection;
-
-    // Page data
-    private readonly List<Row> Rows = new();
-    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
-    private readonly List<OpenPOLine> OpenLines = new();
-    private List<OpenPOLine> VisibleOpenLines =>
-        SelectedItems.Count == 0 ? OpenLines : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
 
     // Scalars → what goes into URL as singletons (besides multi 'items')
     protected override IReadOnlyDictionary<string, string?> Scalars =>
@@ -221,9 +200,6 @@
 
     // Multi facet values (we still encode items=… in the URL for deep links)
     protected override IReadOnlyCollection<string> MultiValues => SelectedItems;
-
-    // URL-bound state
-    private string? DealerId;
 
     // Decode URL → local state
     protected override void ReadFromUrl()
@@ -296,16 +272,21 @@
         );
     }
 
-    // No custom sidebar click handling needed for this page;
-    // we only use grid clicks for the multi "items" selection.
+    // No custom sidebar click handling needed for this page
     protected override void OnSidebarClick(SidebarItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.Url))
             Nav.NavigateTo(AppendPreserved(item.Url));
     }
 
+    // ============================================================
+    // 2) Lifecycle & URL-change wiring
+    // ============================================================
     protected override void OnInitialized()
     {
+        Read();                 // read dealerId snapshot for local field
+        Url.Changed += OnUrlChanged;
+
         // Seed demo data (replace with your data source)
         Rows.AddRange(new[]
         {
@@ -347,10 +328,58 @@
             }
         });
 
-        base.OnInitialized(); // wires URL <-> Sidebar once and builds sections
+        base.OnInitialized();   // wires URL <-> Sidebar once and builds sections
     }
 
-    // ===== Grid click handling with Ctrl/Cmd + Shift =====
+    public void Dispose() => Url.Changed -= OnUrlChanged;
+
+    private void OnUrlChanged()
+    {
+        var prev = dealerId;
+        Read();
+        if (prev != dealerId)
+            InvokeAsync(StateHasChanged);
+    }
+
+    private void Read()
+    {
+        dealerId = Url.Current.TryGetValue("dealer", out var d) ? d : null;
+    }
+
+    // ============================================================
+    // 3) Page state, data & computed views
+    // ============================================================
+    // URL-bound state
+    private string? DealerId;
+    public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
+    private static StatusKind MapStatus(string s) => s switch
+    {
+        "Backorders" => StatusKind.Backorders,
+        "In Transit" => StatusKind.InTransit,
+        "Unacknowledged" => StatusKind.Unacknowledged,
+        _ => StatusKind.All
+    };
+    private StatusKind Status = StatusKind.All;
+
+    // Multi-select (grid-driven)
+    private readonly HashSet<string> SelectedItems = new(StringComparer.OrdinalIgnoreCase);
+    private int? _anchorIndex; // for shift-range
+
+    // DOM refs
+    private ElementReference _oplinesSection;
+
+    // Page data
+    private readonly List<Row> Rows = new();
+    private readonly List<OpenPOLine> OpenLines = new();
+
+    // Computed projections
+    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
+    private List<OpenPOLine> VisibleOpenLines =>
+        SelectedItems.Count == 0 ? OpenLines : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
+
+    // ============================================================
+    // 4) UI event handlers (grid clicks, actions, printing)
+    // ============================================================
     private async Task HandleRowClick(string item, MouseEventArgs e)
     {
         var list = FilteredRows;
@@ -388,14 +417,6 @@
             await ScrollToPOLinesAsync();
 
         StateHasChanged();
-    }
-
-    private static int FindIndex(List<Row> list, string item)
-    {
-        for (int i = 0; i < list.Count; i++)
-            if (string.Equals(list[i].Item, item, StringComparison.OrdinalIgnoreCase))
-                return i;
-        return -1;
     }
 
     private void RemoveItem(string item)
@@ -453,6 +474,9 @@
         await JS.InvokeVoidAsync("files.save", fileName, Convert.ToBase64String(pdfBytes));
     }
 
+    // ============================================================
+    // 5) Pure helpers
+    // ============================================================
     private static List<Row> ApplyStatusFilter(List<Row> source, StatusKind status) =>
         status switch
         {
@@ -463,8 +487,19 @@
             _ => source
         };
 
+    private static int FindIndex(List<Row> list, string item)
+    {
+        for (int i = 0; i < list.Count; i++)
+            if (string.Equals(list[i].Item, item, StringComparison.OrdinalIgnoreCase))
+                return i;
+        return -1;
+    }
+
     private string HighlightIf(bool cond) => cond ? "hl" : "";
 
+    // ============================================================
+    // 6) Data models
+    // ============================================================
     private sealed class Row
     {
         public Row(string item, string desc, int onOrderOpen, int inTransit, int alloc, int bko, decimal unitCost)
@@ -501,6 +536,11 @@
         public int Rcv { get; set; }
         public string Status { get; set; } = "Open";
     }
+
+    // ============================================================
+    // 7) Local-only URL snapshot (used by lifecycle wiring)
+    // ============================================================
+    private string? dealerId;
 }
 
 <script>
