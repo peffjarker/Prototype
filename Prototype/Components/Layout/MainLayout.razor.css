@@ -71,8 +71,6 @@ main {
     }
 
     .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
     }
 }
 
@@ -129,7 +127,6 @@ main {
 
 .ptl-content {
     overflow: auto;
-    padding: 1rem;
 }
 
 .brand {
