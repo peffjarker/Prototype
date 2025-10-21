@@ -2,10 +2,11 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.WebUtilities; // QueryHelpers
+using Microsoft.AspNetCore.WebUtilities;
 using Prototype.Components.Layout.Navigation.Sidebar;
 
 public abstract class PageWithSidebarBase : ComponentBase, IDisposable
@@ -14,26 +15,18 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     [Inject] protected ISidebarState Sidebar { get; set; } = default!;
 
     // === Page contract ===
-    protected abstract string BasePath { get; }                 // e.g. "/po-transfer/items-on-order"
-    protected abstract IEnumerable<Facet> Facets();             // declare your sidebar schema
-    protected virtual bool HandleMultiFacetClick => false;      // page handles multi facet clicks itself?
+    protected abstract string BasePath { get; }
+    protected abstract IEnumerable<Facet> Facets();
+    protected virtual bool HandleMultiFacetClick => false;
 
-    // Pages declare current URL state:
-    protected abstract IReadOnlyDictionary<string, string?> Scalars { get; }     // singletons
-    protected abstract IReadOnlyCollection<string> MultiValues { get; }          // repeatable values
-    protected abstract void ReadFromUrl();                                       // parse URL -> page fields
-    protected abstract void OnSidebarClick(SidebarItem item);                    // page-specific handling
+    protected abstract IReadOnlyDictionary<string, string?> Scalars { get; }
+    protected abstract IReadOnlyCollection<string> MultiValues { get; }
+    protected abstract void ReadFromUrl();
+    protected abstract void OnSidebarClick(SidebarItem item);
 
     // === URL behavior ===
-
-    /// Keys that should always be preserved across navigation (sticky app-wide).
-    /// Default keeps "dealer". Override to add more (e.g., "env", "asof").
     protected virtual IReadOnlyCollection<string> PreservedKeys => new[] { "dealer" };
-
-    /// The query key name used to serialize MultiValues. Override per page if needed.
     protected virtual string MultiKeyName => "items";
-
-    /// Separator used when collapsing multi values into one parameter (default comma).
     protected virtual string MultiSeparator => ",";
 
     protected void NavigateWithPageState(bool replace = false)
@@ -48,34 +41,26 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         var curUri = new Uri(Nav.Uri);
         var curQ = QueryHelpers.ParseQuery(curUri.Query);
 
-        // Start from current query so unrelated keys survive
         var dict = curQ.ToDictionary(kv => kv.Key, kv => kv.Value.ToString(), StringComparer.OrdinalIgnoreCase);
 
-        // Preserve sticky keys (dealer, etc.)
         foreach (var k in PreservedKeys)
             if (curQ.TryGetValue(k, out var v)) dict[k] = v.ToString();
 
-        // Apply scalars (null/empty removes)
         foreach (var (k, v) in scalars)
             if (string.IsNullOrWhiteSpace(v)) dict.Remove(k); else dict[k] = v;
 
-        // Remove the multi key entirely first
         dict.Remove(multiKeyName);
 
-        // Collapse multi values into a single "items=a,b,c" (stable order helps for UX/deeplinks)
         var list = multiValues?.ToList() ?? new List<string>();
         if (list.Count > 0)
         {
-            // optional: keep insertion order; if you prefer alpha, use: list = list.OrderBy(x => x).ToList();
             dict[multiKeyName] = string.Join(MultiSeparator, list);
         }
 
-        // Build final URL
         var url = QueryHelpers.AddQueryString(curUri.GetLeftPart(UriPartial.Path), dict);
         Nav.NavigateTo(url, replace: replace);
     }
 
-    /// Builds a target href that carries current PreservedKeys (e.g., dealer).
     protected string AppendPreserved(string href)
     {
         var abs = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
@@ -98,10 +83,11 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     }
 
     // === Sidebar + lifecycle wiring ===
-
     private Func<SidebarItem, Task>? _itemSelectedHandler;
     private Action? _sidebarStateChangedHandler;
     private EventHandler<LocationChangedEventArgs>? _locationChangedHandler;
+    private CancellationTokenSource? _rebuildCts;
+    private bool _isNavigating;
 
     protected override void OnInitialized()
     {
@@ -113,7 +99,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
             }
             else if (!string.IsNullOrWhiteSpace(item.Url))
             {
-                // default navigate but keep sticky keys (dealer, etc.)
+                _isNavigating = true;
                 Nav.NavigateTo(AppendPreserved(item.Url));
             }
             await Task.CompletedTask;
@@ -123,9 +109,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
         _locationChangedHandler = (_, __) =>
         {
-            ReadFromUrl();
-            RebuildSidebar();
-            _ = InvokeAsync(StateHasChanged);
+            _ = HandleLocationChangedAsync();
         };
 
         Sidebar.ItemSelectedHandler = _itemSelectedHandler;
@@ -136,6 +120,43 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         RebuildSidebar();
     }
 
+    private async Task HandleLocationChangedAsync()
+    {
+        // Cancel any pending rebuild
+        _rebuildCts?.Cancel();
+        _rebuildCts?.Dispose();
+        _rebuildCts = new CancellationTokenSource();
+        var token = _rebuildCts.Token;
+
+        try
+        {
+            // If we initiated the navigation, skip the delay
+            if (!_isNavigating)
+            {
+                // Small delay to batch rapid URL changes
+                await Task.Delay(25, token);
+            }
+            _isNavigating = false;
+
+            if (token.IsCancellationRequested)
+                return;
+
+            await InvokeAsync(() =>
+            {
+                if (!token.IsCancellationRequested)
+                {
+                    ReadFromUrl();
+                    RebuildSidebar();
+                    StateHasChanged();
+                }
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by newer navigation
+        }
+    }
+
     protected void RebuildSidebar()
     {
         var sections = FacetSections.Build(Facets(), Scalars, MultiValues, BasePath);
@@ -144,6 +165,9 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
     public virtual void Dispose()
     {
+        _rebuildCts?.Cancel();
+        _rebuildCts?.Dispose();
+
         if (_sidebarStateChangedHandler is not null)
             Sidebar.StateChanged -= _sidebarStateChangedHandler;
 
