@@ -3,6 +3,8 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Utils
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
 
 @inherits PageWithSidebarBase
 
@@ -141,60 +143,131 @@
             </div>
         </div>
 
-        <!-- Lines grid -->
-        <div class="table-wrap">
-            <table class="tbl rop-lines" role="grid" aria-label="PO Lines">
-                <thead>
-                    <tr>
-                        <th class="num w-ord">#</th>
-                        <th class="w-item">Line Item</th>
-                        <th>Description</th>
-                        <th>Comment</th>
-                        <th class="num">Ord</th>
-                        <th class="num">Rcv</th>
-                        <th class="num">Open</th>
-                        <th class="w-defcbx">DEF/CBX</th>
-                        <th class="num">Transit</th>
-                        <th class="num">SO Line</th>
-                        <th class="num">Unit Cost</th>
-                        <th class="num">Total Cost</th>
-                        <th class="num">Rally Unit</th>
-                        <th class="num">Rally Ext</th>
-                        <th>Status</th>
-                        <th class="num">Cancel</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var (line, idx) in Model.Lines.Select((l, i) => (l, i + 1)))
-                    {
-                        <tr>
-                            <td class="num">@idx</td>
-                            <td>@line.Item</td>
-                            <td>@line.Description</td>
-                            <td>@line.Comment</td>
-                            <td class="num">@line.Ordered</td>
-                            <td class="num">@line.Received</td>
-                            <td class="num">@line.Open</td>
-                            <td>@line.DefCbx</td>
-                            <td class="num">@line.Transit</td>
-                            <td class="num">@line.SalesOrderLine</td>
-                            <td class="num">@line.UnitCost.ToString("C")</td>
-                            <td class="num">@line.TotalCost.ToString("C")</td>
-                            <td class="num">@line.RallyUnit</td>
-                            <td class="num">@line.RallyExt</td>
-                            <td>@line.Status</td>
-                            <td class="num">@line.CancelFlag</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <!-- Lines Grid -->
+        <div style="margin-top: 2rem;">
+            <TelerikGrid Data="@Model.Lines"
+                         SelectionMode="@GridSelectionMode.Multiple"
+                         @bind-SelectedItems="@SelectedLines"
+                         Pageable="true"
+                         PageSize="20"
+                         Sortable="true"
+                         FilterMode="@GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         Groupable="true"
+                         ShowColumnMenu="true">
+                <GridToolBarTemplate>
+                    <GridCommandButton Command="ExcelExport" Icon="@SvgIcon.FileExcel">Export to Excel</GridCommandButton>
+                    <GridSearchBox />
+                    <span style="margin-left: auto; font-weight: bold;">
+                        Total Lines: @Model.Lines.Count | Selected: @SelectedLines.Count()
+                    </span>
+                </GridToolBarTemplate>
+                <GridExport>
+                    <GridExcelExport FileName="purchase-order-lines" AllPages="true" />
+                    <GridCsvExport FileName="purchase-order-lines" AllPages="true" />
+                </GridExport>
+                <GridColumns>
+                    <GridCheckboxColumn SelectAll="true" Width="60px" Locked="true" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Item)" Title="Line Item" Width="140px" Locked="true" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Description)" Title="Description" Width="300px" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Comment)" Title="Comment" Width="200px" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Ordered)" Title="Ord" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                        <FooterTemplate>
+                            @{
+                                var total = Model.Lines.Sum(x => x.Ordered);
+                                <strong>@total</strong>
+                            }
+                        </FooterTemplate>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Received)" Title="Rcv" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                        <FooterTemplate>
+                            @{
+                                var total = Model.Lines.Sum(x => x.Received);
+                                <strong>@total</strong>
+                            }
+                        </FooterTemplate>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Open)" Title="Open" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                        <FooterTemplate>
+                            @{
+                                var total = Model.Lines.Sum(x => x.Open);
+                                <strong>@total</strong>
+                            }
+                        </FooterTemplate>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.DefCbx)" Title="DEF/CBX" Width="100px" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Transit)" Title="Transit" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                        <FooterTemplate>
+                            @{
+                                var total = Model.Lines.Sum(x => x.Transit);
+                                <strong>@total</strong>
+                            }
+                        </FooterTemplate>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.SalesOrderLine)" Title="SO Line" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.UnitCost)" Title="Unit Cost" Width="120px" TextAlign="@ColumnTextAlign.Right" DisplayFormat="{0:C}">
+                        <Template>
+                            @{
+                                var line = (PurchaseOrderLine)context;
+                                @line.UnitCost.ToString("C")
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.TotalCost)" Title="Total Cost" Width="130px" TextAlign="@ColumnTextAlign.Right">
+                        <Template>
+                            @{
+                                var line = (PurchaseOrderLine)context;
+                                @line.TotalCost.ToString("C")
+                            }
+                        </Template>
+                        <FooterTemplate>
+                            @{
+                                var total = Model.Lines.Sum(x => x.TotalCost);
+                                <strong>@total.ToString("C")</strong>
+                            }
+                        </FooterTemplate>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.RallyUnit)" Title="Rally Unit" Width="110px" TextAlign="@ColumnTextAlign.Right" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.RallyExt)" Title="Rally Ext" Width="110px" TextAlign="@ColumnTextAlign.Right">
+                        <FooterTemplate>
+                            @{
+                                var total = Model.Lines.Sum(x => x.RallyExt);
+                                <strong>@total</strong>
+                            }
+                        </FooterTemplate>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Status)" Title="Status" Width="120px">
+                        <Template>
+                            @{
+                                var line = (PurchaseOrderLine)context;
+                                var statusClass = line.Status.ToLower() switch
+                                {
+                                    "open" => "badge badge-success",
+                                    "closed" => "badge badge-secondary",
+                                    "cancelled" => "badge badge-danger",
+                                    _ => "badge badge-info"
+                                };
+                                <span class="@statusClass">@line.Status</span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PurchaseOrderLine.CancelFlag)" Title="Cancel" Width="90px" TextAlign="@ColumnTextAlign.Right" />
+                </GridColumns>
+                <GridSettings>
+                    <GridPagerSettings InputType="PagerInputType.Input"
+                                       PageSizes="@(new List<int?> { 10, 20, 50, 100, null })" />
+                </GridSettings>
+            </TelerikGrid>
         </div>
 
         <!-- Footer actions -->
-        <footer class="rop-footer">
+        <footer class="rop-footer" style="margin-top: 1rem;">
             <button class="btn" @onclick="PrintPo">Print</button>
             <button class="btn" @onclick="CreateNewPo">Create New</button>
-            <button class="btn warn" @onclick="CancelSelectedLines">Cancel PO Line(s)</button>
+            <button class="btn warn" @onclick="CancelSelectedLines" disabled="@(!SelectedLines.Any())">
+                Cancel PO Line(s) @(SelectedLines.Any() ? $"({SelectedLines.Count()})" : "")
+            </button>
             <button class="btn danger" @onclick="CancelPo">Cancel PO</button>
         </footer>
     </section>
@@ -210,6 +283,9 @@
     private string Status = "Closed";      // default from your original page
     private string? SelectedPo;            // "PO-200996 - 07/29/2025"
     private string? DealerId;
+
+    // Grid selection
+    private IEnumerable<PurchaseOrderLine> SelectedLines { get; set; } = new List<PurchaseOrderLine>();
 
     // Scalars -> URL map
     protected override IReadOnlyDictionary<string, string?> Scalars =>
@@ -340,7 +416,6 @@
             new PoSummary("PO-200995",      new DateTime(2025, 07, 24), "Open – Acknowledged"),
             new PoSummary("PO-200994",      new DateTime(2025, 07, 22), "Pending"),
             new PoSummary("PO-000010929",   new DateTime(2025, 07, 09), "Closed"),
-            // add more with realistic statuses
         };
     }
 
@@ -385,11 +460,11 @@
                 new()
                 {
                     Item = "THCE5401",
-                    Description = "Articulating Borescope, 5” 6mm Cam",
+                    Description = "Articulating Borescope, 5\" 6mm Cam",
                     Comment = "Added - CQT",
                     Ordered = 1, Received = 1, Open = 0,
                     DefCbx = "None", Transit = 0, SalesOrderLine = 0,
-                    UnitCost = 0m, TotalCost = 0m,
+                    UnitCost = 299.99m, TotalCost = 299.99m,
                     RallyUnit = 0, RallyExt = 0, Status = "Closed", CancelFlag = 0
                 },
                 new()
@@ -399,22 +474,47 @@
                     Comment = "Added - CQT",
                     Ordered = 1, Received = 1, Open = 0,
                     DefCbx = "None", Transit = 0, SalesOrderLine = 0,
-                    UnitCost = 0m, TotalCost = 0m,
+                    UnitCost = 89.99m, TotalCost = 89.99m,
                     RallyUnit = 0, RallyExt = 0, Status = "Closed", CancelFlag = 0
+                },
+                new()
+                {
+                    Item = "WT5500",
+                    Description = "5-Piece Wrench Set",
+                    Comment = "Pending Shipment",
+                    Ordered = 2, Received = 0, Open = 2,
+                    DefCbx = "DEF", Transit = 2, SalesOrderLine = 5,
+                    UnitCost = 45.50m, TotalCost = 91.00m,
+                    RallyUnit = 0, RallyExt = 0, Status = "Open", CancelFlag = 0
                 }
             }
         };
 
         Model.TotalCost = Model.Lines.Sum(l => l.TotalCost);
         Model.OpenCost = Model.Lines.Where(l => l.Open > 0).Sum(l => l.TotalCost);
+
+        // Clear selection when loading new PO
+        SelectedLines = new List<PurchaseOrderLine>();
     }
 
     // ============================================================
-    // 6) Actions (stubbed)
+    // 6) Actions
     // ============================================================
     private Task PrintPo() => JS.InvokeVoidAsync("console.log", "Print PO").AsTask();
     private Task CreateNewPo() => JS.InvokeVoidAsync("console.log", "Create New PO").AsTask();
-    private Task CancelSelectedLines() => JS.InvokeVoidAsync("console.log", "Cancel Lines").AsTask();
+
+    private async Task CancelSelectedLines()
+    {
+        if (!SelectedLines.Any()) return;
+
+        var items = string.Join(", ", SelectedLines.Select(l => l.Item));
+        await JS.InvokeVoidAsync("console.log", $"Cancel Lines: {items}");
+
+        // TODO: Call actual service to cancel lines
+        // After successful cancellation, refresh the data
+        // LoadPoDetail(SelectedPo);
+    }
+
     private Task CancelPo() => JS.InvokeVoidAsync("console.log", "Cancel PO").AsTask();
     private Task ViewActivities() => JS.InvokeVoidAsync("console.log", "View Activities").AsTask();
 
@@ -475,3 +575,54 @@
         public int CancelFlag { get; set; }
     }
 }
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 0.875em;
+        font-weight: 600;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+
+    .badge-success {
+        background-color: #28a745;
+    }
+
+    .badge-secondary {
+        background-color: #6c757d;
+    }
+
+    .badge-danger {
+        background-color: #dc3545;
+    }
+
+    .badge-info {
+        background-color: #17a2b8;
+    }
+
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .btn.warn {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .btn.danger {
+        background-color: #dc3545;
+        color: #fff;
+    }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>

@@ -29,35 +29,117 @@
         <TelerikGrid Data="@FilteredRows"
                      SelectionMode="@GridSelectionMode.Multiple"
                      @bind-SelectedItems="@SelectedItemsCollection"
-                     Pageable="false"
+                     Pageable="true"
+                     PageSize="20"
                      Sortable="true"
+                     FilterMode="@GridFilterMode.FilterRow"
                      Resizable="true"
-                     Height="auto"
-                     OnRowClick="@OnRowClickHandler">
+                     Reorderable="true"
+                     Groupable="true"
+                     ShowColumnMenu="true"
+                     OnRowClick="@OnRowClickHandler"
+                     @ref="@ItemsGridRef">
+            <GridToolBarTemplate>
+                <GridCommandButton Command="ExcelExport" Icon="@SvgIcon.FileExcel">Export to Excel</GridCommandButton>
+                <GridCommandButton Command="CsvExport" Icon="@SvgIcon.FileCsv">Export to CSV</GridCommandButton>
+                <GridSearchBox DebounceDelay="300" />
+                <TelerikButton OnClick="@ClearAllFilters" Icon="@SvgIcon.FilterClear">Clear Filters</TelerikButton>
+                <span style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
+                    <span style="font-weight: bold;">Total Items: @FilteredRows.Count</span>
+                    <span style="font-weight: bold; color: #007bff;">Selected: @SelectedItems.Count</span>
+                    @if (SelectedItems.Count > 0)
+                    {
+                        <TelerikButton OnClick="@(() => { SelectedItemsCollection = new List<Row>(); })"
+                                       Icon="@SvgIcon.X"
+                                       FillMode="@ThemeConstants.Button.FillMode.Flat">
+                            Clear Selection
+                        </TelerikButton>
+                    }
+                </span>
+            </GridToolBarTemplate>
+            <GridExport>
+                <GridExcelExport FileName="items-on-order" AllPages="true" />
+                <GridCsvExport FileName="items-on-order" AllPages="true" />
+            </GridExport>
             <GridColumns>
-                <GridColumn Field="@nameof(Row.Item)" Title="Item" Width="120px">
+                <GridCheckboxColumn SelectAll="true" Width="60px" Locked="true" Title="Select" />
+                <GridColumn Field="@nameof(Row.Item)" Title="Item" Width="140px" Locked="true">
                     <Template>
                         @{
                             var row = (Row)context;
-                            <button class="link-button" @onclick="() => HandleItemClick(row.Item)">
+                            <button class="link-button" @onclick="() => HandleItemClick(row.Item)" @onclick:stopPropagation="true">
                                 @row.Item
                             </button>
                         }
                     </Template>
                 </GridColumn>
-                <GridColumn Field="@nameof(Row.Description)" Title="Description" />
-                <GridColumn Field="@nameof(Row.OnOrderOpen)" Title="On Order Open" Width="140px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(Row.InTransit)" Title="In Transit" Width="120px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(Row.Alloc)" Title="Alloc" Width="100px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(Row.BKO)" Title="BKO" Width="100px" TextAlign="@ColumnTextAlign.Right">
+                <GridColumn Field="@nameof(Row.Description)" Title="Description" Width="350px" />
+                <GridColumn Field="@nameof(Row.OnOrderOpen)" Title="On Order Open" Width="160px" TextAlign="@ColumnTextAlign.Right">
                     <Template>
                         @{
                             var row = (Row)context;
-                            <span class="@HighlightIf(row.BKO > 0)">@row.BKO</span>
+                            <span class="@(row.OnOrderOpen > 10 ? "badge badge-warning" : "")">@row.OnOrderOpen</span>
                         }
                     </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = FilteredRows.Sum(x => x.OnOrderOpen);
+                            <strong style="color: #007bff;">@total</strong>
+                        }
+                    </FooterTemplate>
                 </GridColumn>
-                <GridColumn Field="@nameof(Row.TotalOpenCost)" Title="Total Open Cost" Width="150px" TextAlign="@ColumnTextAlign.Right">
+                <GridColumn Field="@nameof(Row.InTransit)" Title="In Transit" Width="140px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var row = (Row)context;
+                            @if (row.InTransit > 0)
+                            {
+                                <span class="badge badge-info">@row.InTransit</span>
+                            }
+                            else
+                            {
+                                <span>@row.InTransit</span>
+                            }
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = FilteredRows.Sum(x => x.InTransit);
+                            <strong style="color: #17a2b8;">@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(Row.Alloc)" Title="Alloc" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = FilteredRows.Sum(x => x.Alloc);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(Row.BKO)" Title="BKO" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var row = (Row)context;
+                            @if (row.BKO > 0)
+                            {
+                                <span class="badge badge-danger">@row.BKO</span>
+                            }
+                            else
+                            {
+                                <span>@row.BKO</span>
+                            }
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = FilteredRows.Sum(x => x.BKO);
+                            <strong style="color: #dc3545;">@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(Row.UnitCost)" Title="Unit Cost" Width="140px" TextAlign="@ColumnTextAlign.Right" DisplayFormat="{0:C}" />
+                <GridColumn Field="@nameof(Row.TotalOpenCost)" Title="Total Open Cost" Width="170px" TextAlign="@ColumnTextAlign.Right">
                     <Template>
                         @{
                             var row = (Row)context;
@@ -65,25 +147,25 @@
                         }
                     </Template>
                     <FooterTemplate>
-                        @FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")
+                        @{
+                            var total = FilteredRows.Sum(x => x.TotalOpenCost);
+                            <strong style="font-size: 1.1em; color: #28a745;">@total.ToString("C")</strong>
+                        }
                     </FooterTemplate>
                 </GridColumn>
             </GridColumns>
-            <GridAggregates>
-                <GridAggregate Field="@nameof(Row.OnOrderOpen)" Aggregate="@GridAggregateType.Sum" />
-                <GridAggregate Field="@nameof(Row.InTransit)" Aggregate="@GridAggregateType.Sum" />
-                <GridAggregate Field="@nameof(Row.Alloc)" Aggregate="@GridAggregateType.Sum" />
-                <GridAggregate Field="@nameof(Row.BKO)" Aggregate="@GridAggregateType.Sum" />
-                <GridAggregate Field="@nameof(Row.TotalOpenCost)" Aggregate="@GridAggregateType.Sum" />
-            </GridAggregates>
+            <GridSettings>
+                <GridPagerSettings InputType="PagerInputType.Input"
+                                   PageSizes="@(new List<int?> { 10, 20, 50, 100, null })"/>
+            </GridSettings>
         </TelerikGrid>
 
         @if (SelectedItems.Count > 0)
         {
-            <div style="padding: 1rem;">
+            <div style="padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6;">
                 <div class="chips-row">
                     <div class="chips">
-                        <span class="chips-label">Filtering by</span>
+                        <span class="chips-label" style="font-weight: 600;">Filtering PO Lines by Selected Items:</span>
                         @foreach (var it in SelectedItems.OrderBy(x => x))
                         {
                             <span class="chip" title="Remove filter">
@@ -97,22 +179,42 @@
             </div>
         }
 
-        <div style="padding: 0 1rem 1rem; font-size: 0.875rem; color: #666;">
-            In Transit: <strong>@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
-            &nbsp; | &nbsp; Backorders Awaiting Release: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
-            &nbsp; | &nbsp; Backordered: <strong>@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
-            &nbsp; | &nbsp; Unacknowledged: <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
-            &nbsp; | &nbsp; Open Items: <strong>@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
+        <div style="padding: 1rem; background: #fff; border-top: 1px solid #dee2e6; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.875rem;">
+            <div>
+                <span style="color: #6c757d;">In Transit:</span>
+                <strong style="color: #17a2b8;">@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
+            </div>
+            <div>
+                <span style="color: #6c757d;">Backorders Awaiting Release:</span>
+                <strong style="color: #ffc107;">@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+            </div>
+            <div>
+                <span style="color: #6c757d;">Backordered:</span>
+                <strong style="color: #dc3545;">@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+            </div>
+            <div>
+                <span style="color: #6c757d;">Unacknowledged:</span>
+                <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
+            </div>
+            <div>
+                <span style="color: #6c757d;">Open Items:</span>
+                <strong style="color: #28a745; font-size: 1.1em;">@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
+            </div>
         </div>
     </section>
 
     <!-- PO Lines Grid -->
-    <section class="panel" id="oplines" @ref="_oplinesSection">
-        <header class="section-header">
-            <h4>Open PO Lines</h4>
+    <section class="panel" id="oplines" @ref="_oplinesSection" style="margin-top: 2rem;">
+        <header class="section-header" style="background: #f8f9fa; padding: 1rem; border-bottom: 2px solid #dee2e6;">
+            <h4 style="margin: 0; display: flex; align-items: center; gap: 1rem;">
+                Open PO Lines
+                <span class="badge" style="background: #007bff; color: white; padding: 0.35em 0.65em;">
+                    @VisibleOpenLines.Count Lines
+                </span>
+            </h4>
             @if (SelectedItems.Count > 0)
             {
-                <div class="chips compact">
+                <div class="chips compact" style="margin-top: 0.5rem;">
                     <span class="chips-label">Showing PO lines for:</span>
                     @foreach (var it in SelectedItems.OrderBy(x => x))
                     {
@@ -127,12 +229,31 @@
         </header>
 
         <TelerikGrid Data="@VisibleOpenLines"
-                     Pageable="false"
+                     Pageable="true"
+                     PageSize="20"
                      Sortable="true"
+                     FilterMode="@GridFilterMode.FilterRow"
                      Resizable="true"
-                     Height="auto">
+                     Reorderable="true"
+                     Groupable="true"
+                     ShowColumnMenu="true"
+                     @ref="@POLinesGridRef">
+            <GridToolBarTemplate>
+                <GridCommandButton Command="ExcelExport" Icon="@SvgIcon.FileExcel">Export to Excel</GridCommandButton>
+                <GridCommandButton Command="CsvExport" Icon="@SvgIcon.FileCsv">Export to CSV</GridCommandButton>
+                <GridSearchBox DebounceDelay="300" />
+                <TelerikButton OnClick="@ClearPOLinesFilters" Icon="@SvgIcon.FilterClear">Clear Filters</TelerikButton>
+                <span style="margin-left: auto; font-weight: bold;">
+                    Total PO Lines: @VisibleOpenLines.Count
+                </span>
+            </GridToolBarTemplate>
+            <GridExport>
+                <GridExcelExport FileName="open-po-lines" AllPages="true" />
+                <GridCsvExport FileName="open-po-lines" AllPages="true" />
+            </GridExport>
             <GridColumns>
-                <GridColumn Field="@nameof(OpenPOLine.PONumber)" Title="PO#" Width="140px">
+                <GridColumn Field="@nameof(OpenPOLine.Item)" Title="Item" Width="140px" Locked="true" />
+                <GridColumn Field="@nameof(OpenPOLine.PONumber)" Title="PO#" Width="160px">
                     <Template>
                         @{
                             var line = (OpenPOLine)context;
@@ -143,22 +264,98 @@
                     </Template>
                 </GridColumn>
                 <GridColumn Field="@nameof(OpenPOLine.Line)" Title="Ln" Width="80px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(OpenPOLine.SONumber)" Title="SO#" Width="120px" />
-                <GridColumn Field="@nameof(OpenPOLine.Vendor)" Title="Vendor" Width="120px" />
-                <GridColumn Field="@nameof(OpenPOLine.Date)" Title="Date" Width="110px">
+                <GridColumn Field="@nameof(OpenPOLine.SONumber)" Title="SO#" Width="140px" />
+                <GridColumn Field="@nameof(OpenPOLine.Vendor)" Title="Vendor" Width="140px" />
+                <GridColumn Field="@nameof(OpenPOLine.Date)" Title="Date" Width="130px" DisplayFormat="{0:MM/dd/yyyy}">
                     <Template>
                         @{
                             var line = (OpenPOLine)context;
-                            @line.Date.ToString("MM/dd/yyyy")
+                            var daysDiff = (DateTime.Today - line.Date).Days;
+                            var dateClass = daysDiff > 30 ? "text-danger" : daysDiff > 14 ? "text-warning" : "";
+                            <span class="@dateClass">@line.Date.ToString("MM/dd/yyyy")</span>
                         }
                     </Template>
                 </GridColumn>
-                <GridColumn Field="@nameof(OpenPOLine.QtyOrdered)" Title="Qty Ord" Width="100px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(OpenPOLine.Open)" Title="Open" Width="100px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(OpenPOLine.InTransit)" Title="In Transit" Width="110px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(OpenPOLine.Alloc)" Title="Alloc" Width="100px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(OpenPOLine.BKO)" Title="BKO" Width="100px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(OpenPOLine.UnitCost)" Title="Unit Cost" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                <GridColumn Field="@nameof(OpenPOLine.QtyOrdered)" Title="Qty Ord" Width="110px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = VisibleOpenLines.Sum(x => x.QtyOrdered);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.Open)" Title="Open" Width="110px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            @if (line.Open > 0)
+                            {
+                                <span style="font-weight: 600; color: #007bff;">@line.Open</span>
+                            }
+                            else
+                            {
+                                <span>@line.Open</span>
+                            }
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = VisibleOpenLines.Sum(x => x.Open);
+                            <strong style="color: #007bff;">@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.InTransit)" Title="In Transit" Width="130px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            @if (line.InTransit > 0)
+                            {
+                                <span class="badge badge-info">@line.InTransit</span>
+                            }
+                            else
+                            {
+                                <span>@line.InTransit</span>
+                            }
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = VisibleOpenLines.Sum(x => x.InTransit);
+                            <strong style="color: #17a2b8;">@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.Alloc)" Title="Alloc" Width="110px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = VisibleOpenLines.Sum(x => x.Alloc);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.BKO)" Title="BKO" Width="110px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            @if (line.BKO > 0)
+                            {
+                                <span class="badge badge-danger">@line.BKO</span>
+                            }
+                            else
+                            {
+                                <span>@line.BKO</span>
+                            }
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = VisibleOpenLines.Sum(x => x.BKO);
+                            <strong style="color: #dc3545;">@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.UnitCost)" Title="Unit Cost" Width="140px" TextAlign="@ColumnTextAlign.Right" DisplayFormat="{0:C}">
                     <Template>
                         @{
                             var line = (OpenPOLine)context;
@@ -166,26 +363,63 @@
                         }
                     </Template>
                 </GridColumn>
-                <GridColumn Field="@nameof(OpenPOLine.TotalOpenCost)" Title="Total Open Cost" Width="150px" TextAlign="@ColumnTextAlign.Right">
+                <GridColumn Field="@nameof(OpenPOLine.TotalOpenCost)" Title="Total Open Cost" Width="170px" TextAlign="@ColumnTextAlign.Right">
                     <Template>
                         @{
                             var line = (OpenPOLine)context;
                             @line.TotalOpenCost.ToString("C")
                         }
                     </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = VisibleOpenLines.Sum(x => x.TotalOpenCost);
+                            <strong style="font-size: 1.1em; color: #28a745;">@total.ToString("C")</strong>
+                        }
+                    </FooterTemplate>
                 </GridColumn>
-                <GridColumn Field="@nameof(OpenPOLine.Rcv)" Title="Rcv" Width="100px" TextAlign="@ColumnTextAlign.Right" />
-                <GridColumn Field="@nameof(OpenPOLine.Status)" Title="Status" Width="120px" />
+                <GridColumn Field="@nameof(OpenPOLine.Rcv)" Title="Rcv" Width="100px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = VisibleOpenLines.Sum(x => x.Rcv);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(OpenPOLine.Status)" Title="Status" Width="130px">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            var statusClass = line.Status.ToLower() switch
+                            {
+                                "open" => "badge badge-success",
+                                "partial" => "badge badge-warning",
+                                "closed" => "badge badge-secondary",
+                                _ => "badge badge-info"
+                            };
+                            <span class="@statusClass">@line.Status</span>
+                        }
+                    </Template>
+                </GridColumn>
             </GridColumns>
+            <GridSettings>
+                <GridPagerSettings InputType="PagerInputType.Input"
+                                   PageSizes="@(new List<int?> { 10, 20, 50, 100, null })"/>
+            </GridSettings>
         </TelerikGrid>
 
-        <footer class="actions" style="padding: 1rem;">
-            <button style="border: 1px solid black;" class="btn" @onclick="Print">Print</button>
+        <footer class="actions" style="padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6;">
+            <button class="btn btn-primary" @onclick="Print">
+                <span class="k-icon k-i-print"></span> Print Report
+            </button>
         </footer>
     </section>
 </div>
 
 @code {
+    // Grid references for programmatic control
+    private TelerikGrid<Row>? ItemsGridRef;
+    private TelerikGrid<OpenPOLine>? POLinesGridRef;
+
     // ============================================================
     // 1) Page contract & URL bindings (overrides + sidebar + decode)
     // ============================================================
@@ -384,7 +618,7 @@
     {
         var newItems = _selectedItemsCollection.Select(r => r.Item).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var changed = !SelectedItems.SetEquals(newItems);
-        
+
         if (changed)
         {
             SelectedItems.Clear();
@@ -392,9 +626,9 @@
             {
                 SelectedItems.Add(item);
             }
-            
+
             NavigateWithPageState();
-            
+
             if (SelectedItems.Count > 0)
             {
                 InvokeAsync(async () => await ScrollToPOLinesAsync());
@@ -411,22 +645,6 @@
         }
     }
 
-    private async Task OnSelectedItemsChanged(IEnumerable<Row> selectedRows)
-    {
-        SelectedItems.Clear();
-        foreach (var row in selectedRows)
-        {
-            SelectedItems.Add(row.Item);
-        }
-
-        NavigateWithPageState();
-
-        if (SelectedItems.Count > 0)
-            await ScrollToPOLinesAsync();
-
-        StateHasChanged();
-    }
-
     private void HandleItemClick(string item)
     {
         if (SelectedItems.Contains(item))
@@ -437,6 +655,10 @@
         {
             SelectedItems.Add(item);
         }
+
+        // Update the grid selection
+        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
+
         NavigateWithPageState();
         StateHasChanged();
     }
@@ -444,6 +666,10 @@
     private void RemoveItem(string item)
     {
         if (!SelectedItems.Remove(item)) return;
+
+        // Update the grid selection
+        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
+
         NavigateWithPageState(replace: SelectedItems.Count == 0);
         StateHasChanged();
     }
@@ -452,8 +678,31 @@
     {
         if (SelectedItems.Count == 0) return;
         SelectedItems.Clear();
+        _selectedItemsCollection = new List<Row>();
         NavigateWithPageState(replace: true);
         StateHasChanged();
+    }
+
+    private async Task ClearAllFilters()
+    {
+        if (ItemsGridRef != null)
+        {
+            var state = ItemsGridRef.GetState();
+            state.FilterDescriptors.Clear();
+            state.SearchFilter = null;
+            await ItemsGridRef.SetStateAsync(state);
+        }
+    }
+
+    private async Task ClearPOLinesFilters()
+    {
+        if (POLinesGridRef != null)
+        {
+            var state = POLinesGridRef.GetState();
+            state.FilterDescriptors.Clear();
+            state.SearchFilter = null;
+            await POLinesGridRef.SetStateAsync(state);
+        }
     }
 
     private async Task ScrollToPOLinesAsync()
@@ -560,3 +809,77 @@
         el.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
     };
 </script>
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 0.25em 0.6em;
+        font-size: 0.875em;
+        font-weight: 600;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+
+    .badge-success {
+        background-color: #28a745;
+    }
+
+    .badge-secondary {
+        background-color: #6c757d;
+    }
+
+    .badge-danger {
+        background-color: #dc3545;
+    }
+
+    .badge-info {
+        background-color: #17a2b8;
+    }
+
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
+    }
+
+    .link-button {
+        background: none;
+        border: none;
+        color: #007bff;
+        text-decoration: underline;
+        cursor: pointer;
+        padding: 0;
+        font: inherit;
+    }
+
+        .link-button:hover {
+            color: #0056b3;
+        }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+</style>

@@ -7,6 +7,8 @@
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Utils
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
 
 @inherits PageWithSidebarBase
 
@@ -74,67 +76,151 @@
     </header>
 
     <section class="card rop-card">
-        <header class="section-header panel">
-            <h4>Shipping Notifications</h4>
+        <header class="section-header panel" style="display: flex; align-items: center; padding: 1rem;">
+            <h4 style="margin: 0;">Shipping Notifications</h4>
             <span class="badge" style="margin-left:auto;">Label Count: @LabelCountTotal</span>
         </header>
 
-        <div class="table-wrap">
-            <table class="tbl tbl-lines" role="grid" aria-label="ASN Lines">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th class="w-label">Label</th>
-                        <th>Description</th>
-                        <th class="num">Unit Cost</th>
-                        <th class="num">Ext. Cost</th>
-                        <th class="w-po">PO #</th>
-                        <th class="w-ln">PO Line</th>
-                        <th>Need For</th>
-                        <th class="num">Qty On Hand</th>
-                        <th class="num">Total Qty Needs</th>
-                        <th class="num">Qty Ship</th>
-                        <th class="num">Prev Rcv Qty</th>
-                        <th class="num">Rcv Qty</th>
-                        <th class="w-status">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (CurrentLines.Count == 0)
-                    {
-                        <tr><td colspan="14" class="muted">No lines for the selected ASN.</td></tr>
-                    }
-                    else
-                    {
-                        @foreach (var l in CurrentLines)
-                        {
-                            <tr>
-                                <td>@l.Item</td>
-                                <td class="num">@l.LabelCount</td>
-                                <td>@l.Description</td>
-                                <td class="num">@l.UnitCost.ToString("C")</td>
-                                <td class="num">@l.ExtCost.ToString("C")</td>
-                                <td class="w-po">@l.PONumber</td>
-                                <td class="num">@l.POLine</td>
-                                <td>@l.NeedFor</td>
-                                <td class="num">@l.QtyOnHand</td>
-                                <td class="num">@l.TotalQtyNeeds</td>
-                                <td class="num">@l.QtyShip</td>
-                                <td class="num">@l.PreviouslyReceived</td>
-                                <td class="num">@l.ReceiveQty</td>
-                                <td>@l.Status</td>
-                            </tr>
+        <TelerikGrid Data="@CurrentLines"
+                     SelectionMode="@GridSelectionMode.Multiple"
+                     @bind-SelectedItems="@SelectedLines"
+                     Pageable="true"
+                     PageSize="20"
+                     Sortable="true"
+                     FilterMode="@GridFilterMode.FilterRow"
+                     Resizable="true"
+                     Reorderable="true"
+                     Groupable="true"
+                     ShowColumnMenu="true"
+                     OnUpdate="@UpdateHandler"
+                     EditMode="@GridEditMode.Incell">
+            <GridToolBarTemplate>
+                <GridCommandButton Command="ExcelExport" Icon="@SvgIcon.FileExcel">Export to Excel</GridCommandButton>
+                <GridSearchBox />
+                <span style="margin-left: auto; font-weight: bold;">
+                    Total Lines: @CurrentLines.Count | Selected: @SelectedLines.Count()
+                </span>
+            </GridToolBarTemplate>
+            <GridExport>
+                <GridExcelExport FileName="asn-lines" AllPages="true" />
+                <GridCsvExport FileName="asn-lines" AllPages="true" />
+            </GridExport>
+            <GridColumns>
+                <GridCheckboxColumn SelectAll="true" Width="60px" Locked="true" />
+                <GridColumn Field="@nameof(AsnLine.Item)" Title="Item" Width="140px" Locked="true" />
+                <GridColumn Field="@nameof(AsnLine.LabelCount)" Title="Label" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = CurrentLines.Sum(x => x.LabelCount);
+                            <strong>@total</strong>
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.Description)" Title="Description" Width="300px" />
+                <GridColumn Field="@nameof(AsnLine.UnitCost)" Title="Unit Cost" Width="120px" TextAlign="@ColumnTextAlign.Right" DisplayFormat="{0:C}">
+                    <Template>
+                        @{
+                            var line = (AsnLine)context;
+                            @line.UnitCost.ToString("C")
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.ExtCost)" Title="Ext. Cost" Width="130px" TextAlign="@ColumnTextAlign.Right">
+                    <Template>
+                        @{
+                            var line = (AsnLine)context;
+                            @line.ExtCost.ToString("C")
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = CurrentLines.Sum(x => x.ExtCost);
+                            <strong>@total.ToString("C")</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.PONumber)" Title="PO #" Width="140px" />
+                <GridColumn Field="@nameof(AsnLine.POLine)" Title="PO Line" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                <GridColumn Field="@nameof(AsnLine.NeedFor)" Title="Need For" Width="120px" />
+                <GridColumn Field="@nameof(AsnLine.QtyOnHand)" Title="Qty On Hand" Width="130px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = CurrentLines.Sum(x => x.QtyOnHand);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.TotalQtyNeeds)" Title="Total Qty Needs" Width="150px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = CurrentLines.Sum(x => x.TotalQtyNeeds);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.QtyShip)" Title="Qty Ship" Width="110px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = CurrentLines.Sum(x => x.QtyShip);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.PreviouslyReceived)" Title="Prev Rcv Qty" Width="140px" TextAlign="@ColumnTextAlign.Right">
+                    <FooterTemplate>
+                        @{
+                            var total = CurrentLines.Sum(x => x.PreviouslyReceived);
+                            <strong>@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.ReceiveQty)" Title="Rcv Qty" Width="110px" TextAlign="@ColumnTextAlign.Right" Editable="true">
+                    <Template>
+                        @{
+                            var line = (AsnLine)context;
+                            <span style="@(line.ReceiveQty > 0 ? "font-weight: bold; color: #28a745;" : "")">
+                                @line.ReceiveQty
+                            </span>
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @{
+                            var total = CurrentLines.Sum(x => x.ReceiveQty);
+                            <strong style="color: #28a745;">@total</strong>
+                        }
+                    </FooterTemplate>
+                </GridColumn>
+                <GridColumn Field="@nameof(AsnLine.Status)" Title="Status" Width="120px">
+                    <Template>
+                        @{
+                            var line = (AsnLine)context;
+                            var statusClass = line.Status.ToLower() switch
+                            {
+                                "open" => "badge badge-success",
+                                "closed" => "badge badge-secondary",
+                                "partial" => "badge badge-warning",
+                                _ => "badge badge-info"
+                            };
+                            <span class="@statusClass">@line.Status</span>
+                        }
+                    </Template>
+                </GridColumn>
+            </GridColumns>
+            <GridSettings>
+                <GridPagerSettings InputType="PagerInputType.Input"
+                                   PageSizes="@(new List<int?> { 10, 20, 50, 100, null })" />
+            </GridSettings>
+        </TelerikGrid>
 
-        <footer class="actions">
-            <button class="btn outline" @onclick="SelectAll">Select All</button>
+        <footer class="actions" style="margin-top: 1rem; padding: 1rem;">
+            <button class="btn outline" @onclick="SelectAll">Select All (@CurrentLines.Count)</button>
             <button class="btn outline" @onclick="UnselectAll">Un-Select All</button>
-            <button class="btn primary" @onclick="PrintPriceLabels" disabled="@(!PrintNeedsOnly)">Print Price Labels</button>
-            <button class="btn success" @onclick="Receive">Receive</button>
+            <button class="btn primary" @onclick="PrintPriceLabels" disabled="@(!CanPrintLabels)">
+                Print Price Labels @(SelectedLines.Any() ? $"({SelectedLines.Count()})" : "")
+            </button>
+            <button class="btn success" @onclick="Receive" disabled="@(!CanReceive)">
+                Receive @(TotalReceiveQty > 0 ? $"({TotalReceiveQty} items)" : "")
+            </button>
         </footer>
     </section>
 </div>
@@ -170,9 +256,14 @@
     private string SelectedCarrier = "UPS";
     private readonly string[] Carriers = new[] { "UPS", "USPS", "FedEx", "DHL", "OnTrac", "Other" };
 
-    // Lines
+    // Lines and selection
     private List<AsnLine> CurrentLines = new();
+    private IEnumerable<AsnLine> SelectedLines { get; set; } = new List<AsnLine>();
+
     private int LabelCountTotal => CurrentLines.Sum(x => x.LabelCount);
+    private int TotalReceiveQty => CurrentLines.Sum(x => x.ReceiveQty);
+    private bool CanPrintLabels => PrintNeedsOnly && SelectedLines.Any();
+    private bool CanReceive => TotalReceiveQty > 0;
 
     // ====== PageWithSidebarBase contract ======
     protected override IReadOnlyDictionary<string, string?> Scalars =>
@@ -184,8 +275,7 @@
             ["asn"] = SelectedAsnId
         };
 
-
-    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>(); // none on this page
+    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
 
     // URL-bound state
     private string? DealerId;
@@ -213,7 +303,6 @@
         LoadLinesFor(SelectedAsnId);
     }
 
-
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -221,9 +310,9 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Items On Order",    "Items On Order",    Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
-            new FacetOption("Purchase Orders",   "Purchase Orders",   Href: AppendPreserved("/po-transfer/purchase-orders")),
-            new FacetOption("Receipt of Product","Receipt of Product",Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
+                new FacetOption("Items On Order",    "Items On Order",    Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
+                new FacetOption("Purchase Orders",   "Purchase Orders",   Href: AppendPreserved("/po-transfer/purchase-orders")),
+                new FacetOption("Receipt of Product","Receipt of Product",Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
             }
         );
 
@@ -232,9 +321,9 @@
             Title: "Status",
             Options: () => new[]
             {
-            new FacetOption("All","All",       Href: AppendPreserved($"{BasePath}?status=All")),
-            new FacetOption("Open","Open",     Href: AppendPreserved($"{BasePath}?status=Open")),
-            new FacetOption("Closed","Closed", Href: AppendPreserved($"{BasePath}?status=Closed"))
+                new FacetOption("All","All",       Href: AppendPreserved($"{BasePath}?status=All")),
+                new FacetOption("Open","Open",     Href: AppendPreserved($"{BasePath}?status=Open")),
+                new FacetOption("Closed","Closed", Href: AppendPreserved($"{BasePath}?status=Closed"))
             }
         );
 
@@ -287,36 +376,130 @@
     private void LoadLinesFor(string? asnId)
     {
         CurrentLines.Clear();
+        SelectedLines = new List<AsnLine>();
+
         if (string.IsNullOrWhiteSpace(asnId)) return;
 
-        // DEMO lines
+        // DEMO lines - expanded with more data
         if (asnId == "0044501566")
+        {
+            CurrentLines.AddRange(new[]
+            {
+                new AsnLine
+                {
+                    Item = "MWE289120",
+                    LabelCount = 1,
+                    Description = "M18 & M12 Wireless Spkr",
+                    UnitCost = 185.46m,
+                    ExtCost = 185.46m,
+                    PONumber = "PO-200996",
+                    POLine = 7,
+                    NeedFor = "Truck",
+                    QtyOnHand = 0,
+                    TotalQtyNeeds = 0,
+                    QtyShip = 1,
+                    PreviouslyReceived = 0,
+                    ReceiveQty = 1,
+                    Status = "Open"
+                },
+                new AsnLine
+                {
+                    Item = "SB4820",
+                    LabelCount = 2,
+                    Description = "20pc 1/2\" Drive SAE Socket Set",
+                    UnitCost = 89.99m,
+                    ExtCost = 179.98m,
+                    PONumber = "PO-200996",
+                    POLine = 8,
+                    NeedFor = "Stock",
+                    QtyOnHand = 2,
+                    TotalQtyNeeds = 3,
+                    QtyShip = 2,
+                    PreviouslyReceived = 0,
+                    ReceiveQty = 2,
+                    Status = "Open"
+                }
+            });
+        }
+        else if (asnId == "0044453050")
         {
             CurrentLines.Add(new AsnLine
             {
-                Item = "MWE289120",
+                Item = "WT3350",
                 LabelCount = 1,
-                Description = "M18 & M12 Wireless Spkr",
-                UnitCost = 185.46m,
-                ExtCost = 185.46m,
-                PONumber = "PO-200996",
-                POLine = 7,
-                NeedFor = "Truck",
-                QtyOnHand = 0,
-                TotalQtyNeeds = 0,
+                Description = "Adjustable Wrench 12\"",
+                UnitCost = 92.10m,
+                ExtCost = 92.10m,
+                PONumber = "PO-200994",
+                POLine = 3,
+                NeedFor = "Customer",
+                QtyOnHand = 1,
+                TotalQtyNeeds = 1,
                 QtyShip = 1,
                 PreviouslyReceived = 0,
-                ReceiveQty = 1,
+                ReceiveQty = 0,
                 Status = "Open"
             });
         }
     }
 
+    // ===== Grid event handlers =====
+    private async Task UpdateHandler(GridCommandEventArgs args)
+    {
+        var line = (AsnLine)args.Item;
+
+        // Find and update the line in the list
+        var existingLine = CurrentLines.FirstOrDefault(l => l.Item == line.Item);
+        if (existingLine != null)
+        {
+            existingLine.ReceiveQty = line.ReceiveQty;
+
+            // Recalculate received amount
+            ReceivedAmount = CurrentLines.Sum(l => l.ReceiveQty * l.UnitCost);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
     // ===== Actions =====
-    private Task SelectAll() => Task.CompletedTask;
-    private Task UnselectAll() => Task.CompletedTask;
-    private Task PrintPriceLabels() => Task.CompletedTask;
-    private Task Receive() => Task.CompletedTask;
+    private void SelectAll()
+    {
+        SelectedLines = CurrentLines.ToList();
+        StateHasChanged();
+    }
+
+    private void UnselectAll()
+    {
+        SelectedLines = new List<AsnLine>();
+        StateHasChanged();
+    }
+
+    private async Task PrintPriceLabels()
+    {
+        if (!CanPrintLabels) return;
+
+        var items = string.Join(", ", SelectedLines.Select(l => l.Item));
+        await JS.InvokeVoidAsync("console.log", $"Printing price labels for: {items}");
+
+        // TODO: Implement actual label printing
+    }
+
+    private async Task Receive()
+    {
+        if (!CanReceive) return;
+
+        var itemsToReceive = CurrentLines.Where(l => l.ReceiveQty > 0).ToList();
+        var summary = string.Join(", ", itemsToReceive.Select(l => $"{l.Item} ({l.ReceiveQty})"));
+
+        await JS.InvokeVoidAsync("console.log", $"Receiving items: {summary}");
+        await JS.InvokeVoidAsync("console.log", $"Total amount: {ReceivedAmount:C}");
+
+        // TODO: Implement actual receiving logic
+        // After successful receive:
+        // - Update line statuses
+        // - Clear receive quantities
+        // - Reload data
+    }
 
     private async Task TrackPackageAsync()
     {
@@ -386,3 +569,71 @@
         yield return new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m, ReceiptStatus.Open);
     }
 }
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.875em;
+        font-weight: 600;
+        line-height: 1;
+        color: #fff;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+
+    .badge-success {
+        background-color: #28a745;
+    }
+
+    .badge-secondary {
+        background-color: #6c757d;
+    }
+
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+
+    .badge-info {
+        background-color: #17a2b8;
+    }
+
+    .btn.outline {
+        background-color: transparent;
+        border: 1px solid #6c757d;
+        color: #6c757d;
+    }
+
+        .btn.outline:hover {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+    .btn.primary {
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+    }
+
+        .btn.primary:hover {
+            background-color: #0056b3;
+        }
+
+    .btn.success {
+        background-color: #28a745;
+        color: #fff;
+        border: none;
+    }
+
+        .btn.success:hover {
+            background-color: #1e7e34;
+        }
+
+    .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+</style>
