@@ -415,15 +415,16 @@
 </div>
 
 @code {
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
+
     // Grid references for programmatic control
     private TelerikGrid<Row>? ItemsGridRef;
     private TelerikGrid<OpenPOLine>? POLinesGridRef;
 
-    // Enable franchise selector in sidebar
-    protected override bool ShowFranchiseSelector => true;
 
     // ============================================================
-    // 1) Page contract & URL bindings (overrides + sidebar + decode)
+    // Page contract & URL bindings (overrides + sidebar + decode)
     // ============================================================
     protected override string BasePath => "/po-transfer/items-on-order";
 
@@ -439,6 +440,8 @@
 
     protected override void ReadFromUrl()
     {
+        var map = QueryStringMap.Read(Nav);
+
         var abs = Nav.ToAbsoluteUri(Nav.Uri);
         var q = QueryHelpers.ParseQuery(abs.Query);
 
@@ -462,6 +465,10 @@
             }
         }
     }
+
+    // ============================================================
+    // Sidebar facets
+    // ============================================================
 
     protected override IEnumerable<Facet> Facets()
     {
@@ -510,7 +517,7 @@
     }
 
     // ============================================================
-    // 2) Lifecycle & URL-change wiring
+    // Lifecycle & URL-change wiring
     // ============================================================
     protected override void OnInitialized()
     {
@@ -565,7 +572,7 @@
     }
 
     // ============================================================
-    // 3) Page state, data & computed views
+    // Page state, data & computed views
     // ============================================================
     private string? DealerId;
     public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
@@ -600,7 +607,7 @@
         SelectedItems.Count == 0 ? OpenLines : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
 
     // ============================================================
-    // 4) UI event handlers
+    // UI event handlers
     // ============================================================
     private void SyncSelectedItems()
     {
@@ -733,7 +740,7 @@
     }
 
     // ============================================================
-    // 5) Pure helpers
+    // Helpers
     // ============================================================
     private static List<Row> ApplyStatusFilter(List<Row> source, StatusKind status) =>
         status switch
@@ -748,7 +755,7 @@
     private string HighlightIf(bool cond) => cond ? "hl" : "";
 
     // ============================================================
-    // 6) Data models
+    // Data models
     // ============================================================
     private sealed class Row
     {

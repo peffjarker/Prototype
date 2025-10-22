@@ -303,6 +303,13 @@
         LoadLinesFor(SelectedAsnId);
     }
 
+    // ============================================================
+    // Sidebar facets
+    // ============================================================
+
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => false;
+
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(

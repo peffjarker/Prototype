@@ -274,8 +274,11 @@
 </div>
 
 @code {
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
+
     // ============================================================
-    // 1) Page contract & URL bindings
+    // Page contract & URL bindings
     // ============================================================
     protected override string BasePath => "/po-transfer/purchase-orders";
 
@@ -328,6 +331,7 @@
     // ============================================================
     // 2) Sidebar facets
     // ============================================================
+
     protected override IEnumerable<Facet> Facets()
     {
         // Option facet (cross-page) – wrap Hrefs with AppendPreserved
@@ -377,7 +381,7 @@
     }
 
     // ============================================================
-    // 3) Lifecycle
+    // Lifecycle
     // ============================================================
     protected override void OnInitialized()
     {
@@ -386,7 +390,7 @@
     }
 
     // ============================================================
-    // 4) Page state & computed lists
+    // Page state & computed lists
     // ============================================================
     private sealed record PoSummary(string Number, DateTime Date, string Status)
     {
@@ -406,7 +410,7 @@
     private PurchaseOrder Model { get; set; } = new();
 
     // ============================================================
-    // 5) Data seeding & loading
+    // Data seeding & loading
     // ============================================================
     private void SeedPoList()
     {
@@ -498,7 +502,7 @@
     }
 
     // ============================================================
-    // 6) Actions
+    //  Actions
     // ============================================================
     private Task PrintPo() => JS.InvokeVoidAsync("console.log", "Print PO").AsTask();
     private Task CreateNewPo() => JS.InvokeVoidAsync("console.log", "Create New PO").AsTask();
@@ -519,12 +523,12 @@
     private Task ViewActivities() => JS.InvokeVoidAsync("console.log", "View Activities").AsTask();
 
     // ============================================================
-    // 7) Helpers
+    // Helpers
     // ============================================================
     private static string BoolText(bool v) => v ? "Yes" : "No";
 
     // ============================================================
-    // 8) Simple models for this page
+    // Data models
     // ============================================================
     private sealed class PurchaseOrder
     {

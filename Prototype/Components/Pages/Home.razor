@@ -15,13 +15,3 @@
     </main>
 </div>
 
-@code {
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            Sidebar.ResetAll(hide: true);
-            StateHasChanged();
-        }
-    }
-}
