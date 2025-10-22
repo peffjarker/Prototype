@@ -37,6 +37,8 @@ namespace Prototype.Components.Layout.Navigation.Sidebar
         /// </summary>
         public List<SidebarItem> Items { get; set; } = new();
 
+        public bool IsFranchiseSelector { get; set; }
+
         /// <summary>
         /// Utility to normalize a title into a URL/key-safe slug.
         /// </summary>

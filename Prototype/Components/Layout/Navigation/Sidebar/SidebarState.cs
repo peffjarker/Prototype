@@ -121,6 +121,7 @@ public sealed class SidebarState : ISidebarState
         SectionKey = src.SectionKey,
         Title = src.Title,
         IsLegend = src.IsLegend,
+        IsFranchiseSelector = src.IsFranchiseSelector,
         Items = src.Items.Select(CloneItem).ToList()
     };
 

@@ -1,68 +1,84 @@
-﻿@* URL-driven selection (no item.Selected mutation) *@
-@inherits ComponentBase
-@using Prototype.Components.Layout
-@using Microsoft.AspNetCore.WebUtilities
+﻿@using Prototype.Components.Layout.Navigation.Sidebar
+@using Services
+@using global::Services
+@inject IFranchiseService FranchiseService
 
 @if (Sections.Count > 0)
 {
-    <div class="sidebar-sections"
-         style="--ss-width:@Width;
-                --ss-header:#@(HeaderColor.TrimStart('#'));
-                --ss-accent:#@(AccentColor.TrimStart('#'));
-                --ss-bg:#@(BackgroundColor.TrimStart('#'));
-                --ss-hover:#f0f5ff;
-                --ss-sel-bg:#d9e8ff;
-                --ss-sel-border:#a4c8ff;
-                --ss-sel-shadow:#cfe2ff;
-                --ss-sel-text:#0c5ea8;">
-
+    <div class="sidebar-sections" style="--ss-width:@Width; --ss-header:#@(HeaderColor.TrimStart('#')); --ss-accent:#@(AccentColor.TrimStart('#')); --ss-bg:#@(BackgroundColor.TrimStart('#'));">
         @for (var i = 0; i < Sections.Count; i++)
         {
             var section = Sections[i];
 
-            <section class="ss-section">
-                <header class="ss-header">
-                    <span>@(string.IsNullOrWhiteSpace(section.Title) ? section.SectionKey : section.Title)</span>
-                </header>
-
-                @if (section.IsLegend)
-                {
-                    <ul class="ss-legend">
-                        @foreach (var item in section.Items)
-                        {
-                            <li class="ss-legend-item">
-                                <span class="dot" style="background:@(item.ColorHex ?? "#d0d0d0")"></span>
-                                <span class="text">@item.Text</span>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <ul class="ss-list" role="listbox" aria-label="@Sections[i].Title">
-                        @foreach (var item in section.Items)
-                        {
-                            var isSelected = IsSelected(section, item);
-                            <li @key="(section.SectionKey ?? section.Title) + '|' + item.Text"
-                                class="ss-item @(isSelected ? "selected" : null)"
-                                role="option"
-                                aria-selected="@isSelected"
-                                @onclick="() => HandleSelect(section, item)">
-                                @if (!string.IsNullOrWhiteSpace(item.Icon))
-                                {
-                                    <span class="ss-item-icon">@((MarkupString)item.Icon)</span>
-                                }
-                                <span class="ss-item-text">@item.Text</span>
-                            </li>
-                        }
-                    </ul>
-                }
-            </section>
-
-            @if (i < Sections.Count - 1)
+            @if (section.IsFranchiseSelector)
             {
-                <div class="ss-separator" aria-hidden="true"><div></div></div>
+                var franchises = FranchiseService.GetFranchises();
+                var currentDealer = SelectedBySection.TryGetValue("dealer", out var d) ? d : null;
+
+                <FranchiseSelectorSection Franchises="@franchises"
+                                          SelectedDealerId="@currentDealer"
+                                          OnFranchiseChanged="@((dealerId) => HandleFranchiseChange(dealerId))" />
+
+                @if (i < Sections.Count - 1)
+                {
+                    <div class="ss-separator"><div></div></div>
+                }
+            }
+            else
+            {
+                <section class="ss-section">
+                    <header class="ss-header"><span>@(string.IsNullOrWhiteSpace(section.Title) ? section.SectionKey : section.Title)</span></header>
+                    @if (section.IsLegend)
+                    {
+                        <ul class="ss-legend">
+                            @foreach (var item in section.Items)
+                            {
+                                <li class="ss-legend-item">
+                                    <span class="dot" style="background:@(item.ColorHex ?? "#d0d0d0")"></span>
+                                    <span class="text">@item.Text</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <ul class="ss-list">
+                            @foreach (var item in section.Items)
+                            {
+                                var isSelected = IsSelected(section, item);
+                                <li @key="(section.SectionKey ?? section.Title) + '|' + item.Text"
+                                    class="ss-item @(isSelected ? "selected" : null)"
+                                    @onclick="() => HandleSelect(section, item)">
+                                    @if (!string.IsNullOrWhiteSpace(item.Icon))
+                                    {
+                                        <span class="ss-item-icon">@((MarkupString)item.Icon)</span>
+                                    }
+                                    <span class="ss-item-text">@item.Text</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+                @if (i < Sections.Count - 1)
+                {
+                    <div class="ss-separator"><div></div></div>
+                }
             }
         }
     </div>
+}
+
+@code {
+    private async Task HandleFranchiseChange(string? dealerId)
+    {
+        var updates = new Dictionary<string, string?> { ["dealer"] = dealerId };
+        var href = UpdateQuery(updates);
+        Nav.NavigateTo(href, replace: false);
+
+        if (OnItemSelected.HasDelegate)
+        {
+            var franchiseItem = new SidebarItem { Key = dealerId, Text = dealerId ?? "All" };
+            await OnItemSelected.InvokeAsync(franchiseItem);
+        }
+    }
 }

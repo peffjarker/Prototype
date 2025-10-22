@@ -8,21 +8,22 @@ using Microsoft.AspNetCore.WebUtilities;
 
 namespace Prototype.Components.Layout.Navigation.Sidebar;
 
-public sealed partial class SidebarSections : ComponentBase, IDisposable
+public partial class SidebarSections : ComponentBase, IDisposable
 {
     // ===== Parameters =====
     [Parameter] public IReadOnlyList<SidebarSection> Sections { get; set; } = Array.Empty<SidebarSection>();
 
     /// <summary>
-    /// Map a section key -> query key (e.g., { "status":"status", "option":null, "asn":"asn" }).
-    /// If null or missing, that section selection won’t be reflected in the query.
+    /// Map a section key -> query key (e.g., { "status":"status", "option":null, "asn":"asn", "franchise":"dealer" }).
+    /// If null or missing, that section selection won't be reflected in the query.
     /// </summary>
     [Parameter]
     public Dictionary<string, string?> SectionQueryKeys { get; set; } = new(StringComparer.OrdinalIgnoreCase)
     {
         ["option"] = null,
         ["status"] = "status",
-        ["asn"] = "asn"   // <-- REQUIRED so ASN never falls back to path matching
+        ["asn"] = "asn",
+        ["franchise"] = "dealer"  // Map franchise section to dealer query param
     };
 
     /// <summary>Two-way selection bindings. Keys should be section keys, not titles.</summary>
@@ -68,6 +69,9 @@ public sealed partial class SidebarSections : ComponentBase, IDisposable
 
         if (section.IsLegend || string.IsNullOrWhiteSpace(sk)) return false;
 
+        // Skip franchise selector - handled by component itself
+        if (section.IsFranchiseSelector) return false;
+
         // ---- ASN: ALWAYS query-driven; never fall back to path ----
         if (skKey == "asn")
         {
@@ -108,7 +112,7 @@ public sealed partial class SidebarSections : ComponentBase, IDisposable
         }
 
         // ---- Path-driven fallback (ONLY for sections that truly navigate by path) ----
-        // To prevent “everything selected”, require that the item has NO query portion in its URL,
+        // To prevent "everything selected", require that the item has NO query portion in its URL,
         // and compare only the path segments.
         if (!string.IsNullOrWhiteSpace(item.Url))
         {

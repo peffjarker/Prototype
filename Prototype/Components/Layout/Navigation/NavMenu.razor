@@ -49,27 +49,6 @@
                        Rounded="Rounded.Large"
                        OnClick="@ToggleDrawer" />
     </AppBarSection>
-
-    <!-- Franchise selector -->
-    <TelerikComboBox TItem="FranchiseOption"
-                     TValue="string"
-                     Data="@Franchises"
-                     TextField="@nameof(FranchiseOption.Display)"
-                     ValueField="@nameof(FranchiseOption.DealerId)"
-                     Placeholder="Select franchise"
-                     Filterable="true"
-                     Class="fr-combo"
-                     Value="@_selectedDealerId"
-                     ValueChanged="@OnDealerChangedAsync">
-        <ItemTemplate Context="f">
-            <div class="fr-item">
-                <span class="fr-id">@f.DealerId</span>
-                <span class="fr-dot">•</span>
-                <span class="fr-client">@f.ClientKey</span>
-                <span class="fr-name">@f.FirstName @f.LastName</span>
-            </div>
-        </ItemTemplate>
-    </TelerikComboBox>
 </TelerikAppBar>
 
 <!-- Mobile Drawer -->
@@ -107,46 +86,12 @@
 
 @code
 {
-    // ===== Franchise selector state =====
-    private string? _selectedDealerId;
-
-    private async Task OnDealerChangedAsync(string? dealerId)
-    {
-        _selectedDealerId = dealerId;
-
-        // Let Telerik close its popup/JS first to avoid JSDisconnected
-        await Task.Yield();
-
-        var sel = string.IsNullOrWhiteSpace(dealerId)
-            ? null
-            : Franchises.FirstOrDefault(f => string.Equals(f.DealerId, dealerId, StringComparison.OrdinalIgnoreCase));
-
-        if (sel is null)
-            Url.Set(("dealer", null));
-        else
-            Url.Set(("dealer", sel.DealerId));
-    }
-
     // Compute & navigate at click time so we always merge the *current* query
     private void OnMenuLinkClick(string hrefBase)
     {
         var href = Url.BuildHref(hrefBase);
         drawerOpen = false;
         Nav.NavigateTo(href);
-    }
-
-    // Replace with your service
-    private List<FranchiseOption> Franchises =
-    [
-        new("A1B2", "10001", "Alex",   "Meyer"),
-        new("C3D4", "20002", "Jordan", "Price"),
-        new("E5F6", "30003", "Sam",    "Carter"),
-        new("G7H8", "40004", "Taylor", "Nguyen"),
-    ];
-
-    public sealed record FranchiseOption(string DealerId, string ClientKey, string FirstName, string LastName)
-    {
-        public string Display => $"{DealerId} — {FirstName} {LastName}";
     }
 
     // ===== Existing menu/drawer code =====
@@ -156,34 +101,13 @@
     protected override void OnInitialized()
     {
         currentPath = Nav.ToBaseRelativePath(Nav.Uri);
-
-        // Initialize selector from URL snapshot
-        if (Url.Current.TryGetValue("dealer", out var dealer) && !string.IsNullOrWhiteSpace(dealer))
-        {
-            if (Franchises.Any(f => string.Equals(f.DealerId, dealer, StringComparison.OrdinalIgnoreCase)))
-                _selectedDealerId = dealer; // set backing field only (no write-back)
-        }
-
         Url.Changed += OnUrlChanged;
     }
 
     private void OnUrlChanged()
     {
         currentPath = Nav.ToBaseRelativePath(Nav.Uri);
-
-        if (Url.Current.TryGetValue("dealer", out var dealer))
-        {
-            if (!string.Equals(_selectedDealerId, dealer, StringComparison.OrdinalIgnoreCase))
-            {
-                _selectedDealerId = dealer;
-                _ = InvokeAsync(StateHasChanged);
-            }
-        }
-        else if (!string.IsNullOrEmpty(_selectedDealerId))
-        {
-            _selectedDealerId = null;
-            _ = InvokeAsync(StateHasChanged);
-        }
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private void ToggleDrawer() => drawerOpen = !drawerOpen;
@@ -219,37 +143,189 @@
 }
 
 <style>
-    .appbar { position: sticky; top: 0; z-index: 4000; backdrop-filter: saturate(1.05) blur(8px);
-              background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 88%, transparent);
-              border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent); }
-    .appbar .left, .appbar .right, .appbar .center { display: flex; align-items: center; gap: .8rem; }
-    .brand { display: flex; align-items: center; gap: .65rem; text-decoration: none; color: inherit; }
-    .logo { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
-            border: 1px solid var(--kendo-color-border, #e5e7eb);
-            background: linear-gradient(180deg, color-mix(in oklab, var(--kendo-color-surface, #fff) 92%, transparent), transparent);
-            box-shadow: 0 4px 14px rgba(2,6,23,.06) inset; }
-    .logo.small { width: 32px; height: 32px; border-radius: 10px; }
-    .brand-stack { display: flex; flex-direction: column; line-height: 1.05; }
-    .brand-text { font-size: 1.1rem; font-weight: 800; letter-spacing: .2px; color: #0c5ea8; }
-    .brand-sub { font-size: .72rem; opacity: .65; color: #0c5ea8; }
-    .quick-menu { min-width: 240px; padding: 8px; background: var(--kendo-color-surface, #fff); border: 1px solid var(--kendo-color-border, #e5e7eb); border-radius: 14px; box-shadow: 0 18px 40px rgba(2,6,23,.15); }
-    .quick-menu a { display: flex; align-items: center; gap: .55rem; padding: 10px 12px; border-radius: 10px; text-decoration: none; color: var(--kendo-color-on-surface, #111827); }
-    .quick-menu a:hover { background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white); }
-    .search { display: flex; align-items: center; gap: .5rem; border: 1px solid var(--kendo-color-border, #e5e7eb); border-radius: 999px; padding: .35rem .75rem; min-width: 360px; background: var(--kendo-color-surface, #fff); }
-    .search input { border: none; outline: none; background: transparent; width: 100%; font: inherit; padding: .05rem 0; }
-    .desktop-menu { display: flex; }
-    .main-menu .k-link { display: inline-flex; align-items: center; gap: .35rem; padding: .45rem .7rem; border-radius: 10px; transition: background .15s ease; }
-    .main-menu .k-link:hover { background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white); }
-    .hamburger { display: none; }
-    .mobile-drawer .k-drawer-wrapper { background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 94%, transparent); backdrop-filter: saturate(1.05) blur(6px); }
-    .mobile-drawer .k-drawer-item-body { padding: .75rem .85rem; border-radius: 10px; margin: .15rem .35rem; }
-    .mobile-drawer .k-drawer-item-body:hover { background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white); }
-    .drawer-header { display: flex; align-items: center; gap: .6rem; padding: .9rem .75rem; border-bottom: 1px solid var(--kendo-color-border, #e5e7eb); }
-    .drawer-footer { display: flex; gap: .6rem; padding: .75rem .6rem; border-top: 1px solid var(--kendo-color-border, #e5e7eb); }
-    .drawer-footer a { display: flex; align-items: center; gap: .5rem; text-decoration: none; padding: .5rem .6rem; border-radius: 10px; }
-    .drawer-footer a:hover { background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white); }
-    .hide-on-mobile { display: flex; }
-    .main-menu ul { list-style: none; margin: 0; padding: 0; }
-    .main-menu .k-menu-horizontal > .k-menu-item { display: inline-flex; }
-    .main-menu .k-menu-item > .k-link { display: inline-flex; align-items: center; gap: .35rem; }
+    .appbar {
+        position: sticky;
+        top: 0;
+        z-index: 4000;
+        backdrop-filter: saturate(1.05) blur(8px);
+        background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 88%, transparent);
+        border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent);
+    }
+
+        .appbar .left, .appbar .right, .appbar .center {
+            display: flex;
+            align-items: center;
+            gap: .8rem;
+        }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        background: linear-gradient(180deg, color-mix(in oklab, var(--kendo-color-surface, #fff) 92%, transparent), transparent);
+        box-shadow: 0 4px 14px rgba(2,6,23,.06) inset;
+    }
+
+        .logo.small {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+        }
+
+    .brand-stack {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.05;
+    }
+
+    .brand-text {
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: .2px;
+        color: #0c5ea8;
+    }
+
+    .brand-sub {
+        font-size: .72rem;
+        opacity: .65;
+        color: #0c5ea8;
+    }
+
+    .quick-menu {
+        min-width: 240px;
+        padding: 8px;
+        background: var(--kendo-color-surface, #fff);
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 14px;
+        box-shadow: 0 18px 40px rgba(2,6,23,.15);
+    }
+
+        .quick-menu a {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            padding: 10px 12px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--kendo-color-on-surface, #111827);
+        }
+
+            .quick-menu a:hover {
+                background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
+            }
+
+    .search {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 999px;
+        padding: .35rem .75rem;
+        min-width: 360px;
+        background: var(--kendo-color-surface, #fff);
+    }
+
+        .search input {
+            border: none;
+            outline: none;
+            background: transparent;
+            width: 100%;
+            font: inherit;
+            padding: .05rem 0;
+        }
+
+    .desktop-menu {
+        display: flex;
+    }
+
+    .main-menu .k-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .45rem .7rem;
+        border-radius: 10px;
+        transition: background .15s ease;
+    }
+
+        .main-menu .k-link:hover {
+            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+        }
+
+    .hamburger {
+        display: none;
+    }
+
+    .mobile-drawer .k-drawer-wrapper {
+        background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 94%, transparent);
+        backdrop-filter: saturate(1.05) blur(6px);
+    }
+
+    .mobile-drawer .k-drawer-item-body {
+        padding: .75rem .85rem;
+        border-radius: 10px;
+        margin: .15rem .35rem;
+    }
+
+        .mobile-drawer .k-drawer-item-body:hover {
+            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
+        }
+
+    .drawer-header {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        padding: .9rem .75rem;
+        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+    }
+
+    .drawer-footer {
+        display: flex;
+        gap: .6rem;
+        padding: .75rem .6rem;
+        border-top: 1px solid var(--kendo-color-border, #e5e7eb);
+    }
+
+        .drawer-footer a {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            text-decoration: none;
+            padding: .5rem .6rem;
+            border-radius: 10px;
+        }
+
+            .drawer-footer a:hover {
+                background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+            }
+
+    .hide-on-mobile {
+        display: flex;
+    }
+
+    .main-menu ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .main-menu .k-menu-horizontal > .k-menu-item {
+        display: inline-flex;
+    }
+
+    .main-menu .k-menu-item > .k-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+    }
 </style>

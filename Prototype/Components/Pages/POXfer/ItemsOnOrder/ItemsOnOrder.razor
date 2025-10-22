@@ -17,7 +17,6 @@
 
 @inject IJSRuntime JS
 @inject IItemsOnOrderPdfService ReportService
-@inject IUrlState Url
 
 <div class="wrap">
     <header class="header">
@@ -156,7 +155,7 @@
             </GridColumns>
             <GridSettings>
                 <GridPagerSettings InputType="PagerInputType.Input"
-                                   PageSizes="@(new List<int?> { 10, 20, 50, 100, null })"/>
+                                   PageSizes="@(new List<int?> { 10, 20, 50, 100, null })" />
             </GridSettings>
         </TelerikGrid>
 
@@ -403,7 +402,7 @@
             </GridColumns>
             <GridSettings>
                 <GridPagerSettings InputType="PagerInputType.Input"
-                                   PageSizes="@(new List<int?> { 10, 20, 50, 100, null })"/>
+                                   PageSizes="@(new List<int?> { 10, 20, 50, 100, null })" />
             </GridSettings>
         </TelerikGrid>
 
@@ -419,6 +418,9 @@
     // Grid references for programmatic control
     private TelerikGrid<Row>? ItemsGridRef;
     private TelerikGrid<OpenPOLine>? POLinesGridRef;
+
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
 
     // ============================================================
     // 1) Page contract & URL bindings (overrides + sidebar + decode)
@@ -512,8 +514,8 @@
     // ============================================================
     protected override void OnInitialized()
     {
-        Read();
-        Url.Changed += OnUrlChanged;
+        // Note: Base.OnInitialized() calls ReadFromUrl() and RebuildSidebar()
+        // so we need to call it AFTER we set up our data
 
         Rows.AddRange(new[]
         {
@@ -555,25 +557,11 @@
             }
         });
 
-        // Initialize selected items from URL
-        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
-
+        // Call base AFTER setting up data
         base.OnInitialized();
-    }
 
-    public void Dispose() => Url.Changed -= OnUrlChanged;
-
-    private void OnUrlChanged()
-    {
-        var prev = dealerId;
-        Read();
-        if (prev != dealerId)
-            InvokeAsync(StateHasChanged);
-    }
-
-    private void Read()
-    {
-        dealerId = Url.Current.TryGetValue("dealer", out var d) ? d : null;
+        // Initialize selected items from URL AFTER base.OnInitialized()
+        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
     }
 
     // ============================================================
@@ -798,8 +786,6 @@
         public int Rcv { get; set; }
         public string Status { get; set; } = "Open";
     }
-
-    private string? dealerId;
 }
 
 <script>

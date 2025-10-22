@@ -1,0 +1,158 @@
+@using Services
+@using global::Services
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+
+<section class="ss-section franchise-selector-section">
+    <div class="franchise-selector-content">
+        <div class="franchise-combo-wrapper">
+            <TelerikComboBox TItem="FranchiseOption"
+                             TValue="string"
+                             Data="@Franchises"
+                             TextField="@nameof(FranchiseOption.Display)"
+                             ValueField="@nameof(FranchiseOption.DealerId)"
+                             Value="@SelectedDealerId"
+                             ValueChanged="@OnFranchiseChanged"
+                             Placeholder="Search franchise..."
+                             Filterable="true"
+                             FilterOperator="@StringFilterOperator.Contains"
+                             AllowCustom="true"
+                             Class="franchise-combo">
+                <ItemTemplate Context="franchise">
+                    <div class="franchise-item">
+                        <span class="franchise-id">@franchise.DealerId</span>
+                        <span class="franchise-dot">•</span>
+                        <span class="franchise-name">@franchise.FirstName @franchise.LastName</span>
+                    </div>
+                </ItemTemplate>
+            </TelerikComboBox>
+
+            @if (!string.IsNullOrWhiteSpace(SelectedDealerId))
+            {
+                <button type="button"
+                        class="franchise-clear-icon"
+                        @onclick="@(() => OnFranchiseChanged.InvokeAsync(null))"
+                        title="Clear selection">
+                    ×
+                </button>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(SelectedDealerId))
+        {
+            var selected = Franchises.FirstOrDefault(f => f.DealerId == SelectedDealerId);
+            if (selected != null)
+            {
+                <div class="franchise-info">
+                    <small>
+                        <strong>@selected.DealerId</strong> — @selected.FirstName @selected.LastName
+                    </small>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="franchise-info">
+                <small>Showing all franchises</small>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<FranchiseOption> Franchises { get; set; } = Array.Empty<FranchiseOption>();
+    [Parameter] public string? SelectedDealerId { get; set; }
+    [Parameter] public EventCallback<string?> OnFranchiseChanged { get; set; }
+}
+
+<style>
+    .franchise-selector-section .franchise-selector-content {
+        padding: 0.75rem;
+    }
+
+    .franchise-combo-wrapper {
+        position: relative;
+        width: 100%;
+    }
+
+    .franchise-selector-section .franchise-combo {
+        width: 100%;
+    }
+
+    .franchise-clear-icon {
+        position: absolute;
+        right: 32px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        color: #64748b;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.15s;
+        z-index: 10;
+    }
+
+        .franchise-clear-icon:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .franchise-clear-icon:active {
+            background: #e2e8f0;
+        }
+
+    .franchise-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0;
+    }
+
+    .franchise-id {
+        font-weight: 600;
+        color: #0c5ea8;
+        font-size: 0.875rem;
+    }
+
+    .franchise-dot {
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .franchise-name {
+        color: #374151;
+        font-size: 0.875rem;
+    }
+
+    .franchise-info {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: #f8fafc;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+
+        .franchise-info small {
+            font-size: 0.75rem;
+            line-height: 1.3;
+            color: #6c757d;
+        }
+
+    .franchise-selector-section .k-input-inner {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .franchise-selector-section .k-input {
+        border-radius: 8px;
+    }
+</style>
