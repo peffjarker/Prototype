@@ -2,7 +2,10 @@
 @using Telerik.Blazor.Components
 @using Services
 @using global::Services
-@inherits ComponentBase
+@using Microsoft.AspNetCore.WebUtilities
+@implements IDisposable
+@inject IUrlState Url
+@inject NavigationManager Nav
 
 <section class="ss-section franchise-selector-section">
     <div class="franchise-selector-content">
@@ -12,9 +15,8 @@
                              Data="@FranchisesOrEmpty"
                              TextField="@nameof(FranchiseOption.Display)"
                              ValueField="@nameof(FranchiseOption.DealerId)"
-
+                             Value="@SelectedDealerIdBacking"
                              ValueChanged="@OnValueChanged"
-
                              Placeholder="Search franchise..."
                              Filterable="true"
                              FilterOperator="@StringFilterOperator.Contains"
@@ -44,7 +46,7 @@
         @if (!string.IsNullOrWhiteSpace(SelectedDealerIdBacking))
         {
             var selected = FranchisesOrEmpty.FirstOrDefault(f =>
-                string.Equals(f.DealerId, SelectedDealerIdBacking, StringComparison.OrdinalIgnoreCase));
+            string.Equals(f.DealerId, SelectedDealerIdBacking, StringComparison.OrdinalIgnoreCase));
 
             if (selected is not null)
             {
@@ -69,48 +71,72 @@
 @code {
     // ===== Parameters =====
     [Parameter] public IReadOnlyList<FranchiseOption> Franchises { get; set; } = Array.Empty<FranchiseOption>();
-
-    /// <summary>Parent-supplied selected DealerId (URL is your source of truth).</summary>
     [Parameter] public string? SelectedDealerId { get; set; }
-
-    /// <summary>Notify parent so it can update URL/state.</summary>
     [Parameter] public EventCallback<string?> OnFranchiseChanged { get; set; }
 
-    // ===== Internal state (mirror of SelectedDealerId) =====
+    // ===== Internal state =====
     private string? SelectedDealerIdBacking;
 
     private IReadOnlyList<FranchiseOption> FranchisesOrEmpty =>
         Franchises ?? Array.Empty<FranchiseOption>();
 
+    protected override void OnInitialized()
+    {
+        // SYNCHRONOUSLY read directly from browser URL - no debouncing, no delay
+        var uri = new Uri(Nav.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("dealer", out var dealerValue))
+        {
+            SelectedDealerIdBacking = dealerValue.ToString();
+        }
+
+        // Subscribe to URL changes for future updates
+        Url.Changed += HandleUrlChanged;
+    }
+
     protected override void OnParametersSet()
     {
-        // Keep the UI mirror in sync with the parent (URL-driven) value.
-        if (!string.Equals(SelectedDealerIdBacking, SelectedDealerId, StringComparison.Ordinal))
+        // Prefer parameter if explicitly set, but don't override initial URL read
+        if (!string.IsNullOrWhiteSpace(SelectedDealerId) &&
+            !string.Equals(SelectedDealerIdBacking, SelectedDealerId, StringComparison.Ordinal))
         {
             SelectedDealerIdBacking = SelectedDealerId;
         }
     }
 
+    private void HandleUrlChanged()
+    {
+        // Sync from URL when it changes
+        var dealerFromUrl = Url.Current.TryGetValue("dealer", out var d) ? d : null;
+
+        if (!string.Equals(SelectedDealerIdBacking, dealerFromUrl, StringComparison.Ordinal))
+        {
+            SelectedDealerIdBacking = dealerFromUrl;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
     private async Task OnValueChanged(string? value)
     {
-        // Fires for both picked items and custom text (with AllowCustom=true on your version).
         var normalized = NormalizeValue(value);
         SelectedDealerIdBacking = normalized;
         await OnFranchiseChanged.InvokeAsync(normalized);
-        StateHasChanged();
     }
 
     private async Task ClearSelection()
     {
         SelectedDealerIdBacking = null;
         await OnFranchiseChanged.InvokeAsync(null);
-        StateHasChanged();
     }
 
     private static string? NormalizeValue(string? s)
         => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
-}
 
+    public void Dispose()
+    {
+        Url.Changed -= HandleUrlChanged;
+    }
+}
 
 <style>
     .franchise-selector-section .franchise-selector-content {
