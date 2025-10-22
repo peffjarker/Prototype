@@ -1,18 +1,20 @@
-@using Services
-@using global::Services
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using Services
+@using global::Services
+@inherits ComponentBase
 
 <section class="ss-section franchise-selector-section">
     <div class="franchise-selector-content">
         <div class="franchise-combo-wrapper">
             <TelerikComboBox TItem="FranchiseOption"
                              TValue="string"
-                             Data="@Franchises"
+                             Data="@FranchisesOrEmpty"
                              TextField="@nameof(FranchiseOption.Display)"
                              ValueField="@nameof(FranchiseOption.DealerId)"
-                             Value="@SelectedDealerId"
-                             ValueChanged="@OnFranchiseChanged"
+
+                             ValueChanged="@OnValueChanged"
+
                              Placeholder="Search franchise..."
                              Filterable="true"
                              FilterOperator="@StringFilterOperator.Contains"
@@ -27,43 +29,88 @@
                 </ItemTemplate>
             </TelerikComboBox>
 
-            @if (!string.IsNullOrWhiteSpace(SelectedDealerId))
+            @if (!string.IsNullOrWhiteSpace(SelectedDealerIdBacking))
             {
                 <button type="button"
                         class="franchise-clear-icon"
-                        @onclick="@(() => OnFranchiseChanged.InvokeAsync(null))"
-                        title="Clear selection">
+                        @onclick="ClearSelection"
+                        title="Clear selection"
+                        aria-label="Clear franchise selection">
                     ×
                 </button>
             }
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(SelectedDealerId))
+        @if (!string.IsNullOrWhiteSpace(SelectedDealerIdBacking))
         {
-            var selected = Franchises.FirstOrDefault(f => f.DealerId == SelectedDealerId);
-            if (selected != null)
+            var selected = FranchisesOrEmpty.FirstOrDefault(f =>
+                string.Equals(f.DealerId, SelectedDealerIdBacking, StringComparison.OrdinalIgnoreCase));
+
+            if (selected is not null)
             {
-                <div class="franchise-info">
+                <div class="franchise-info" aria-live="polite">
                     <small>
                         <strong>@selected.DealerId</strong> — @selected.FirstName @selected.LastName
                     </small>
                 </div>
             }
-        }
-        else
-        {
-            <div class="franchise-info">
-                <small>Showing all franchises</small>
-            </div>
+            else
+            {
+                <div class="franchise-info" aria-live="polite">
+                    <small>
+                        <strong>@SelectedDealerIdBacking</strong> — (custom)
+                    </small>
+                </div>
+            }
         }
     </div>
 </section>
 
 @code {
+    // ===== Parameters =====
     [Parameter] public IReadOnlyList<FranchiseOption> Franchises { get; set; } = Array.Empty<FranchiseOption>();
+
+    /// <summary>Parent-supplied selected DealerId (URL is your source of truth).</summary>
     [Parameter] public string? SelectedDealerId { get; set; }
+
+    /// <summary>Notify parent so it can update URL/state.</summary>
     [Parameter] public EventCallback<string?> OnFranchiseChanged { get; set; }
+
+    // ===== Internal state (mirror of SelectedDealerId) =====
+    private string? SelectedDealerIdBacking;
+
+    private IReadOnlyList<FranchiseOption> FranchisesOrEmpty =>
+        Franchises ?? Array.Empty<FranchiseOption>();
+
+    protected override void OnParametersSet()
+    {
+        // Keep the UI mirror in sync with the parent (URL-driven) value.
+        if (!string.Equals(SelectedDealerIdBacking, SelectedDealerId, StringComparison.Ordinal))
+        {
+            SelectedDealerIdBacking = SelectedDealerId;
+        }
+    }
+
+    private async Task OnValueChanged(string? value)
+    {
+        // Fires for both picked items and custom text (with AllowCustom=true on your version).
+        var normalized = NormalizeValue(value);
+        SelectedDealerIdBacking = normalized;
+        await OnFranchiseChanged.InvokeAsync(normalized);
+        StateHasChanged();
+    }
+
+    private async Task ClearSelection()
+    {
+        SelectedDealerIdBacking = null;
+        await OnFranchiseChanged.InvokeAsync(null);
+        StateHasChanged();
+    }
+
+    private static string? NormalizeValue(string? s)
+        => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }
+
 
 <style>
     .franchise-selector-section .franchise-selector-content {
