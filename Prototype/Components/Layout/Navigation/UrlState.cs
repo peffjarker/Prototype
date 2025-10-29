@@ -12,10 +12,7 @@ namespace Services
 {
     /// <summary>
     /// IUrlState implementation with debounced, circuit-safe navigation.
-    /// Matches IUrlState API: BuildHref, Set, Navigate.
-    /// - Debounces query writes to avoid multiple navigations in a render tick.
-    /// - Marshals NavigateTo onto the Blazor circuit SynchronizationContext to avoid JSDisconnected.
-    /// - Uses NavigationOptions (ReplaceHistoryEntry for Set; normal history for Navigate).
+    /// Centralizes all URL operations to eliminate duplication across components.
     /// </summary>
     public sealed class UrlState : IUrlState, IDisposable
     {
@@ -38,62 +35,55 @@ namespace Services
         }
 
         public IReadOnlyDictionary<string, string?> Current => _current;
-
         public event Action? Changed;
 
-        // ------------------------------------------------------------
-        // IUrlState
-        // ------------------------------------------------------------
+        // ===== Core IUrlState Operations =====
 
-        public string BuildHref(string baseHref, IReadOnlyDictionary<string, string?>? overrides = null)
+        public string BuildHref(string baseHref, IReadOnlyDictionary<string, string?>? overrides = null, bool preserveCurrentState = true)
         {
             if (string.IsNullOrWhiteSpace(baseHref))
                 baseHref = "/";
 
-            // Separate provided baseHref into path + its own query
             var cut = baseHref.IndexOfAny(new[] { '?', '#' });
             var pathOnly = cut >= 0 ? baseHref[..cut] : baseHref;
             pathOnly = pathOnly.StartsWith("/") ? pathOnly : "/" + pathOnly.TrimStart('/');
 
-            var start = new Dictionary<string, string?>(_current, StringComparer.OrdinalIgnoreCase);
+            // CHANGE: Start fresh OR merge based on flag
+            var merged = preserveCurrentState
+                ? new Dictionary<string, string?>(_current, StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
+            // Parse any query string in the baseHref
             if (cut >= 0 && baseHref[cut] == '?')
             {
                 var providedQs = QueryHelpers.ParseQuery(baseHref[cut..]);
                 foreach (var kv in providedQs)
-                    start[kv.Key] = kv.Value.LastOrDefault();
+                    merged[kv.Key] = kv.Value.LastOrDefault();
             }
 
+            // Apply overrides
             if (overrides is not null)
             {
                 foreach (var kv in overrides)
                 {
-                    if (kv.Value is null) start.Remove(kv.Key);
-                    else start[kv.Key] = kv.Value;
+                    if (kv.Value is null) merged.Remove(kv.Key);
+                    else merged[kv.Key] = kv.Value;
                 }
             }
 
-            var qs = BuildQuery(start);
+            var qs = BuildQuery(merged);
             return string.IsNullOrEmpty(qs) ? pathOnly : $"{pathOnly}?{qs}";
         }
 
         public void Set(params (string key, string? value)[] overrides)
         {
-            if (_disposed) return;
-            var syncCtx = SynchronizationContext.Current;
+            if (_disposed || overrides.Length == 0) return;
 
-            var target = new Dictionary<string, string?>(_current, StringComparer.OrdinalIgnoreCase);
+            var updates = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
             foreach (var (k, v) in overrides)
-            {
-                if (v is null) target.Remove(k);
-                else target[k] = v;
-            }
+                updates[k] = v;
 
-            if (SameQuery(_current, target))
-                return;
-
-            // Set = replace history entry
-            ScheduleNavigation(query: target, pathOverride: null, replaceHistory: true, callerSyncCtx: syncCtx);
+            Update(updates);
         }
 
         public void Navigate(string path, IReadOnlyDictionary<string, string?>? overrides = null)
@@ -113,13 +103,72 @@ namespace Services
                 }
             }
 
-            // Navigate = normal history push
             ScheduleNavigation(query: target, pathOverride: pathOnly, replaceHistory: false, callerSyncCtx: syncCtx);
         }
 
-        // ------------------------------------------------------------
-        // Debounce + safe navigation
-        // ------------------------------------------------------------
+        // ===== Convenience Helpers =====
+
+        public string? Get(string key)
+        {
+            return _current.TryGetValue(key, out var value) ? value : null;
+        }
+
+        public bool Has(string key)
+        {
+            return _current.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value);
+        }
+
+        public void Toggle(string key, string value, string separator = ",")
+        {
+            if (_disposed || string.IsNullOrWhiteSpace(value)) return;
+
+            var current = GetMulti(key, separator);
+            var list = current.ToList();
+
+            if (list.Contains(value, StringComparer.OrdinalIgnoreCase))
+                list.RemoveAll(v => string.Equals(v, value, StringComparison.OrdinalIgnoreCase));
+            else
+                list.Add(value);
+
+            var newValue = list.Count > 0 ? string.Join(separator, list) : null;
+            Set((key, newValue));
+        }
+
+        public void Remove(params string[] keys)
+        {
+            if (_disposed || keys.Length == 0) return;
+
+            var updates = keys.ToDictionary(k => k, k => (string?)null, StringComparer.OrdinalIgnoreCase);
+            Update(updates);
+        }
+
+        public void Update(IReadOnlyDictionary<string, string?> updates)
+        {
+            if (_disposed) return;
+            var syncCtx = SynchronizationContext.Current;
+
+            var target = new Dictionary<string, string?>(_current, StringComparer.OrdinalIgnoreCase);
+            foreach (var kv in updates)
+            {
+                if (kv.Value is null) target.Remove(kv.Key);
+                else target[kv.Key] = kv.Value;
+            }
+
+            if (SameQuery(_current, target))
+                return;
+
+            ScheduleNavigation(query: target, pathOverride: null, replaceHistory: true, callerSyncCtx: syncCtx);
+        }
+
+        public IReadOnlyList<string> GetMulti(string key, string separator = ",")
+        {
+            if (!_current.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
+                return Array.Empty<string>();
+
+            return value.Split(separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
+
+        // ===== Internal Navigation Logic =====
 
         private void ScheduleNavigation(Dictionary<string, string?> query, string? pathOverride, bool replaceHistory, SynchronizationContext? callerSyncCtx)
         {
@@ -145,7 +194,6 @@ namespace Services
         {
             try
             {
-                // Let current render / JS (e.g., ComboBox popup close) complete
                 await Task.Yield();
                 token.ThrowIfCancellationRequested();
 
@@ -181,15 +229,8 @@ namespace Services
                 else
                     _nav.NavigateTo(href, opts);
             }
-            catch (OperationCanceledException)
-            {
-                // superseded by newer request
-            }
+            catch (OperationCanceledException) { }
         }
-
-        // ------------------------------------------------------------
-        // Location change + helpers
-        // ------------------------------------------------------------
 
         private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
         {
@@ -203,6 +244,8 @@ namespace Services
 
             Changed?.Invoke();
         }
+
+        // ===== Utilities =====
 
         private static Dictionary<string, string?> ReadQuerySnapshot(NavigationManager nav)
         {

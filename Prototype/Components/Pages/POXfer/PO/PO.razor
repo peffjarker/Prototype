@@ -2,7 +2,6 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Utils
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 
@@ -305,21 +304,18 @@
     // Parse URL -> state, then load model
     protected override void ReadFromUrl()
     {
-        var map = QueryStringMap.Read(Nav);
+        // Read parameters using UrlState
+        DealerId = Url.Get("dealer");
+        Status = Url.Get("status") ?? "Closed";
+        var poParam = Url.Get("po");
 
-        // dealer
-        DealerId = map.TryGetValue("dealer", out var d) && !string.IsNullOrWhiteSpace(d) ? d : null;
-
-        // status
-        Status = map.TryGetValue("status", out var s) && !string.IsNullOrWhiteSpace(s) ? s! : "Closed";
-
-        var poParam = map.TryGetValue("po", out var p) ? p : null;
-
+        // Initialize data if needed
         if (AllPos.Count == 0)
             SeedPoList();
 
         var filtered = FilteredPos;
 
+        // Select PO based on URL parameter or default to first
         if (!string.IsNullOrWhiteSpace(poParam) && filtered.Any(x => x.Display.Equals(poParam, StringComparison.OrdinalIgnoreCase)))
             SelectedPo = poParam;
         else

@@ -6,7 +6,6 @@
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Utils
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 
@@ -226,6 +225,9 @@
 </div>
 
 @code {
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
+
     // ===== BasePath for the sidebar builder =====
     protected override string BasePath => "/po-transfer/receipt-of-product";
 
@@ -282,17 +284,17 @@
 
     protected override void ReadFromUrl()
     {
-        var map = QueryStringMap.Read(Nav);
+        // Read parameters using UrlState
+        DealerId = Url.Get("dealer");
 
-        // dealer
-        DealerId = map.TryGetValue("dealer", out var d) && !string.IsNullOrWhiteSpace(d) ? d : null;
+        // Read and parse status enum
+        var statusVal = Url.Get("status");
+        Status = (!string.IsNullOrWhiteSpace(statusVal) && Enum.TryParse<ReceiptStatus>(statusVal, true, out var parsedStatus))
+            ? parsedStatus
+            : ReceiptStatus.Open;
 
-        // status
-        Status = (map.TryGetValue("status", out var s) && Enum.TryParse<ReceiptStatus>(s, true, out var parsed))
-            ? parsed : ReceiptStatus.Open;
-
-        // asn
-        SelectedAsnId = map.TryGetValue("asn", out var a) && !string.IsNullOrWhiteSpace(a) ? a : null;
+        // Read ASN selection
+        SelectedAsnId = Url.Get("asn");
 
         // Keep selection valid against current filter
         var list = FilteredAsns;
@@ -307,9 +309,6 @@
     // Sidebar facets
     // ============================================================
 
-    // Enable franchise selector in sidebar
-    protected override bool ShowFranchiseSelector => false;
-
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -318,7 +317,7 @@
             Options: () => new[]
             {
                 new FacetOption("Items On Order",    "Items On Order",    Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
-                new FacetOption("Purchase Orders",   "Purchase Orders",   Href: AppendPreserved("/po-transfer/purchase-orders")),
+                new FacetOption("Purchase Orders",   "Purchase Orders",   Href: AppendPreserved("/po-transfer/purchase-orders?status=All")),
                 new FacetOption("Receipt of Product","Receipt of Product",Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
             }
         );

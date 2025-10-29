@@ -67,18 +67,3 @@
         }
     </div>
 }
-
-@code {
-    private async Task HandleFranchiseChange(string? dealerId)
-    {
-        var updates = new Dictionary<string, string?> { ["dealer"] = dealerId };
-        var href = UpdateQuery(updates);
-        Nav.NavigateTo(href, replace: false);
-
-        if (OnItemSelected.HasDelegate)
-        {
-            var franchiseItem = new SidebarItem { Key = dealerId, Text = dealerId ?? "All" };
-            await OnItemSelected.InvokeAsync(franchiseItem);
-        }
-    }
-}

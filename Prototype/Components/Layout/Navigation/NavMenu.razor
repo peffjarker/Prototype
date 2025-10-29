@@ -9,6 +9,7 @@
 @using Telerik.Blazor.Components
 @using Services
 @using global::Services
+@implements IDisposable
 @inject NavigationManager Nav
 @inject IUrlState Url
 
@@ -30,10 +31,10 @@
                          Orientation="MenuOrientation.Horizontal"
                          Class="main-menu">
                 <ItemTemplate Context="item">
-                    @* Prevent default and navigate via Nav.NavigateTo(Url.BuildHref(...)) so we always preserve the current query (dealer, etc.) *@
+                    @* Use UrlState.BuildHref to preserve current query parameters *@
                     <a href="@Url.BuildHref(item.Href)"
                        class="k-link"
-                       @onclick="(e => OnMenuLinkClick(item.Href))"
+                       @onclick="@(e => OnMenuLinkClick(item.Href))"
                        @onclick:preventDefault="true">
                         <TelerikSvgIcon Icon="@item.Icon" />
                         <span style="margin-left:.4rem">@item.Text</span>
@@ -86,15 +87,18 @@
 
 @code
 {
-    // Compute & navigate at click time so we always merge the *current* query
+    // ===== Navigation (using UrlState) =====
+
     private void OnMenuLinkClick(string hrefBase)
     {
+        // BuildHref automatically preserves current query parameters
         var href = Url.BuildHref(hrefBase);
         drawerOpen = false;
         Nav.NavigateTo(href);
     }
 
-    // ===== Existing menu/drawer code =====
+    // ===== Menu State =====
+
     private bool drawerOpen;
     private string? currentPath;
 
@@ -125,9 +129,9 @@
 
     private readonly List<MenuLink> MenuItems =
     [
-        new("Home",          "/",                                      SvgIcon.Home),
+        new("Home",          "/",                                       SvgIcon.Home),
         new("PO / Transfer", "/po-transfer/items-on-order/?status=All", SvgIcon.ArrowsSwap),
-        new("Help",          "/help",                                  SvgIcon.Gear)
+        new("Help",          "/help",                                   SvgIcon.Gear)
     ];
 
     public sealed class MenuLink

@@ -1,11 +1,10 @@
+@* Components/Layout/Navigation/Sidebar/FranchiseSelectorSection.razor *@
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 @using Services
 @using global::Services
-@using Microsoft.AspNetCore.WebUtilities
 @implements IDisposable
 @inject IUrlState Url
-@inject NavigationManager Nav
 
 <section class="ss-section franchise-selector-section">
     <div class="franchise-selector-content">
@@ -82,21 +81,16 @@
 
     protected override void OnInitialized()
     {
-        // SYNCHRONOUSLY read directly from browser URL - no debouncing, no delay
-        var uri = new Uri(Nav.Uri);
-        var query = QueryHelpers.ParseQuery(uri.Query);
-        if (query.TryGetValue("dealer", out var dealerValue))
-        {
-            SelectedDealerIdBacking = dealerValue.ToString();
-        }
+        // Read initial value from URL
+        SelectedDealerIdBacking = Url.Get("dealer");
 
-        // Subscribe to URL changes for future updates
+        // Subscribe to URL changes
         Url.Changed += HandleUrlChanged;
     }
 
     protected override void OnParametersSet()
     {
-        // Prefer parameter if explicitly set, but don't override initial URL read
+        // Prefer parameter if explicitly set, but don't override URL
         if (!string.IsNullOrWhiteSpace(SelectedDealerId) &&
             !string.Equals(SelectedDealerIdBacking, SelectedDealerId, StringComparison.Ordinal))
         {
@@ -107,7 +101,7 @@
     private void HandleUrlChanged()
     {
         // Sync from URL when it changes
-        var dealerFromUrl = Url.Current.TryGetValue("dealer", out var d) ? d : null;
+        var dealerFromUrl = Url.Get("dealer");
 
         if (!string.Equals(SelectedDealerIdBacking, dealerFromUrl, StringComparison.Ordinal))
         {
@@ -120,12 +114,20 @@
     {
         var normalized = NormalizeValue(value);
         SelectedDealerIdBacking = normalized;
+
+        // Update URL via UrlState
+        Url.Set(("dealer", normalized));
+
         await OnFranchiseChanged.InvokeAsync(normalized);
     }
 
     private async Task ClearSelection()
     {
         SelectedDealerIdBacking = null;
+
+        // Remove from URL via UrlState
+        Url.Remove("dealer");
+
         await OnFranchiseChanged.InvokeAsync(null);
     }
 

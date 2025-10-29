@@ -8,7 +8,6 @@
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Services
 @using Prototype.Components.Services.Reports
-@using Utils
 @using global::Services
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
@@ -440,29 +439,19 @@
 
     protected override void ReadFromUrl()
     {
-        var map = QueryStringMap.Read(Nav);
+        // Read dealer from URL using UrlState
+        DealerId = Url.Get("dealer");
 
-        var abs = Nav.ToAbsoluteUri(Nav.Uri);
-        var q = QueryHelpers.ParseQuery(abs.Query);
+        // Read status from URL
+        var statusVal = Url.Get("status");
+        Status = !string.IsNullOrWhiteSpace(statusVal) ? MapStatus(statusVal) : StatusKind.All;
 
-        DealerId = q.TryGetValue("dealer", out var dVal) && !string.IsNullOrWhiteSpace(dVal)
-            ? dVal.ToString()
-            : null;
-
-        if (q.TryGetValue("status", out var sVal) && !string.IsNullOrWhiteSpace(sVal))
-            Status = MapStatus(sVal!);
-        else
-            Status = StatusKind.All;
-
+        // Read multi-select items using GetMulti
         SelectedItems.Clear();
-        if (q.TryGetValue("items", out var itemsVals))
+        var items = Url.GetMulti("items");
+        foreach (var item in items)
         {
-            foreach (var raw in itemsVals)
-            {
-                if (string.IsNullOrWhiteSpace(raw)) continue;
-                foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-                    SelectedItems.Add(part);
-            }
+            SelectedItems.Add(item);
         }
     }
 

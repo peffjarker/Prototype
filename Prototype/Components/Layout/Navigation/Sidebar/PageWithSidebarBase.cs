@@ -1,15 +1,18 @@
-﻿using System;
-using System.Linq;
+﻿// Components/PageWithSidebarBase.cs
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.WebUtilities;
 using Prototype.Components.Layout.Navigation.Sidebar;
 using Services;
-using Telerik.SvgIcons;
 
+/// <summary>
+/// Base class for pages with sidebar navigation.
+/// Centralizes URL state management and sidebar synchronization.
+/// </summary>
 public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 {
     [Inject] protected NavigationManager Nav { get; set; } = default!;
@@ -17,58 +20,44 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     [Inject] protected IFranchiseService FranchiseService { get; set; } = default!;
     [Inject] protected IUrlState Url { get; set; } = default!;
 
+    // ===== Abstract Configuration =====
+
+    /// <summary>Base path for this page (e.g., "/po-transfer/items-on-order")</summary>
     protected abstract string BasePath { get; }
+
+    /// <summary>Define the facets (filters) for the sidebar</summary>
     protected abstract IEnumerable<Facet> Facets();
+
+    /// <summary>Whether clicking multi-facet items triggers custom logic (vs. auto-navigation)</summary>
     protected virtual bool HandleMultiFacetClick => false;
+
+    /// <summary>Whether to show the franchise selector in the sidebar</summary>
     protected virtual bool ShowFranchiseSelector => true;
 
-    protected abstract IReadOnlyDictionary<string, string?> Scalars { get; }
-    protected abstract IReadOnlyCollection<string> MultiValues { get; }
-    protected abstract void ReadFromUrl();
-    protected abstract void OnSidebarClick(SidebarItem item);
-
+    /// <summary>Query keys that should be preserved during navigation</summary>
     protected virtual IReadOnlyCollection<string> PreservedKeys => new[] { "dealer" };
+
+    /// <summary>Query key name for multi-select values</summary>
     protected virtual string MultiKeyName => "items";
+
+    /// <summary>Separator for multi-select values in URL</summary>
     protected virtual string MultiSeparator => ",";
 
-    protected void NavigateWithPageState(bool replace = false)
-        => NavigateWithState(replace, Scalars, MultiKeyName, MultiValues);
+    // ===== State Properties (derived from URL) =====
 
-    protected void NavigateWithState(bool replace, IReadOnlyDictionary<string, string?> scalars, string multiKeyName, IEnumerable<string> multiValues)
-    {
-        var curUri = new Uri(Nav.Uri);
-        var curQ = QueryHelpers.ParseQuery(curUri.Query);
-        var dict = curQ.ToDictionary(kv => kv.Key, kv => kv.Value.ToString(), StringComparer.OrdinalIgnoreCase);
+    /// <summary>Current scalar (single-value) query parameters</summary>
+    protected abstract IReadOnlyDictionary<string, string?> Scalars { get; }
 
-        foreach (var k in PreservedKeys)
-            if (curQ.TryGetValue(k, out var v)) dict[k] = v.ToString();
+    /// <summary>Current multi-select values</summary>
+    protected abstract IReadOnlyCollection<string> MultiValues { get; }
 
-        foreach (var (k, v) in scalars)
-            if (string.IsNullOrWhiteSpace(v)) dict.Remove(k); else dict[k] = v;
+    /// <summary>Read URL into component state (called on init and URL changes)</summary>
+    protected abstract void ReadFromUrl();
 
-        dict.Remove(multiKeyName);
-        var list = multiValues?.ToList() ?? new List<string>();
-        if (list.Count > 0) dict[multiKeyName] = string.Join(MultiSeparator, list);
+    /// <summary>Handle sidebar item clicks (for custom multi-facet logic)</summary>
+    protected abstract void OnSidebarClick(SidebarItem item);
 
-        var url = QueryHelpers.AddQueryString(curUri.GetLeftPart(UriPartial.Path), dict);
-        Nav.NavigateTo(url, replace: replace);
-    }
-
-    protected string AppendPreserved(string href)
-    {
-        var abs = href.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? href : Nav.ToAbsoluteUri(href).ToString();
-        var target = new Uri(abs);
-        var targetQ = QueryHelpers.ParseQuery(target.Query).ToDictionary(kv => kv.Key, kv => kv.Value.ToString(), StringComparer.OrdinalIgnoreCase);
-        var curQ = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
-
-        foreach (var k in PreservedKeys)
-            if (!targetQ.ContainsKey(k) && curQ.TryGetValue(k, out var v))
-                targetQ[k] = v.ToString();
-
-        var with = QueryHelpers.AddQueryString(target.GetLeftPart(UriPartial.Path), targetQ);
-        var rel = Nav.ToBaseRelativePath(with);
-        return "/" + rel.TrimStart('/');
-    }
+    // ===== Private State =====
 
     private Func<SidebarItem, Task>? _itemSelectedHandler;
     private Action? _sidebarStateChangedHandler;
@@ -76,26 +65,11 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     private CancellationTokenSource? _rebuildCts;
     private bool _isNavigating;
 
+    // ===== Lifecycle =====
+
     protected override void OnInitialized()
     {
-        _itemSelectedHandler = async item =>
-        {
-            if (item.Key?.StartsWith("franchise:") == true)
-            {
-                var dealerId = item.Key.Substring("franchise:".Length);
-                OnFranchiseSelected(dealerId);
-                return;
-            }
-
-            if (HandleMultiFacetClick) OnSidebarClick(item);
-            else if (!string.IsNullOrWhiteSpace(item.Url))
-            {
-                _isNavigating = true;
-                Nav.NavigateTo(AppendPreserved(item.Url));
-            }
-            await Task.CompletedTask;
-        };
-
+        _itemSelectedHandler = HandleSidebarItemSelected;
         _sidebarStateChangedHandler = () => InvokeAsync(StateHasChanged);
         _locationChangedHandler = (_, __) => { _ = HandleLocationChangedAsync(); };
 
@@ -107,14 +81,90 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         RebuildSidebar();
     }
 
+    public virtual void Dispose()
+    {
+        _rebuildCts?.Cancel();
+        _rebuildCts?.Dispose();
+        if (_sidebarStateChangedHandler is not null)
+            Sidebar.StateChanged -= _sidebarStateChangedHandler;
+        if (ReferenceEquals(Sidebar.ItemSelectedHandler, _itemSelectedHandler))
+            Sidebar.ItemSelectedHandler = null;
+        if (_locationChangedHandler is not null)
+            Nav.LocationChanged -= _locationChangedHandler;
+    }
+
+    // ===== Navigation Helpers (simplified using UrlState) =====
+
+    /// <summary>Navigate with current page state</summary>
+    protected void NavigateWithPageState(bool replace = false)
+    {
+        var updates = new Dictionary<string, string?>(Scalars, StringComparer.OrdinalIgnoreCase);
+
+        var multiList = MultiValues?.ToList() ?? new List<string>();
+        if (multiList.Count > 0)
+            updates[MultiKeyName] = string.Join(MultiSeparator, multiList);
+        else
+            updates[MultiKeyName] = null;
+
+        if (replace)
+            Url.Update(updates);
+        else
+            Url.Navigate(BasePath, updates);
+    }
+
+    /// <summary>Build href with preserved query parameters</summary>
+    protected string AppendPreserved(string href)
+    {
+        var preservedValues = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in PreservedKeys)
+        {
+            if (Url.Has(key))
+                preservedValues[key] = Url.Get(key);
+        }
+
+        return Url.BuildHref(href, preservedValues, preserveCurrentState: false);
+    }
+
+    // ===== Franchise Selection =====
+
     public virtual void OnFranchiseSelected(string? dealerId)
     {
-        if (string.IsNullOrWhiteSpace(dealerId)) Url.Set(("dealer", null));
+        if (string.IsNullOrWhiteSpace(dealerId))
+        {
+            Url.Set(("dealer", null));
+        }
         else
         {
             var franchise = FranchiseService.FindByDealerId(dealerId);
-            if (franchise != null) Url.Set(("dealer", franchise.DealerId));
+            if (franchise != null)
+                Url.Set(("dealer", franchise.DealerId));
         }
+    }
+
+    // ===== Sidebar Management =====
+
+    private async Task HandleSidebarItemSelected(SidebarItem item)
+    {
+        // Handle franchise selection
+        if (item.Key?.StartsWith("franchise:") == true)
+        {
+            var dealerId = item.Key.Substring("franchise:".Length);
+            OnFranchiseSelected(dealerId);
+            return;
+        }
+
+        // Handle multi-facet clicks
+        if (HandleMultiFacetClick)
+        {
+            OnSidebarClick(item);
+        }
+        else if (!string.IsNullOrWhiteSpace(item.Url))
+        {
+            _isNavigating = true;
+            Nav.NavigateTo(item.Url);
+        }
+
+        await Task.CompletedTask;
     }
 
     private async Task HandleLocationChangedAsync()
@@ -126,8 +176,11 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
         try
         {
-            if (!_isNavigating) await Task.Delay(25, token);
+            if (!_isNavigating)
+                await Task.Delay(25, token);
+
             _isNavigating = false;
+
             if (token.IsCancellationRequested) return;
 
             await InvokeAsync(() =>
@@ -150,40 +203,25 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         // Add franchise selector section if enabled
         if (ShowFranchiseSelector)
         {
-            var franchiseSection = new SidebarSection
+            sections.Add(new SidebarSection
             {
                 SectionKey = "franchise",
                 Title = "Franchise",
                 IsFranchiseSelector = true,
                 Items = new List<SidebarItem>()
-            };
-            sections.Add(franchiseSection);
+            });
         }
 
-        // Add facet sections
+        // Add facet sections (URLs will be built by FacetSections using current state)
         var facetSections = FacetSections.Build(Facets(), Scalars, MultiValues, BasePath);
         sections.AddRange(facetSections);
 
         // Build initial selections including dealer parameter
         var initialSelections = new Dictionary<string, string?>(Scalars, StringComparer.OrdinalIgnoreCase);
 
-        // Get dealer from URL if present
-        var uri = new Uri(Nav.Uri);
-        var query = QueryHelpers.ParseQuery(uri.Query);
-        if (query.TryGetValue("dealer", out var dealerValue) && !string.IsNullOrWhiteSpace(dealerValue))
-        {
-            initialSelections["dealer"] = dealerValue.ToString();
-        }
+        if (Url.Has("dealer"))
+            initialSelections["dealer"] = Url.Get("dealer");
 
         Sidebar.SetSections(sections, initialSelections);
-    }
-
-    public virtual void Dispose()
-    {
-        _rebuildCts?.Cancel();
-        _rebuildCts?.Dispose();
-        if (_sidebarStateChangedHandler is not null) Sidebar.StateChanged -= _sidebarStateChangedHandler;
-        if (ReferenceEquals(Sidebar.ItemSelectedHandler, _itemSelectedHandler)) Sidebar.ItemSelectedHandler = null;
-        if (_locationChangedHandler is not null) Nav.LocationChanged -= _locationChangedHandler;
     }
 }
