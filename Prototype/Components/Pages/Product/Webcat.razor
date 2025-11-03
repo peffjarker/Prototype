@@ -2,8 +2,10 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Pages.Product.SeedData
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using static Prototype.Pages.Product.SeedData.WebcatSeedData
 
 @inherits PageWithSidebarBase
 
@@ -93,33 +95,6 @@
             <button class="btn" @onclick="ClearFilters">Clear Filters</button>
             <span class="filter-summary">
                 Showing @FilteredItems.Count of @AllItems.Count items
-            </span>
-        </div>
-    </section>
-
-    <!-- Item Legend -->
-    <section class="card legend-panel">
-        <div class="legend-items">
-            <span class="legend-label">Item Legend:</span>
-            <span class="legend-item">
-                <span class="legend-icon disc"></span>
-                Discontinued
-            </span>
-            <span class="legend-item">
-                <span class="legend-icon price"></span>
-                Price Confirm
-            </span>
-            <span class="legend-item">
-                <span class="legend-icon csi"></span>
-                CSI
-            </span>
-            <span class="legend-item">
-                <span class="legend-icon ds"></span>
-                Drop Ship
-            </span>
-            <span class="legend-item">
-                <span class="legend-icon so"></span>
-                Special Orders
             </span>
         </div>
     </section>
@@ -319,13 +294,63 @@
                                     <span class="pricing-value">@SelectedItem.Discount</span>
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="radio-group">
-                                <label>
-                                    <input type="radio" name="inventory" checked />
-                                    Other Inventory
-                                </label>
-                            </div>
+                        <!-- Other Inventory Section -->
+                        <div class="other-inventory-section">
+                            <button class="collapsible-header @(ShowOtherInventory ? "expanded" : "")"
+                                    @onclick="() => ShowOtherInventory = !ShowOtherInventory">
+                                <span class="chevron">@(ShowOtherInventory ? "▼" : "▶")</span>
+                                Other Inventory
+                            </button>
+
+                            @if (ShowOtherInventory)
+                            {
+                                <div class="other-inventory-content">
+                                    <div class="inventory-warehouse-section">
+                                        <div class="field-row" style="align-items: end; margin-bottom: 1rem;">
+                                            <div class="field">
+                                                <label>Warehouse</label>
+                                                <select @bind="SelectedWarehouse">
+                                                    @foreach (var wh in Warehouses)
+                                                    {
+                                                        <option value="@wh">@wh</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="field">
+                                                <label>Quantity</label>
+                                                <input readonly value="@GetWarehouseQuantity(SelectedWarehouse)" />
+                                            </div>
+                                        </div>
+
+                                        <div class="field-row" style="margin-bottom: 1rem;">
+                                            <div class="field">
+                                                <label>Stock In Date</label>
+                                                <input readonly value="@GetWarehouseStockDate(SelectedWarehouse)" />
+                                            </div>
+                                            <div class="field">
+                                                <label>As Of</label>
+                                                <input readonly value="about 13 hours ago" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="shared-dealers-section">
+                                        <div class="shared-dealers-header">
+                                            <strong>Shared Dealer</strong>
+                                            <strong>Quantity</strong>
+                                        </div>
+                                        @foreach (var dealer in SharedDealers)
+                                        {
+                                            <div class="shared-dealer-row">
+                                                <span>@dealer.Name</span>
+                                                <span>@dealer.Quantity</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
                         </div>
 
                         <!-- Catalog Text -->
@@ -353,7 +378,7 @@
     // ============================================================
     // Page contract & URL bindings
     // ============================================================
-    protected override string BasePath => "/webcat/items";
+    protected override string BasePath => "/product/webcat";
 
     private string? DealerId;
     private string? Option = "Webcat";
@@ -367,20 +392,25 @@
     private string SearchText = "";
     private string? SelectedItemNumber;
 
+    // Other Inventory state
+    private bool ShowOtherInventory = false;
+    private string SelectedWarehouse = "Cornwell";
+    private string[] Warehouses => new[] { "Cornwell", "1DC", "2DC", "3DC" };
+
     protected override IReadOnlyDictionary<string, string?> Scalars =>
         new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["dealer"] = DealerId,
-                ["option"] = Option,
-                ["class"] = SelectedClass != "All" ? SelectedClass : null,
-                ["category"] = !string.IsNullOrEmpty(SelectedCategory) ? SelectedCategory : null,
-                ["subcategory"] = !string.IsNullOrEmpty(SelectedSubcategory) ? SelectedSubcategory : null,
-                ["brand"] = !string.IsNullOrEmpty(SelectedBrand) ? SelectedBrand : null,
-                ["shipfrom"] = !string.IsNullOrEmpty(SelectedShipFrom) ? SelectedShipFrom : null,
-                ["discontinued"] = DisplayDiscontinued ? "true" : null,
-                ["inventory"] = OnlyShowInventory ? "true" : null,
-                ["item"] = SelectedItemNumber
-            };
+        {
+            ["dealer"] = DealerId,
+            ["option"] = Option,
+            ["class"] = SelectedClass != "All" ? SelectedClass : null,
+            ["category"] = !string.IsNullOrEmpty(SelectedCategory) ? SelectedCategory : null,
+            ["subcategory"] = !string.IsNullOrEmpty(SelectedSubcategory) ? SelectedSubcategory : null,
+            ["brand"] = !string.IsNullOrEmpty(SelectedBrand) ? SelectedBrand : null,
+            ["shipfrom"] = !string.IsNullOrEmpty(SelectedShipFrom) ? SelectedShipFrom : null,
+            ["discontinued"] = DisplayDiscontinued ? "true" : null,
+            ["inventory"] = OnlyShowInventory ? "true" : null,
+            ["item"] = SelectedItemNumber
+        };
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
 
@@ -415,18 +445,35 @@
             Title: "Option",
             Options: () => new[]
             {
-                new FacetOption("Webcat", "Webcat", Href: AppendPreserved("/webcat/items")),
-                new FacetOption("Item Availability", "Item Availability", Href: AppendPreserved("/webcat/item-availability")),
-                new FacetOption("Item Activity", "Item Activity", Href: AppendPreserved("/webcat/item-activity")),
-                new FacetOption("Item Costs", "Item Costs", Href: AppendPreserved("/webcat/item-costs")),
-                new FacetOption("Set Maintenance", "Set Maintenance", Href: AppendPreserved("/webcat/set-maintenance")),
-                new FacetOption("Adjust Inventory", "Adjust Inventory", Href: AppendPreserved("/webcat/adjust-inventory")),
-                new FacetOption("View/Change Prices", "View/Change Prices", Href: AppendPreserved("/webcat/prices")),
-                new FacetOption("Global Pricing", "Global Pricing", Href: AppendPreserved("/webcat/global-pricing")),
-                new FacetOption("Physical Inventory", "Physical Inventory", Href: AppendPreserved("/webcat/physical-inventory")),
-                new FacetOption("Add/Change/Delete", "Add/Change/Delete", Href: AppendPreserved("/webcat/add-change-delete")),
-                new FacetOption("Price Labels", "Price Labels", Href: AppendPreserved("/webcat/price-labels"))
+                new FacetOption("Webcat", "Webcat", Href: AppendPreserved("/product/webcat")),
+                new FacetOption("Set Maintenance", "Set Maintenance", Href: AppendPreserved("/product/set-maintenance")),
+                new FacetOption("View/Change Prices", "View/Change Prices", Href: AppendPreserved("/product/prices"))
             }
+        );
+
+        yield return new Facet(
+            Key: "class",
+            Title: "Class",
+            Options: () => new[]
+            {
+                new FacetOption("All Items", "All", Href: AppendPreserved($"{BasePath}?class=All")),
+                new FacetOption("CQT Stock", "CQT Stock", Href: AppendPreserved($"{BasePath}?class=CQT+Stock")),
+                new FacetOption("Local Only", "Local Only", Href: AppendPreserved($"{BasePath}?class=Local+Only"))
+            }
+        );
+
+        yield return new Facet(
+            Key: "legend",
+            Title: "Item Legend",
+            Options: () => new[]
+            {
+                new FacetOption("Discontinued", "disc", ColorHex: "#e11d48"),
+                new FacetOption("Price Confirm", "price", ColorHex: "#111827"),
+                new FacetOption("CSI", "csi", ColorHex: "#2563eb"),
+                new FacetOption("Drop Ship", "ds", ColorHex: "#f59e0b"),
+                new FacetOption("Special Orders", "so", ColorHex: "#eab308")
+            },
+            IsLegend: true
         );
     }
 
@@ -452,7 +499,18 @@
 
     private readonly string[] Categories = new[] { "Drive Tools", "Hand Tools", "Power Tools", "Storage", "Diagnostics" };
     private readonly string[] Subcategories = new[] { "3/8\" Ratchets", "1/2\" Ratchets", "Wrenches", "Sockets", "Extensions" };
-    private readonly string[] Brands = new[] { "Cornwell Quality Tools", "Repair Parts", "Matco", "Snap-on" };
+    public readonly IReadOnlyList<string> Brands = new[]
+    {
+            "Bosch",
+            "Cornwell Quality Tools",
+            "DeWalt",
+            "Fluke",
+            "Generic",
+            "Knipex",
+            "Makita",
+            "Mechanix Wear",
+            "Milwaukee"
+        };
     private readonly string[] ShipFromLocations = new[] { "CQT", "1DC", "2DC", "3DC" };
 
     private List<WebcatItem> FilteredItems
@@ -509,6 +567,34 @@
         DisplayedItems.FirstOrDefault(x => x.Item == SelectedItemNumber);
 
     // ============================================================
+    // Other Inventory Data
+    // ============================================================
+    private sealed class SharedDealer
+    {
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
+
+    private List<SharedDealer> SharedDealers => new()
+    {
+        new SharedDealer { Name = "Donald D. Bricker", Quantity = 0 },
+        new SharedDealer { Name = "Shawn M. Lewis", Quantity = 0 },
+        new SharedDealer { Name = "Donald W. Muffley", Quantity = 0 }
+    };
+
+    private int GetWarehouseQuantity(string warehouse)
+    {
+        // TODO: Fetch actual warehouse inventory
+        return 0;
+    }
+
+    private string GetWarehouseStockDate(string warehouse)
+    {
+        // TODO: Fetch actual stock date
+        return "";
+    }
+
+    // ============================================================
     // Actions
     // ============================================================
     private void SelectItem(string itemNumber)
@@ -553,223 +639,7 @@
     // ============================================================
     private void SeedData()
     {
-        AllItems = new()
-        {
-            new WebcatItem
-            {
-                Item = "1/4",
-                Description = "1/4\"",
-                ListPrice = 5.09m,
-                Discount = "A",
-                Warranty = "10",
-                Action = "No Warranty",
-                Status = "Active",
-                Category = "Drive Tools",
-                Subcategory = "3/8\" Ratchets",
-                Class = "CQT Stock",
-                ShipFrom = "CQT",
-                Brand = "Cornwell Quality Tools",
-                Supplier = "CQT",
-                BuyQty = 1,
-                SellQty = 1,
-                OnHand = 0,
-                Pending = 0,
-                OnOrder = 0,
-                Alloc = 0,
-                BKO = 0,
-                InTransit = 0,
-                Needs = 0,
-                Interests = 0,
-                EffectiveDate = new DateTime(2025, 7, 10),
-                LocalListPrice = 5.09m,
-                CatalogText = "1/4\" Ball (25-Pack)"
-            },
-            new WebcatItem
-            {
-                Item = "1/8",
-                Description = "1/8\"",
-                ListPrice = 4.25m,
-                Discount = "A",
-                Warranty = "10",
-                Action = "No Warranty",
-                Status = "Active",
-                Category = "Drive Tools",
-                Subcategory = "3/8\" Ratchets",
-                Class = "CQT Stock",
-                ShipFrom = "CQT",
-                Brand = "Cornwell Quality Tools",
-                Supplier = "CQT",
-                BuyQty = 1,
-                SellQty = 1,
-                OnHand = 0,
-                Pending = 0,
-                OnOrder = 0,
-                Alloc = 0,
-                BKO = 0,
-                InTransit = 0,
-                Needs = 0,
-                Interests = 0,
-                EffectiveDate = new DateTime(2025, 7, 10),
-                LocalListPrice = 4.25m
-            },
-            new WebcatItem
-            {
-                Item = "1002",
-                Description = "Firm",
-                ListPrice = 89.99m,
-                Discount = "A",
-                Warranty = "10",
-                Action = "No Warranty",
-                Status = "Active",
-                Category = "Hand Tools",
-                Subcategory = "Wrenches",
-                Class = "CQT Stock",
-                ShipFrom = "CQT",
-                Brand = "Cornwell Quality Tools",
-                Supplier = "CQT",
-                BuyQty = 1,
-                SellQty = 1,
-                OnHand = 2,
-                Pending = 0,
-                OnOrder = 1,
-                Alloc = 0,
-                BKO = 0,
-                InTransit = 0,
-                Needs = 0,
-                Interests = 0,
-                EffectiveDate = new DateTime(2025, 7, 10),
-                LocalListPrice = 89.99m
-            },
-            new WebcatItem
-            {
-                Item = "1003",
-                Description = "Firm",
-                ListPrice = 45.50m,
-                Discount = "A",
-                Warranty = "10",
-                Action = "No Warranty",
-                Status = "Active",
-                IsDiscontinued = true,
-                Category = "Hand Tools",
-                Subcategory = "Sockets",
-                Class = "CQT Stock",
-                ShipFrom = "CQT",
-                Brand = "Cornwell Quality Tools",
-                Supplier = "CQT",
-                BuyQty = 1,
-                SellQty = 1,
-                OnHand = 0,
-                Pending = 0,
-                OnOrder = 0,
-                Alloc = 0,
-                BKO = 0,
-                InTransit = 0,
-                Needs = 0,
-                Interests = 0,
-                EffectiveDate = new DateTime(2025, 7, 10),
-                LocalListPrice = 45.50m
-            },
-            new WebcatItem
-            {
-                Item = "10030A25E717",
-                Description = "LOCK",
-                ListPrice = 125.00m,
-                Discount = "A",
-                Warranty = "10",
-                Action = "No Warranty",
-                Status = "Active",
-                Category = "Storage",
-                Subcategory = "Tool Boxes",
-                Class = "CQT Stock",
-                ShipFrom = "1DC",
-                Brand = "Cornwell Quality Tools",
-                Supplier = "CQT",
-                BuyQty = 1,
-                SellQty = 1,
-                IsPriceConfirm = true,
-                OnHand = 5,
-                Pending = 0,
-                OnOrder = 0,
-                Alloc = 0,
-                BKO = 0,
-                InTransit = 0,
-                Needs = 0,
-                Interests = 0,
-                EffectiveDate = new DateTime(2025, 7, 10),
-                LocalListPrice = 125.00m
-            },
-            new WebcatItem
-            {
-                Item = "1008DA21PNE709",
-                Description = "12 Bl",
-                ListPrice = 299.99m,
-                Discount = "A",
-                Warranty = "10",
-                Action = "No Warranty",
-                Status = "Active",
-                IsDropShip = true,
-                Category = "Power Tools",
-                Subcategory = "Drills",
-                Class = "CQT Stock",
-                ShipFrom = "CQT",
-                Brand = "Cornwell Quality Tools",
-                Supplier = "CQT",
-                BuyQty = 1,
-                SellQty = 1,
-                OnHand = 1,
-                Pending = 0,
-                OnOrder = 0,
-                Alloc = 0,
-                BKO = 0,
-                InTransit = 0,
-                Needs = 0,
-                Interests = 0,
-                EffectiveDate = new DateTime(2025, 7, 10),
-                LocalListPrice = 299.99m
-            }
-        };
-    }
-
-    // ============================================================
-    // Data models
-    // ============================================================
-    private sealed class WebcatItem
-    {
-        public string Item { get; set; } = "";
-        public string Description { get; set; } = "";
-        public decimal ListPrice { get; set; }
-        public string Discount { get; set; } = "A";
-        public string Warranty { get; set; } = "";
-        public string Action { get; set; } = "";
-        public string Status { get; set; } = "";
-        public string Category { get; set; } = "";
-        public string Subcategory { get; set; } = "";
-        public string Class { get; set; } = "";
-        public string ShipFrom { get; set; } = "";
-        public string Brand { get; set; } = "";
-        public string Supplier { get; set; } = "";
-        public string ReplacedBy { get; set; } = "";
-        public int BuyQty { get; set; }
-        public int SellQty { get; set; }
-
-        public int OnHand { get; set; }
-        public int Pending { get; set; }
-        public int OnOrder { get; set; }
-        public int Alloc { get; set; }
-        public int BKO { get; set; }
-        public int InTransit { get; set; }
-        public int Needs { get; set; }
-        public int Interests { get; set; }
-
-        public DateTime? EffectiveDate { get; set; }
-        public decimal LocalListPrice { get; set; }
-        public string CatalogText { get; set; } = "";
-
-        public bool IsDiscontinued { get; set; }
-        public bool IsPriceConfirm { get; set; }
-        public bool IsCSI { get; set; }
-        public bool IsDropShip { get; set; }
-        public bool IsSpecialOrder { get; set; }
+        AllItems = WebcatSeedData.GetItems();
     }
 }
 
@@ -822,56 +692,6 @@
         font-weight: 600;
         color: #6c757d;
     }
-
-    .legend-panel {
-        margin-bottom: 1rem;
-        padding: 0.75rem 1rem;
-    }
-
-    .legend-items {
-        display: flex;
-        gap: 1.5rem;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .legend-label {
-        font-weight: 600;
-        color: #6c757d;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-    }
-
-    .legend-icon {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
-
-        .legend-icon.disc {
-            background-color: #e11d48;
-        }
-
-        .legend-icon.price {
-            background-color: #111827;
-        }
-
-        .legend-icon.csi {
-            background-color: #2563eb;
-        }
-
-        .legend-icon.ds {
-            background-color: #f59e0b;
-        }
-
-        .legend-icon.so {
-            background-color: #eab308;
-        }
 
     .items-section {
         padding: 0;
@@ -1069,16 +889,77 @@
         font-weight: 600;
     }
 
-    .radio-group {
-        padding: 1rem;
-        border-top: 1px solid #dee2e6;
+    .other-inventory-section {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        overflow: hidden;
     }
 
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
+    .collapsible-header {
+        width: 100%;
+        background: #f8f9fa;
+        border: none;
+        padding: 0.75rem 1rem;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        transition: background-color 0.2s;
+    }
+
+        .collapsible-header:hover {
+            background: #e9ecef;
+        }
+
+        .collapsible-header.expanded {
+            background: #e9ecef;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+    .chevron {
+        font-size: 0.75em;
+        color: #6c757d;
+    }
+
+    .other-inventory-content {
+        padding: 1rem;
+        background: white;
+    }
+
+    .inventory-warehouse-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .shared-dealers-section {
+        border-top: 1px solid #dee2e6;
+        padding-top: 1rem;
+    }
+
+    .shared-dealers-header {
+        display: grid;
+        grid-template-columns: 1fr 100px;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        font-weight: 600;
+        border-radius: 0.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .shared-dealer-row {
+        display: grid;
+        grid-template-columns: 1fr 100px;
+        padding: 0.5rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+        .shared-dealer-row:last-child {
+            border-bottom: none;
+        }
+
+        .shared-dealer-row span:last-child {
+            text-align: right;
         }
 
     .catalog-section {

@@ -1,0 +1,500 @@
+﻿@page "/product/set-maintenance"
+
+@using Microsoft.AspNetCore.WebUtilities
+@using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Pages.Product.SeedData
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using static Prototype.Pages.Product.SeedData.SetMaintenanceSeedData
+
+@inherits PageWithSidebarBase
+
+@inject IJSRuntime JS
+
+<div class="wrap">
+    <header class="header">
+        <h3 class="title">Set Maintenance</h3>
+    </header>
+
+    <!-- Items List & Detail -->
+    <section class="card items-section">
+        <div class="items-layout">
+            <!-- Items List -->
+            <div class="items-list">
+                <div class="list-header">
+                    <input type="text" class="search-box" placeholder="Search items..."
+                           @bind="SearchText" @bind:event="oninput" />
+                </div>
+                <div class="list-body">
+                    @foreach (var item in DisplayedItems)
+                    {
+                        <div class="item-row @(item.Item == SelectedItemNumber ? "selected" : "") @GetItemStatusClass(item)"
+                             @onclick="() => SelectItem(item.Item)">
+                            <div class="item-number">@item.Item</div>
+                            <div class="item-name">@item.Description</div>
+                            @if (item.IsDiscontinued)
+                            {
+                                <span class="item-badge disc">●</span>
+                            }
+                            @if (item.IsPriceConfirm)
+                            {
+                                <span class="item-badge price">●</span>
+                            }
+                            @if (item.IsDropShip)
+                            {
+                                <span class="item-badge ds">●</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Item Detail -->
+            <div class="item-detail">
+                @if (SelectedItem != null)
+                {
+                    <div class="set-maintenance-detail">
+                        <!-- Header Section -->
+                        <div class="detail-header-section">
+                            <div class="field-group">
+                                <div class="field">
+                                    <label>Item</label>
+                                    <input readonly value="@SelectedItem.Item" />
+                                </div>
+                            </div>
+
+                            <div class="field-group">
+                                <div class="field">
+                                    <label>Description</label>
+                                    <input readonly value="@SelectedItem.Description" class="full-width" />
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>List Price</label>
+                                    <input readonly value="@SelectedItem.ListPrice.ToString("C")" />
+                                </div>
+                                <div class="field">
+                                    <label>Discount</label>
+                                    <input readonly value="@SelectedItem.Discount" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventory Summary Bar -->
+                        <div class="inventory-bar">
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">On Hand</div>
+                                <div class="inv-bar-value">@SelectedItem.OnHand</div>
+                            </div>
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">Pending</div>
+                                <div class="inv-bar-value">@SelectedItem.Pending</div>
+                            </div>
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">On Order</div>
+                                <div class="inv-bar-value">@SelectedItem.OnOrder</div>
+                            </div>
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">Alloc</div>
+                                <div class="inv-bar-value">@SelectedItem.Alloc</div>
+                            </div>
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">BKO</div>
+                                <div class="inv-bar-value">@SelectedItem.BKO</div>
+                            </div>
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">In Transit</div>
+                                <div class="inv-bar-value">@SelectedItem.InTransit</div>
+                            </div>
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">Needs</div>
+                                <div class="inv-bar-value">@SelectedItem.Needs</div>
+                            </div>
+                            <div class="inv-bar-col">
+                                <div class="inv-bar-header">Interests</div>
+                                <div class="inv-bar-value">@SelectedItem.Interests</div>
+                            </div>
+                        </div>
+
+                        <!-- Components Grid -->
+                        <div class="components-section">
+                            <TelerikGrid Data="@SelectedItem.Components"
+                                         Pageable="false"
+                                         Sortable="true"
+                                         FilterMode="@GridFilterMode.FilterRow"
+                                         Resizable="true"
+                                         Height="400px">
+                                <GridColumns>
+                                    <GridColumn Field="@nameof(SetComponent.Component)" Title="Component" Width="140px" />
+                                    <GridColumn Field="@nameof(SetComponent.Description)" Title="Description" />
+                                    <GridColumn Field="@nameof(SetComponent.AdjQty)" Title="Adj Qty" Width="120px" TextAlign="@ColumnTextAlign.Right" />
+                                    <GridColumn Field="@nameof(SetComponent.OnHand)" Title="On Hand" Width="120px" TextAlign="@ColumnTextAlign.Right" />
+                                    <GridColumn Field="@nameof(SetComponent.PrintLabel)" Title="Print Label" Width="120px" TextAlign="@ColumnTextAlign.Center">
+                                        <Template>
+                                            @{
+                                                var component = (SetComponent)context;
+                                                <input type="checkbox" checked="@component.PrintLabel" disabled />
+                                            }
+                                        </Template>
+                                    </GridColumn>
+                                </GridColumns>
+                            </TelerikGrid>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="detail-empty">
+                        <p>Select an item to view set maintenance details</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
+
+    // ============================================================
+    // Page contract & URL bindings
+    // ============================================================
+    protected override string BasePath => "/product/set-maintenance";
+
+    private string? DealerId;
+    private string? Option = "Set Maintenance";
+    private string SelectedClass = "All";
+    private string SearchText = "";
+    private string? SelectedItemNumber;
+
+    protected override IReadOnlyDictionary<string, string?> Scalars =>
+        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["dealer"] = DealerId,
+            ["option"] = Option,
+            ["class"] = SelectedClass != "All" ? SelectedClass : null,
+            ["item"] = SelectedItemNumber
+        };
+
+    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
+
+    protected override void ReadFromUrl()
+    {
+        DealerId = Url.Get("dealer");
+        Option = Url.Get("option") ?? "Set Maintenance";
+        SelectedClass = Url.Get("class") ?? "All";  // ADD THIS LINE
+        SelectedItemNumber = Url.Get("item");
+
+        // Select first item if none selected
+        if (string.IsNullOrEmpty(SelectedItemNumber))
+        {
+            SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+        }
+    }
+
+    // ============================================================
+    // Sidebar facets
+    // ============================================================
+
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+                new FacetOption("Webcat", "Webcat", Href: AppendPreserved("/product/webcat")),
+                new FacetOption("Set Maintenance", "Set Maintenance", Href: AppendPreserved("/product/set-maintenance")),
+                new FacetOption("View/Change Prices", "View/Change Prices", Href: AppendPreserved("/product/prices"))
+            }
+        );
+
+        yield return new Facet(
+            Key: "class",
+            Title: "Class",
+            Options: () => new[]
+            {
+                new FacetOption("All Items", "All", Href: AppendPreserved($"{BasePath}?class=All")),
+                new FacetOption("CQT Stock", "CQT Stock", Href: AppendPreserved($"{BasePath}?class=CQT+Stock")),
+                new FacetOption("Local Only", "Local Only", Href: AppendPreserved($"{BasePath}?class=Local+Only"))
+            }
+        );
+
+        yield return new Facet(
+            Key: "legend",
+            Title: "Item Legend",
+            Options: () => new[]
+            {
+                new FacetOption("Discontinued", "disc", ColorHex: "#e11d48"),
+                new FacetOption("Price Confirm", "price", ColorHex: "#111827"),
+                new FacetOption("CSI", "csi", ColorHex: "#2563eb"),
+                new FacetOption("Drop Ship", "ds", ColorHex: "#f59e0b"),
+                new FacetOption("Special Orders", "so", ColorHex: "#eab308")
+            },
+            IsLegend: true
+        );
+    }
+
+    protected override void OnSidebarClick(SidebarItem item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.Url))
+            Nav.NavigateTo(item.Url);
+    }
+
+    // ============================================================
+    // Lifecycle
+    // ============================================================
+    protected override void OnInitialized()
+    {
+        SeedData();
+        base.OnInitialized();
+    }
+
+    // ============================================================
+    // Data & Filtering
+    // ============================================================
+    private List<SetMaintenanceItem> AllItems = new();
+
+    private List<SetMaintenanceItem> DisplayedItems
+    {
+        get
+        {
+            var items = AllItems.AsEnumerable();
+
+            if (SelectedClass != "All")
+                items = items.Where(x => x.Class == SelectedClass);
+
+            if (!string.IsNullOrEmpty(SearchText))
+            {
+                var search = SearchText.ToLower();
+                items = items.Where(x =>
+                    x.Item.ToLower().Contains(search) ||
+                    x.Description.ToLower().Contains(search)
+                );
+            }
+
+            return items.ToList();
+        }
+    }
+
+    private SetMaintenanceItem? SelectedItem =>
+        DisplayedItems.FirstOrDefault(x => x.Item == SelectedItemNumber);
+
+    // ============================================================
+    // Actions
+    // ============================================================
+    private void SelectItem(string itemNumber)
+    {
+        SelectedItemNumber = itemNumber;
+        NavigateWithPageState();
+    }
+
+    private string GetItemStatusClass(SetMaintenanceItem item)
+    {
+        var classes = new List<string>();
+        if (item.IsDiscontinued) classes.Add("item-discontinued");
+        if (item.IsPriceConfirm) classes.Add("item-price");
+        if (item.IsDropShip) classes.Add("item-ds");
+        return string.Join(" ", classes);
+    }
+
+    // ============================================================
+    // Data seeding
+    // ============================================================
+    private void SeedData()
+    {
+        AllItems = SetMaintenanceSeedData.GetItems();
+    }
+}
+<style>
+    .items-section {
+        padding: 0;
+    }
+
+    .items-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        min-height: 600px;
+    }
+
+    .items-list {
+        border-right: 1px solid #dee2e6;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .list-header {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    .search-box {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+
+    .list-body {
+        flex: 1;
+        overflow-y: auto;
+        max-height: calc(100vh - 200px);
+    }
+
+    .item-row {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+        .item-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .item-row.selected {
+            background-color: #e7f3ff;
+            border-left: 3px solid #007bff;
+        }
+
+        .item-row.item-discontinued {
+            color: #6c757d;
+        }
+
+    .item-number {
+        font-weight: 600;
+        min-width: 100px;
+    }
+
+    .item-name {
+        flex: 1;
+        font-size: 0.875rem;
+    }
+
+    .item-badge {
+        font-size: 1.2em;
+        line-height: 1;
+    }
+
+        .item-badge.disc {
+            color: #e11d48;
+        }
+
+        .item-badge.price {
+            color: #111827;
+        }
+
+        .item-badge.ds {
+            color: #f59e0b;
+        }
+
+    .item-detail {
+        padding: 1.5rem;
+        overflow-y: auto;
+        max-height: calc(100vh - 150px);
+    }
+
+    .detail-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+    }
+
+    .set-maintenance-detail {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .detail-header-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+        .field label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #495057;
+        }
+
+        .field input,
+        .field select {
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .field input[readonly] {
+            background-color: #e9ecef;
+        }
+
+        .field input.full-width {
+            width: 100%;
+        }
+
+    .inventory-bar {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 1px;
+        background: #dee2e6;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    .inv-bar-col {
+        background: #f8f9fa;
+        padding: 0.75rem;
+        text-align: center;
+    }
+
+    .inv-bar-header {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #fff;
+        background: #007bff;
+        padding: 0.25rem;
+        margin: -0.75rem -0.75rem 0.5rem -0.75rem;
+    }
+
+    .inv-bar-value {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .components-section {
+        margin-top: 1rem;
+    }
+</style>

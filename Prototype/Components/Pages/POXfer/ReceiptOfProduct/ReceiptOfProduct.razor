@@ -82,7 +82,7 @@
 
         <TelerikGrid Data="@CurrentLines"
                      SelectionMode="@GridSelectionMode.Multiple"
-                     @bind-SelectedItems="@SelectedLines"
+                     @bind-SelectedItems="@SelectedLinesCollection"
                      Pageable="true"
                      PageSize="20"
                      Sortable="true"
@@ -97,7 +97,7 @@
                 <GridCommandButton Command="ExcelExport" Icon="@SvgIcon.FileExcel">Export to Excel</GridCommandButton>
                 <GridSearchBox />
                 <span style="margin-left: auto; font-weight: bold;">
-                    Total Lines: @CurrentLines.Count | Selected: @SelectedLines.Count()
+                    Total Lines: @CurrentLines.Count | Selected: @SelectedLineItems.Count
                 </span>
             </GridToolBarTemplate>
             <GridExport>
@@ -215,7 +215,7 @@
             <button class="btn outline" @onclick="SelectAll">Select All (@CurrentLines.Count)</button>
             <button class="btn outline" @onclick="UnselectAll">Un-Select All</button>
             <button class="btn primary" @onclick="PrintPriceLabels" disabled="@(!CanPrintLabels)">
-                Print Price Labels @(SelectedLines.Any() ? $"({SelectedLines.Count()})" : "")
+                Print Price Labels @(SelectedLineItems.Any() ? $"({SelectedLineItems.Count})" : "")
             </button>
             <button class="btn success" @onclick="Receive" disabled="@(!CanReceive)">
                 Receive @(TotalReceiveQty > 0 ? $"({TotalReceiveQty} items)" : "")
@@ -228,15 +228,32 @@
     // Enable franchise selector in sidebar
     protected override bool ShowFranchiseSelector => true;
 
-    // ===== BasePath for the sidebar builder =====
+    // ============================================================
+    // Page contract & URL bindings
+    // ============================================================
     protected override string BasePath => "/po-transfer/receipt-of-product";
+
+    // MultiKey name for grid selections
+    protected override string MultiKeyName => "asnlines";
 
     // ===== URL-bound state (singletons) =====
     public enum ReceiptStatus { All, Open, Closed }
     private ReceiptStatus Status = ReceiptStatus.Open;
-
-    // Current selection
     private string? SelectedAsnId;
+    private string? DealerId;
+
+    // Grid selection tracking
+    private readonly HashSet<string> SelectedLineItems = new(StringComparer.OrdinalIgnoreCase);
+    private IEnumerable<AsnLine> _selectedLinesCollection = new List<AsnLine>();
+    private IEnumerable<AsnLine> SelectedLinesCollection
+    {
+        get => _selectedLinesCollection;
+        set
+        {
+            _selectedLinesCollection = value;
+            SyncSelectedLines();
+        }
+    }
 
     // Data
     private List<AsnSummary> AsnList = new();
@@ -258,13 +275,12 @@
     private string SelectedCarrier = "UPS";
     private readonly string[] Carriers = new[] { "UPS", "USPS", "FedEx", "DHL", "OnTrac", "Other" };
 
-    // Lines and selection
+    // Lines
     private List<AsnLine> CurrentLines = new();
-    private IEnumerable<AsnLine> SelectedLines { get; set; } = new List<AsnLine>();
 
     private int LabelCountTotal => CurrentLines.Sum(x => x.LabelCount);
     private int TotalReceiveQty => CurrentLines.Sum(x => x.ReceiveQty);
-    private bool CanPrintLabels => PrintNeedsOnly && SelectedLines.Any();
+    private bool CanPrintLabels => PrintNeedsOnly && SelectedLineItems.Any();
     private bool CanReceive => TotalReceiveQty > 0;
 
     // ====== PageWithSidebarBase contract ======
@@ -277,10 +293,8 @@
             ["asn"] = SelectedAsnId
         };
 
-    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
-
-    // URL-bound state
-    private string? DealerId;
+    // Expose selected line items as MultiValues
+    protected override IReadOnlyCollection<string> MultiValues => SelectedLineItems;
 
     protected override void ReadFromUrl()
     {
@@ -303,6 +317,17 @@
 
         LoadHeaderFor(SelectedAsnId);
         LoadLinesFor(SelectedAsnId);
+
+        // Read selected lines from URL
+        SelectedLineItems.Clear();
+        var lineItems = Url.GetMulti(MultiKeyName);
+        foreach (var item in lineItems)
+        {
+            SelectedLineItems.Add(item);
+        }
+
+        // Restore grid selection
+        _selectedLinesCollection = CurrentLines.Where(l => SelectedLineItems.Contains(l.Item)).ToList();
     }
 
     // ============================================================
@@ -340,7 +365,7 @@
                 new FacetOption(
                     $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}",
                     a.AsnId,
-                    Href: AppendPreserved($"{BasePath}?status={Status}&asn={Uri.EscapeDataString(a.AsnId)}")
+                    Href: AppendPreserved($"{BasePath}?asn={Uri.EscapeDataString(a.AsnId)}")
                 ))
         );
     }
@@ -348,7 +373,7 @@
     protected override void OnSidebarClick(SidebarItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.Url))
-            Nav.NavigateTo(AppendPreserved(item.Url));
+            Nav.NavigateTo(item.Url);
     }
 
     // ===== Lifecycle =====
@@ -382,7 +407,6 @@
     private void LoadLinesFor(string? asnId)
     {
         CurrentLines.Clear();
-        SelectedLines = new List<AsnLine>();
 
         if (string.IsNullOrWhiteSpace(asnId)) return;
 
@@ -447,6 +471,32 @@
                 Status = "Open"
             });
         }
+
+        // Only clear selection if not restoring from URL
+        if (!SelectedLineItems.Any())
+        {
+            _selectedLinesCollection = new List<AsnLine>();
+        }
+    }
+
+    // ============================================================
+    // Selection sync
+    // ============================================================
+    private void SyncSelectedLines()
+    {
+        var newItems = _selectedLinesCollection.Select(l => l.Item).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var changed = !SelectedLineItems.SetEquals(newItems);
+
+        if (changed)
+        {
+            SelectedLineItems.Clear();
+            foreach (var item in newItems)
+            {
+                SelectedLineItems.Add(item);
+            }
+
+            NavigateWithPageState();
+        }
     }
 
     // ===== Grid event handlers =====
@@ -470,13 +520,21 @@
     // ===== Actions =====
     private void SelectAll()
     {
-        SelectedLines = CurrentLines.ToList();
+        _selectedLinesCollection = CurrentLines.ToList();
+        SelectedLineItems.Clear();
+        foreach (var line in CurrentLines)
+        {
+            SelectedLineItems.Add(line.Item);
+        }
+        NavigateWithPageState();
         StateHasChanged();
     }
 
     private void UnselectAll()
     {
-        SelectedLines = new List<AsnLine>();
+        _selectedLinesCollection = new List<AsnLine>();
+        SelectedLineItems.Clear();
+        NavigateWithPageState();
         StateHasChanged();
     }
 
@@ -484,7 +542,7 @@
     {
         if (!CanPrintLabels) return;
 
-        var items = string.Join(", ", SelectedLines.Select(l => l.Item));
+        var items = string.Join(", ", SelectedLineItems);
         await JS.InvokeVoidAsync("console.log", $"Printing price labels for: {items}");
 
         // TODO: Implement actual label printing
