@@ -1,0 +1,1098 @@
+﻿@page "/product/webcat"
+
+@using Microsoft.AspNetCore.WebUtilities
+@using Prototype.Components.Layout.Navigation.Sidebar
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+
+@inherits PageWithSidebarBase
+
+@inject IJSRuntime JS
+
+<div class="wrap">
+    <header class="header">
+        <h3 class="title">Webcat - Item Availability</h3>
+    </header>
+
+    <!-- Filter Panel -->
+    <section class="card filter-panel">
+        <div class="filter-grid">
+            <div class="filter-col">
+                <div class="field">
+                    <label>Class:</label>
+                    <select @bind="SelectedClass" @bind:after="OnFilterChanged">
+                        <option value="All">All Items</option>
+                        <option value="CQT Stock">CQT Stock</option>
+                        <option value="Local Only">Local Only</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Category:</label>
+                    <select @bind="SelectedCategory" @bind:after="OnFilterChanged">
+                        <option value="">All Categories</option>
+                        @foreach (var cat in Categories)
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Subcategory:</label>
+                    <select @bind="SelectedSubcategory" @bind:after="OnFilterChanged" disabled="@string.IsNullOrEmpty(SelectedCategory)">
+                        <option value="">All Subcategories</option>
+                        @foreach (var sub in Subcategories)
+                        {
+                            <option value="@sub">@sub</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Brand:</label>
+                    <select @bind="SelectedBrand" @bind:after="OnFilterChanged">
+                        <option value="">All Brands</option>
+                        @foreach (var brand in Brands)
+                        {
+                            <option value="@brand">@brand</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-col">
+                <div class="field">
+                    <label>Ship From:</label>
+                    <select @bind="SelectedShipFrom" @bind:after="OnFilterChanged">
+                        <option value="">All Locations</option>
+                        @foreach (var loc in ShipFromLocations)
+                        {
+                            <option value="@loc">@loc</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="field checkbox-field">
+                    <label>
+                        <input type="checkbox" @bind="DisplayDiscontinued" @bind:after="OnFilterChanged" />
+                        Display Discontinued
+                    </label>
+                </div>
+
+                <div class="field checkbox-field">
+                    <label>
+                        <input type="checkbox" @bind="OnlyShowInventory" @bind:after="OnFilterChanged" />
+                        Only Show Items with Inventory
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-actions">
+            <button class="btn" @onclick="ClearFilters">Clear Filters</button>
+            <span class="filter-summary">
+                Showing @FilteredItems.Count of @AllItems.Count items
+            </span>
+        </div>
+    </section>
+
+    <!-- Item Legend -->
+    <section class="card legend-panel">
+        <div class="legend-items">
+            <span class="legend-label">Item Legend:</span>
+            <span class="legend-item">
+                <span class="legend-icon disc"></span>
+                Discontinued
+            </span>
+            <span class="legend-item">
+                <span class="legend-icon price"></span>
+                Price Confirm
+            </span>
+            <span class="legend-item">
+                <span class="legend-icon csi"></span>
+                CSI
+            </span>
+            <span class="legend-item">
+                <span class="legend-icon ds"></span>
+                Drop Ship
+            </span>
+            <span class="legend-item">
+                <span class="legend-icon so"></span>
+                Special Orders
+            </span>
+        </div>
+    </section>
+
+    <!-- Items List & Detail -->
+    <section class="card items-section">
+        <div class="items-layout">
+            <!-- Items List -->
+            <div class="items-list">
+                <div class="list-header">
+                    <input type="text" class="search-box" placeholder="Search items..."
+                           @bind="SearchText" @bind:event="oninput" />
+                </div>
+                <div class="list-body">
+                    @foreach (var item in DisplayedItems)
+                    {
+                        <div class="item-row @(item.Item == SelectedItemNumber ? "selected" : "") @GetItemStatusClass(item)"
+                             @onclick="() => SelectItem(item.Item)">
+                            <div class="item-number">@item.Item</div>
+                            <div class="item-name">@item.Description</div>
+                            @if (item.IsDiscontinued)
+                            {
+                                <span class="item-badge disc">●</span>
+                            }
+                            @if (item.IsPriceConfirm)
+                            {
+                                <span class="item-badge price">●</span>
+                            }
+                            @if (item.IsDropShip)
+                            {
+                                <span class="item-badge ds">●</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Item Detail -->
+            <div class="item-detail">
+                @if (SelectedItem != null)
+                {
+                    <div class="detail-header">
+                        <h4>@SelectedItem.Item - @SelectedItem.Description</h4>
+                    </div>
+
+                    <div class="detail-grid">
+                        <div class="detail-section">
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Item:</label>
+                                    <input readonly value="@SelectedItem.Item" />
+                                </div>
+                                <div class="field">
+                                    <label>Discount:</label>
+                                    <select disabled>
+                                        <option>@SelectedItem.Discount</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <label>Description:</label>
+                                <input readonly value="@SelectedItem.Description" />
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>List Price:</label>
+                                    <input readonly value="@SelectedItem.ListPrice.ToString("C")" />
+                                </div>
+                                <div class="field checkbox-field">
+                                    <label>Drop Ship:</label>
+                                    <input type="checkbox" checked="@SelectedItem.IsDropShip" disabled />
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Warranty:</label>
+                                    <input readonly value="@SelectedItem.Warranty" />
+                                </div>
+                                <div class="field">
+                                    <label>Action:</label>
+                                    <input readonly value="@SelectedItem.Action" />
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Status:</label>
+                                    <input readonly value="@SelectedItem.Status" />
+                                </div>
+                                <div class="field">
+                                    <label>Category:</label>
+                                    <input readonly value="@SelectedItem.Category" />
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Class:</label>
+                                    <input readonly value="@SelectedItem.Class" />
+                                </div>
+                                <div class="field">
+                                    <label>Subcategory:</label>
+                                    <input readonly value="@SelectedItem.Subcategory" />
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Ship From:</label>
+                                    <input readonly value="@SelectedItem.ShipFrom" />
+                                </div>
+                                <div class="field">
+                                    <label>Brand:</label>
+                                    <input readonly value="@SelectedItem.Brand" />
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Replaced by:</label>
+                                    <input readonly value="@SelectedItem.ReplacedBy" />
+                                </div>
+                                <div class="field">
+                                    <label>Supplier:</label>
+                                    <input readonly value="@SelectedItem.Supplier" />
+                                </div>
+                            </div>
+
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Buy Qty:</label>
+                                    <input readonly value="@SelectedItem.BuyQty" />
+                                </div>
+                                <div class="field">
+                                    <label>Sell Qty:</label>
+                                    <input readonly value="@SelectedItem.SellQty" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventory Summary -->
+                        <div class="inventory-summary">
+                            <div class="inventory-header">Inventory Summary</div>
+                            <div class="inventory-grid">
+                                <div class="inv-col">
+                                    <div class="inv-label">On Hand</div>
+                                    <div class="inv-value">@SelectedItem.OnHand</div>
+                                </div>
+                                <div class="inv-col">
+                                    <div class="inv-label">Pending</div>
+                                    <div class="inv-value">@SelectedItem.Pending</div>
+                                </div>
+                                <div class="inv-col">
+                                    <div class="inv-label">On Order</div>
+                                    <div class="inv-value">@SelectedItem.OnOrder</div>
+                                </div>
+                                <div class="inv-col">
+                                    <div class="inv-label">Alloc</div>
+                                    <div class="inv-value">@SelectedItem.Alloc</div>
+                                </div>
+                                <div class="inv-col">
+                                    <div class="inv-label">BKO</div>
+                                    <div class="inv-value">@SelectedItem.BKO</div>
+                                </div>
+                                <div class="inv-col">
+                                    <div class="inv-label">In Transit</div>
+                                    <div class="inv-value">@SelectedItem.InTransit</div>
+                                </div>
+                                <div class="inv-col">
+                                    <div class="inv-label">Needs</div>
+                                    <div class="inv-value">@SelectedItem.Needs</div>
+                                </div>
+                                <div class="inv-col">
+                                    <div class="inv-label">Interests</div>
+                                    <div class="inv-value">@SelectedItem.Interests</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pricing Info -->
+                        <div class="pricing-section">
+                            <div class="pricing-header">Effective Pricing</div>
+                            <div class="pricing-grid">
+                                <div class="pricing-row">
+                                    <span class="pricing-label">Effective:</span>
+                                    <span class="pricing-value">@SelectedItem.EffectiveDate?.ToString("MM/dd/yyyy")</span>
+                                </div>
+                                <div class="pricing-row">
+                                    <span class="pricing-label">Local List:</span>
+                                    <span class="pricing-value">@SelectedItem.LocalListPrice.ToString("C")</span>
+                                </div>
+                                <div class="pricing-row">
+                                    <span class="pricing-label">Discount:</span>
+                                    <span class="pricing-value">@SelectedItem.Discount</span>
+                                </div>
+                            </div>
+
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="inventory" checked />
+                                    Other Inventory
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Catalog Text -->
+                        <div class="catalog-section">
+                            <label>Catalog Text:</label>
+                            <textarea readonly rows="8">@SelectedItem.CatalogText</textarea>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="detail-empty">
+                        <p>Select an item to view details</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
+
+    // ============================================================
+    // Page contract & URL bindings
+    // ============================================================
+    protected override string BasePath => "/webcat/items";
+
+    private string? DealerId;
+    private string? Option = "Webcat";
+    private string SelectedClass = "All";
+    private string SelectedCategory = "";
+    private string SelectedSubcategory = "";
+    private string SelectedBrand = "";
+    private string SelectedShipFrom = "";
+    private bool DisplayDiscontinued = false;
+    private bool OnlyShowInventory = false;
+    private string SearchText = "";
+    private string? SelectedItemNumber;
+
+    protected override IReadOnlyDictionary<string, string?> Scalars =>
+        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["dealer"] = DealerId,
+                ["option"] = Option,
+                ["class"] = SelectedClass != "All" ? SelectedClass : null,
+                ["category"] = !string.IsNullOrEmpty(SelectedCategory) ? SelectedCategory : null,
+                ["subcategory"] = !string.IsNullOrEmpty(SelectedSubcategory) ? SelectedSubcategory : null,
+                ["brand"] = !string.IsNullOrEmpty(SelectedBrand) ? SelectedBrand : null,
+                ["shipfrom"] = !string.IsNullOrEmpty(SelectedShipFrom) ? SelectedShipFrom : null,
+                ["discontinued"] = DisplayDiscontinued ? "true" : null,
+                ["inventory"] = OnlyShowInventory ? "true" : null,
+                ["item"] = SelectedItemNumber
+            };
+
+    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
+
+    protected override void ReadFromUrl()
+    {
+        DealerId = Url.Get("dealer");
+        Option = Url.Get("option") ?? "Webcat";
+        SelectedClass = Url.Get("class") ?? "All";
+        SelectedCategory = Url.Get("category") ?? "";
+        SelectedSubcategory = Url.Get("subcategory") ?? "";
+        SelectedBrand = Url.Get("brand") ?? "";
+        SelectedShipFrom = Url.Get("shipfrom") ?? "";
+        DisplayDiscontinued = Url.Get("discontinued") == "true";
+        OnlyShowInventory = Url.Get("inventory") == "true";
+        SelectedItemNumber = Url.Get("item");
+
+        // Select first item if none selected
+        if (string.IsNullOrEmpty(SelectedItemNumber))
+        {
+            SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+        }
+    }
+
+    // ============================================================
+    // Sidebar facets
+    // ============================================================
+
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+                new FacetOption("Webcat", "Webcat", Href: AppendPreserved("/webcat/items")),
+                new FacetOption("Item Availability", "Item Availability", Href: AppendPreserved("/webcat/item-availability")),
+                new FacetOption("Item Activity", "Item Activity", Href: AppendPreserved("/webcat/item-activity")),
+                new FacetOption("Item Costs", "Item Costs", Href: AppendPreserved("/webcat/item-costs")),
+                new FacetOption("Set Maintenance", "Set Maintenance", Href: AppendPreserved("/webcat/set-maintenance")),
+                new FacetOption("Adjust Inventory", "Adjust Inventory", Href: AppendPreserved("/webcat/adjust-inventory")),
+                new FacetOption("View/Change Prices", "View/Change Prices", Href: AppendPreserved("/webcat/prices")),
+                new FacetOption("Global Pricing", "Global Pricing", Href: AppendPreserved("/webcat/global-pricing")),
+                new FacetOption("Physical Inventory", "Physical Inventory", Href: AppendPreserved("/webcat/physical-inventory")),
+                new FacetOption("Add/Change/Delete", "Add/Change/Delete", Href: AppendPreserved("/webcat/add-change-delete")),
+                new FacetOption("Price Labels", "Price Labels", Href: AppendPreserved("/webcat/price-labels"))
+            }
+        );
+    }
+
+    protected override void OnSidebarClick(SidebarItem item)
+    {
+        if (!string.IsNullOrWhiteSpace(item.Url))
+            Nav.NavigateTo(item.Url);
+    }
+
+    // ============================================================
+    // Lifecycle
+    // ============================================================
+    protected override void OnInitialized()
+    {
+        SeedData();
+        base.OnInitialized();
+    }
+
+    // ============================================================
+    // Data & Filtering
+    // ============================================================
+    private List<WebcatItem> AllItems = new();
+
+    private readonly string[] Categories = new[] { "Drive Tools", "Hand Tools", "Power Tools", "Storage", "Diagnostics" };
+    private readonly string[] Subcategories = new[] { "3/8\" Ratchets", "1/2\" Ratchets", "Wrenches", "Sockets", "Extensions" };
+    private readonly string[] Brands = new[] { "Cornwell Quality Tools", "Repair Parts", "Matco", "Snap-on" };
+    private readonly string[] ShipFromLocations = new[] { "CQT", "1DC", "2DC", "3DC" };
+
+    private List<WebcatItem> FilteredItems
+    {
+        get
+        {
+            var query = AllItems.AsEnumerable();
+
+            if (SelectedClass != "All")
+                query = query.Where(x => x.Class == SelectedClass);
+
+            if (!string.IsNullOrEmpty(SelectedCategory))
+                query = query.Where(x => x.Category == SelectedCategory);
+
+            if (!string.IsNullOrEmpty(SelectedSubcategory))
+                query = query.Where(x => x.Subcategory == SelectedSubcategory);
+
+            if (!string.IsNullOrEmpty(SelectedBrand))
+                query = query.Where(x => x.Brand == SelectedBrand);
+
+            if (!string.IsNullOrEmpty(SelectedShipFrom))
+                query = query.Where(x => x.ShipFrom == SelectedShipFrom);
+
+            if (!DisplayDiscontinued)
+                query = query.Where(x => !x.IsDiscontinued);
+
+            if (OnlyShowInventory)
+                query = query.Where(x => x.OnHand > 0);
+
+            return query.ToList();
+        }
+    }
+
+    private List<WebcatItem> DisplayedItems
+    {
+        get
+        {
+            var items = FilteredItems;
+
+            if (!string.IsNullOrEmpty(SearchText))
+            {
+                var search = SearchText.ToLower();
+                items = items.Where(x =>
+                    x.Item.ToLower().Contains(search) ||
+                    x.Description.ToLower().Contains(search)
+                ).ToList();
+            }
+
+            return items;
+        }
+    }
+
+    private WebcatItem? SelectedItem =>
+        DisplayedItems.FirstOrDefault(x => x.Item == SelectedItemNumber);
+
+    // ============================================================
+    // Actions
+    // ============================================================
+    private void SelectItem(string itemNumber)
+    {
+        SelectedItemNumber = itemNumber;
+        NavigateWithPageState();
+    }
+
+    private void OnFilterChanged()
+    {
+        // Reset item selection when filters change
+        SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+        NavigateWithPageState();
+    }
+
+    private void ClearFilters()
+    {
+        SelectedClass = "All";
+        SelectedCategory = "";
+        SelectedSubcategory = "";
+        SelectedBrand = "";
+        SelectedShipFrom = "";
+        DisplayDiscontinued = false;
+        OnlyShowInventory = false;
+        SearchText = "";
+
+        SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+        NavigateWithPageState(replace: true);
+    }
+
+    private string GetItemStatusClass(WebcatItem item)
+    {
+        var classes = new List<string>();
+        if (item.IsDiscontinued) classes.Add("item-discontinued");
+        if (item.IsPriceConfirm) classes.Add("item-price");
+        if (item.IsDropShip) classes.Add("item-ds");
+        return string.Join(" ", classes);
+    }
+
+    // ============================================================
+    // Data seeding
+    // ============================================================
+    private void SeedData()
+    {
+        AllItems = new()
+        {
+            new WebcatItem
+            {
+                Item = "1/4",
+                Description = "1/4\"",
+                ListPrice = 5.09m,
+                Discount = "A",
+                Warranty = "10",
+                Action = "No Warranty",
+                Status = "Active",
+                Category = "Drive Tools",
+                Subcategory = "3/8\" Ratchets",
+                Class = "CQT Stock",
+                ShipFrom = "CQT",
+                Brand = "Cornwell Quality Tools",
+                Supplier = "CQT",
+                BuyQty = 1,
+                SellQty = 1,
+                OnHand = 0,
+                Pending = 0,
+                OnOrder = 0,
+                Alloc = 0,
+                BKO = 0,
+                InTransit = 0,
+                Needs = 0,
+                Interests = 0,
+                EffectiveDate = new DateTime(2025, 7, 10),
+                LocalListPrice = 5.09m,
+                CatalogText = "1/4\" Ball (25-Pack)"
+            },
+            new WebcatItem
+            {
+                Item = "1/8",
+                Description = "1/8\"",
+                ListPrice = 4.25m,
+                Discount = "A",
+                Warranty = "10",
+                Action = "No Warranty",
+                Status = "Active",
+                Category = "Drive Tools",
+                Subcategory = "3/8\" Ratchets",
+                Class = "CQT Stock",
+                ShipFrom = "CQT",
+                Brand = "Cornwell Quality Tools",
+                Supplier = "CQT",
+                BuyQty = 1,
+                SellQty = 1,
+                OnHand = 0,
+                Pending = 0,
+                OnOrder = 0,
+                Alloc = 0,
+                BKO = 0,
+                InTransit = 0,
+                Needs = 0,
+                Interests = 0,
+                EffectiveDate = new DateTime(2025, 7, 10),
+                LocalListPrice = 4.25m
+            },
+            new WebcatItem
+            {
+                Item = "1002",
+                Description = "Firm",
+                ListPrice = 89.99m,
+                Discount = "A",
+                Warranty = "10",
+                Action = "No Warranty",
+                Status = "Active",
+                Category = "Hand Tools",
+                Subcategory = "Wrenches",
+                Class = "CQT Stock",
+                ShipFrom = "CQT",
+                Brand = "Cornwell Quality Tools",
+                Supplier = "CQT",
+                BuyQty = 1,
+                SellQty = 1,
+                OnHand = 2,
+                Pending = 0,
+                OnOrder = 1,
+                Alloc = 0,
+                BKO = 0,
+                InTransit = 0,
+                Needs = 0,
+                Interests = 0,
+                EffectiveDate = new DateTime(2025, 7, 10),
+                LocalListPrice = 89.99m
+            },
+            new WebcatItem
+            {
+                Item = "1003",
+                Description = "Firm",
+                ListPrice = 45.50m,
+                Discount = "A",
+                Warranty = "10",
+                Action = "No Warranty",
+                Status = "Active",
+                IsDiscontinued = true,
+                Category = "Hand Tools",
+                Subcategory = "Sockets",
+                Class = "CQT Stock",
+                ShipFrom = "CQT",
+                Brand = "Cornwell Quality Tools",
+                Supplier = "CQT",
+                BuyQty = 1,
+                SellQty = 1,
+                OnHand = 0,
+                Pending = 0,
+                OnOrder = 0,
+                Alloc = 0,
+                BKO = 0,
+                InTransit = 0,
+                Needs = 0,
+                Interests = 0,
+                EffectiveDate = new DateTime(2025, 7, 10),
+                LocalListPrice = 45.50m
+            },
+            new WebcatItem
+            {
+                Item = "10030A25E717",
+                Description = "LOCK",
+                ListPrice = 125.00m,
+                Discount = "A",
+                Warranty = "10",
+                Action = "No Warranty",
+                Status = "Active",
+                Category = "Storage",
+                Subcategory = "Tool Boxes",
+                Class = "CQT Stock",
+                ShipFrom = "1DC",
+                Brand = "Cornwell Quality Tools",
+                Supplier = "CQT",
+                BuyQty = 1,
+                SellQty = 1,
+                IsPriceConfirm = true,
+                OnHand = 5,
+                Pending = 0,
+                OnOrder = 0,
+                Alloc = 0,
+                BKO = 0,
+                InTransit = 0,
+                Needs = 0,
+                Interests = 0,
+                EffectiveDate = new DateTime(2025, 7, 10),
+                LocalListPrice = 125.00m
+            },
+            new WebcatItem
+            {
+                Item = "1008DA21PNE709",
+                Description = "12 Bl",
+                ListPrice = 299.99m,
+                Discount = "A",
+                Warranty = "10",
+                Action = "No Warranty",
+                Status = "Active",
+                IsDropShip = true,
+                Category = "Power Tools",
+                Subcategory = "Drills",
+                Class = "CQT Stock",
+                ShipFrom = "CQT",
+                Brand = "Cornwell Quality Tools",
+                Supplier = "CQT",
+                BuyQty = 1,
+                SellQty = 1,
+                OnHand = 1,
+                Pending = 0,
+                OnOrder = 0,
+                Alloc = 0,
+                BKO = 0,
+                InTransit = 0,
+                Needs = 0,
+                Interests = 0,
+                EffectiveDate = new DateTime(2025, 7, 10),
+                LocalListPrice = 299.99m
+            }
+        };
+    }
+
+    // ============================================================
+    // Data models
+    // ============================================================
+    private sealed class WebcatItem
+    {
+        public string Item { get; set; } = "";
+        public string Description { get; set; } = "";
+        public decimal ListPrice { get; set; }
+        public string Discount { get; set; } = "A";
+        public string Warranty { get; set; } = "";
+        public string Action { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string Category { get; set; } = "";
+        public string Subcategory { get; set; } = "";
+        public string Class { get; set; } = "";
+        public string ShipFrom { get; set; } = "";
+        public string Brand { get; set; } = "";
+        public string Supplier { get; set; } = "";
+        public string ReplacedBy { get; set; } = "";
+        public int BuyQty { get; set; }
+        public int SellQty { get; set; }
+
+        public int OnHand { get; set; }
+        public int Pending { get; set; }
+        public int OnOrder { get; set; }
+        public int Alloc { get; set; }
+        public int BKO { get; set; }
+        public int InTransit { get; set; }
+        public int Needs { get; set; }
+        public int Interests { get; set; }
+
+        public DateTime? EffectiveDate { get; set; }
+        public decimal LocalListPrice { get; set; }
+        public string CatalogText { get; set; } = "";
+
+        public bool IsDiscontinued { get; set; }
+        public bool IsPriceConfirm { get; set; }
+        public bool IsCSI { get; set; }
+        public bool IsDropShip { get; set; }
+        public bool IsSpecialOrder { get; set; }
+    }
+}
+
+<style>
+    .filter-panel {
+        margin-bottom: 1rem;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        padding: 1rem;
+    }
+
+    .filter-col {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .checkbox-field {
+        display: flex;
+        align-items: center;
+    }
+
+        .checkbox-field label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .checkbox-field input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+    .filter-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-top: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    .filter-summary {
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .legend-panel {
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .legend-items {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .legend-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .legend-icon {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+        .legend-icon.disc {
+            background-color: #e11d48;
+        }
+
+        .legend-icon.price {
+            background-color: #111827;
+        }
+
+        .legend-icon.csi {
+            background-color: #2563eb;
+        }
+
+        .legend-icon.ds {
+            background-color: #f59e0b;
+        }
+
+        .legend-icon.so {
+            background-color: #eab308;
+        }
+
+    .items-section {
+        padding: 0;
+    }
+
+    .items-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        min-height: 600px;
+    }
+
+    .items-list {
+        border-right: 1px solid #dee2e6;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .list-header {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    .search-box {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+    }
+
+    .list-body {
+        flex: 1;
+        overflow-y: auto;
+        max-height: 600px;
+    }
+
+    .item-row {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        gap: 0.5rem;
+        position: relative;
+    }
+
+        .item-row:hover {
+            background-color: #f8f9fa;
+        }
+
+        .item-row.selected {
+            background-color: #e7f3ff;
+            border-left: 3px solid #007bff;
+        }
+
+        .item-row.item-discontinued {
+            color: #6c757d;
+        }
+
+    .item-number {
+        font-weight: 600;
+        min-width: 120px;
+    }
+
+    .item-name {
+        flex: 1;
+        font-size: 0.875rem;
+    }
+
+    .item-badge {
+        font-size: 1.2em;
+        line-height: 1;
+    }
+
+        .item-badge.disc {
+            color: #e11d48;
+        }
+
+        .item-badge.price {
+            color: #111827;
+        }
+
+        .item-badge.ds {
+            color: #f59e0b;
+        }
+
+    .item-detail {
+        padding: 1.5rem;
+        overflow-y: auto;
+        max-height: 600px;
+    }
+
+    .detail-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+    }
+
+    .detail-header h4 {
+        margin: 0 0 1.5rem 0;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .detail-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .detail-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .inventory-summary {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    .inventory-header {
+        background: #007bff;
+        color: white;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+    }
+
+    .inventory-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: #dee2e6;
+        padding: 1px;
+    }
+
+    .inv-col {
+        background: white;
+        padding: 0.75rem;
+        text-align: center;
+    }
+
+    .inv-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .inv-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .pricing-section {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    .pricing-header {
+        background: #007bff;
+        color: white;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+    }
+
+    .pricing-grid {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .pricing-row {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .pricing-label {
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .pricing-value {
+        font-weight: 600;
+    }
+
+    .radio-group {
+        padding: 1rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+    .catalog-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+        .catalog-section textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            resize: vertical;
+            font-family: inherit;
+        }
+</style>
