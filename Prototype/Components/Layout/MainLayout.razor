@@ -16,7 +16,8 @@
                              SectionQueryKeys="@(new Dictionary<string,string?>(StringComparer.OrdinalIgnoreCase)
                              {
                                  ["option"] = null,      // navigate via item.Url
-                                 ["status"] = "status"   // sync ?status query param
+                                 ["status"] = "status",   // sync ?status query param
+                                 ["class"] = "class"    // sync ?class
                              })"
                              SelectedBySection="selected"
                              SelectedBySectionChanged="@(v => selected = v)"

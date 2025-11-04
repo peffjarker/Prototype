@@ -94,7 +94,6 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     }
 
     // ===== Navigation Helpers (simplified using UrlState) =====
-
     /// <summary>Navigate with current page state</summary>
     protected void NavigateWithPageState(bool replace = false)
     {
@@ -198,6 +197,11 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
     protected void RebuildSidebar()
     {
+        // SAFETY CHECK: Ensure we're still on the correct path for this page
+        var currentPath = GetCurrentPathOnly(Nav);
+        if (!currentPath.StartsWith(BasePath, StringComparison.OrdinalIgnoreCase))
+            return; // We've navigated away from this page, don't rebuild sidebar
+
         var sections = new List<SidebarSection>();
 
         // Add franchise selector section if enabled
@@ -223,5 +227,14 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
             initialSelections["dealer"] = Url.Get("dealer");
 
         Sidebar.SetSections(sections, initialSelections);
+    }
+
+    private static string GetCurrentPathOnly(NavigationManager nav)
+    {
+        var abs = nav.ToAbsoluteUri(nav.Uri);
+        var rel = nav.ToBaseRelativePath(abs.ToString());
+        var cut = rel.IndexOfAny(new[] { '?', '#' });
+        var path = cut >= 0 ? "/" + rel[..cut].TrimStart('/') : "/" + rel.TrimStart('/');
+        return path;
     }
 }

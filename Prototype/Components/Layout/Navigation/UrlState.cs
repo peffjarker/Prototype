@@ -12,7 +12,7 @@ namespace Services
 {
     /// <summary>
     /// IUrlState implementation with debounced, circuit-safe navigation.
-    /// Centralizes all URL operations to eliminate duplication across components.
+    /// Centralizes URL operations to eliminate duplication across components.
     /// </summary>
     public sealed class UrlState : IUrlState, IDisposable
     {
@@ -39,7 +39,15 @@ namespace Services
 
         // ===== Core IUrlState Operations =====
 
-        public string BuildHref(string baseHref, IReadOnlyDictionary<string, string?>? overrides = null, bool preserveCurrentState = true)
+        /// <summary>
+        /// Build an href by optionally starting from current query state, applying a base path/query,
+        /// and then applying overrides. If navigation crosses the first path segment (module),
+        /// current state is ignored to prevent filter leakage.
+        /// </summary>
+        public string BuildHref(
+            string baseHref,
+            IReadOnlyDictionary<string, string?>? overrides = null,
+            bool preserveCurrentState = true)
         {
             if (string.IsNullOrWhiteSpace(baseHref))
                 baseHref = "/";
@@ -48,20 +56,39 @@ namespace Services
             var pathOnly = cut >= 0 ? baseHref[..cut] : baseHref;
             pathOnly = pathOnly.StartsWith("/") ? pathOnly : "/" + pathOnly.TrimStart('/');
 
-            // CHANGE: Start fresh OR merge based on flag
-            var merged = preserveCurrentState
-                ? new Dictionary<string, string?>(_current, StringComparer.OrdinalIgnoreCase)
-                : new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+            // Detect cross-module nav (root segment change)
+            var baseRoot = pathOnly.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            var currentRoot = _nav.Uri.Split('/', StringSplitOptions.RemoveEmptyEntries).Skip(3).FirstOrDefault(); // skip scheme://host/
+            var crossModule = !string.Equals(baseRoot, currentRoot, StringComparison.OrdinalIgnoreCase);
 
-            // Parse any query string in the baseHref
+            var merged = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+            // Preserve current query only when staying within same root
+            if (preserveCurrentState && !crossModule)
+            {
+                foreach (var kv in _current)
+                    merged[kv.Key] = kv.Value;
+            }
+
+            // Parse query from baseHref (takes priority over preserved current)
             if (cut >= 0 && baseHref[cut] == '?')
             {
-                var providedQs = QueryHelpers.ParseQuery(baseHref[cut..]);
-                foreach (var kv in providedQs)
+                var provided = QueryHelpers.ParseQuery(baseHref[cut..]);
+                foreach (var kv in provided)
                     merged[kv.Key] = kv.Value.LastOrDefault();
             }
 
-            // Apply overrides
+            // ---- ALWAYS-PRESERVE dealer ACROSS MODULES  ----
+            if (_current.TryGetValue("dealer", out var dealerVal) && !string.IsNullOrWhiteSpace(dealerVal))
+            {
+                // Only set if nothing has set/overridden it yet (null/empty counts as "not set")
+                if (!merged.TryGetValue("dealer", out var existing) || string.IsNullOrWhiteSpace(existing))
+                {
+                    merged["dealer"] = dealerVal;
+                }
+            }
+
+            // Apply explicit overrides (highest priority — can change or remove dealer)
             if (overrides is not null)
             {
                 foreach (var kv in overrides)
@@ -74,6 +101,7 @@ namespace Services
             var qs = BuildQuery(merged);
             return string.IsNullOrEmpty(qs) ? pathOnly : $"{pathOnly}?{qs}";
         }
+
 
         public void Set(params (string key, string? value)[] overrides)
         {
@@ -108,14 +136,16 @@ namespace Services
 
         // ===== Convenience Helpers =====
 
-        public string? Get(string key)
-        {
-            return _current.TryGetValue(key, out var value) ? value : null;
-        }
+        public string? Get(string key) => _current.TryGetValue(key, out var value) ? value : null;
 
-        public bool Has(string key)
+        public bool Has(string key) => _current.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value);
+
+        public IReadOnlyList<string> GetMulti(string key, string separator = ",")
         {
-            return _current.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value);
+            if (!_current.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
+                return Array.Empty<string>();
+
+            return value.Split(separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         }
 
         public void Toggle(string key, string value, string separator = ",")
@@ -158,14 +188,6 @@ namespace Services
                 return;
 
             ScheduleNavigation(query: target, pathOverride: null, replaceHistory: true, callerSyncCtx: syncCtx);
-        }
-
-        public IReadOnlyList<string> GetMulti(string key, string separator = ",")
-        {
-            if (!_current.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
-                return Array.Empty<string>();
-
-            return value.Split(separator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         }
 
         // ===== Internal Navigation Logic =====

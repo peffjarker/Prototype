@@ -166,7 +166,7 @@
 
     private string? DealerId;
     private string? Option = "Set Maintenance";
-    private string SelectedClass = "All";
+    private string SelectedClass = "All Items";
     private string SearchText = "";
     private string? SelectedItemNumber;
 
@@ -175,7 +175,7 @@
         {
             ["dealer"] = DealerId,
             ["option"] = Option,
-            ["class"] = SelectedClass != "All" ? SelectedClass : null,
+            ["class"] = SelectedClass,
             ["item"] = SelectedItemNumber
         };
 
@@ -185,7 +185,7 @@
     {
         DealerId = Url.Get("dealer");
         Option = Url.Get("option") ?? "Set Maintenance";
-        SelectedClass = Url.Get("class") ?? "All";  // ADD THIS LINE
+        SelectedClass = Url.Get("class") ?? "All Items";
         SelectedItemNumber = Url.Get("item");
 
         // Select first item if none selected
@@ -206,9 +206,17 @@
             Title: "Option",
             Options: () => new[]
             {
-                new FacetOption("Webcat", "Webcat", Href: AppendPreserved("/product/webcat")),
-                new FacetOption("Set Maintenance", "Set Maintenance", Href: AppendPreserved("/product/set-maintenance")),
-                new FacetOption("View/Change Prices", "View/Change Prices", Href: AppendPreserved("/product/prices"))
+            new FacetOption("Webcat", "Webcat",
+                Href: AppendPreserved(Url.BuildHref("/product/webcat",
+                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+
+            new FacetOption("Set Maintenance", "Set Maintenance",
+                Href: AppendPreserved(Url.BuildHref("/product/set-maintenance",
+                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+
+            new FacetOption("View/Change Prices", "View/Change Prices",
+                Href: AppendPreserved(Url.BuildHref("/product/prices",
+                    new Dictionary<string, string?> { ["class"] = "All Items" })))
             }
         );
 
@@ -217,9 +225,17 @@
             Title: "Class",
             Options: () => new[]
             {
-                new FacetOption("All Items", "All", Href: AppendPreserved($"{BasePath}?class=All")),
-                new FacetOption("CQT Stock", "CQT Stock", Href: AppendPreserved($"{BasePath}?class=CQT+Stock")),
-                new FacetOption("Local Only", "Local Only", Href: AppendPreserved($"{BasePath}?class=Local+Only"))
+            new FacetOption("All Items",  "All Items",
+                Href: AppendPreserved(Url.BuildHref(BasePath,
+                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+
+            new FacetOption("CQT Stock",  "CQT Stock",
+                Href: AppendPreserved(Url.BuildHref(BasePath,
+                    new Dictionary<string, string?> { ["class"] = "CQT Stock" }))),
+
+            new FacetOption("Local Only", "Local Only",
+                Href: AppendPreserved(Url.BuildHref(BasePath,
+                    new Dictionary<string, string?> { ["class"] = "Local Only" })))
             }
         );
 
@@ -228,11 +244,11 @@
             Title: "Item Legend",
             Options: () => new[]
             {
-                new FacetOption("Discontinued", "disc", ColorHex: "#e11d48"),
-                new FacetOption("Price Confirm", "price", ColorHex: "#111827"),
-                new FacetOption("CSI", "csi", ColorHex: "#2563eb"),
-                new FacetOption("Drop Ship", "ds", ColorHex: "#f59e0b"),
-                new FacetOption("Special Orders", "so", ColorHex: "#eab308")
+            new FacetOption("Discontinued",  "disc",  ColorHex: "#e11d48"),
+            new FacetOption("Price Confirm", "price", ColorHex: "#111827"),
+            new FacetOption("CSI",           "csi",   ColorHex: "#2563eb"),
+            new FacetOption("Drop Ship",     "ds",    ColorHex: "#f59e0b"),
+            new FacetOption("Special Orders","so",    ColorHex: "#eab308")
             },
             IsLegend: true
         );
@@ -264,7 +280,7 @@
         {
             var items = AllItems.AsEnumerable();
 
-            if (SelectedClass != "All")
+            if (SelectedClass != "All Items")
                 items = items.Where(x => x.Class == SelectedClass);
 
             if (!string.IsNullOrEmpty(SearchText))
@@ -455,13 +471,13 @@
             font-size: 0.875rem;
         }
 
-        .field input[readonly] {
-            background-color: #e9ecef;
-        }
+            .field input[readonly] {
+                background-color: #e9ecef;
+            }
 
-        .field input.full-width {
-            width: 100%;
-        }
+            .field input.full-width {
+                width: 100%;
+            }
 
     .inventory-bar {
         display: grid;

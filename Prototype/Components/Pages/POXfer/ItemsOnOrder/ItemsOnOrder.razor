@@ -8,9 +8,11 @@
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Services
 @using Prototype.Components.Services.Reports
+@using Prototype.Pages.POTransfer.SeedData
 @using global::Services
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using static Prototype.Pages.POTransfer.SeedData.ItemsOnOrderSeedData
 
 @inherits PageWithSidebarBase
 
@@ -421,7 +423,6 @@
     private TelerikGrid<Row>? ItemsGridRef;
     private TelerikGrid<OpenPOLine>? POLinesGridRef;
 
-
     // ============================================================
     // Page contract & URL bindings (overrides + sidebar + decode)
     // ============================================================
@@ -458,7 +459,6 @@
     // ============================================================
     // Sidebar facets
     // ============================================================
-
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -510,48 +510,9 @@
     // ============================================================
     protected override void OnInitialized()
     {
-        // Note: Base.OnInitialized() calls ReadFromUrl() and RebuildSidebar()
-        // so we need to call it AFTER we set up our data
-
-        Rows.AddRange(new[]
-        {
-            new Row("A02", "1/4\" Drive (F) x 3/8\" (M) Adapter", 1, 0, 0, 1, 23.50m),
-            new Row("A20", "3/8\" Drive (F) x 1/2\" (M) Adapter", 2, 2, 0, 0, 45.00m),
-            new Row("A23", "3/8\" Drive (F) x 1/2\" (M) Adapter", 1, 1, 0, 1, 22.10m),
-            new Row("A35", "1/2\" Drive (F) x 3/4\" (M) Adapter", 1, 0, 0, 0, 18.75m),
-            new Row("AF12201", "1220-1 AIR TOOL OIL PINT", 18, 18, 0, 0, 180.00m),
-            new Row("AP328", "1/2\"Dr.(F) x 1/2\"(M) Imp Adapt,Ball Type", 1, 1, 0, 0, 19.30m),
-            new Row("AS6SB", "Stubby Air Slide Hammer", 1, 1, 0, 0, 159.99m),
-            new Row("CAT3160", "3/16\" Orbital Sander 6\"", 1, 2, 0, 1, 299.00m)
-        });
-
-        OpenLines.AddRange(new[]
-        {
-            new OpenPOLine
-            {
-                Item = "CAT3160",
-                PONumber = "PO-0000100807", Line = 1, SONumber = "0002916666",
-                Vendor = "CQT", Date = new DateTime(2025, 09, 30),
-                QtyOrdered = 2, Open = 2, InTransit = 0, Alloc = 0, BKO = 1,
-                UnitCost = 299.00m, Rcv = 0, Status = "Open"
-            },
-            new OpenPOLine
-            {
-                Item = "A20",
-                PONumber = "PO-0000100821", Line = 3, SONumber = "0002917777",
-                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
-                QtyOrdered = 5, Open = 2, InTransit = 2, Alloc = 0, BKO = 0,
-                UnitCost = 45.00m, Rcv = 3, Status = "Partial"
-            },
-            new OpenPOLine
-            {
-                Item = "A02",
-                PONumber = "PO-0000100821", Line = 4, SONumber = "0002917777",
-                Vendor = "CQT", Date = new DateTime(2025, 09, 28),
-                QtyOrdered = 1, Open = 1, InTransit = 0, Alloc = 0, BKO = 1,
-                UnitCost = 23.50m, Rcv = 0, Status = "Open"
-            }
-        });
+        // Load seed data
+        AllRows.AddRange(ItemsOnOrderSeedData.GetItems());
+        OpenLines.AddRange(ItemsOnOrderSeedData.GetPOLines());
 
         // Call base AFTER setting up data
         base.OnInitialized();
@@ -564,6 +525,7 @@
     // Page state, data & computed views
     // ============================================================
     private string? DealerId;
+
     public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
     private static StatusKind MapStatus(string s) => s switch
     {
@@ -588,10 +550,11 @@
 
     private ElementReference _oplinesSection;
 
-    private readonly List<Row> Rows = new();
+    private readonly List<Row> AllRows = new();
     private readonly List<OpenPOLine> OpenLines = new();
 
-    private List<Row> FilteredRows => ApplyStatusFilter(Rows, Status);
+    private List<Row> FilteredRows => ApplyStatusFilter(AllRows, Status);
+
     private List<OpenPOLine> VisibleOpenLines =>
         SelectedItems.Count == 0 ? OpenLines : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
 
@@ -740,48 +703,6 @@
             StatusKind.Unacknowledged => source.Where(r => r.IsUnacknowledged).ToList(),
             _ => source
         };
-
-    private string HighlightIf(bool cond) => cond ? "hl" : "";
-
-    // ============================================================
-    // Data models
-    // ============================================================
-    private sealed class Row
-    {
-        public Row(string item, string desc, int onOrderOpen, int inTransit, int alloc, int bko, decimal unitCost)
-        { Item = item; Description = desc; OnOrderOpen = onOrderOpen; InTransit = inTransit; Alloc = alloc; BKO = bko; UnitCost = unitCost; }
-        public string Item { get; set; }
-        public string Description { get; set; }
-        public int OnOrderOpen { get; set; }
-        public int InTransit { get; set; }
-        public int Alloc { get; set; }
-        public int BKO { get; set; }
-        public decimal UnitCost { get; set; }
-        public decimal TotalOpenCost => UnitCost * Math.Max(OnOrderOpen, 0);
-        public decimal InTransitCost => UnitCost * InTransit;
-        public decimal BackorderCost => UnitCost * BKO;
-        public bool IsUnacknowledged => OnOrderOpen > 0 && InTransit == 0 && BKO == 0 && Alloc == 0;
-        public decimal UnacknowledgedCost => IsUnacknowledged ? TotalOpenCost : 0m;
-    }
-
-    private sealed class OpenPOLine
-    {
-        public string Item { get; set; } = "";
-        public string PONumber { get; set; } = "";
-        public int Line { get; set; }
-        public string SONumber { get; set; } = "";
-        public string Vendor { get; set; } = "";
-        public DateTime Date { get; set; }
-        public int QtyOrdered { get; set; }
-        public int Open { get; set; }
-        public int InTransit { get; set; }
-        public int Alloc { get; set; }
-        public int BKO { get; set; }
-        public decimal UnitCost { get; set; }
-        public decimal TotalOpenCost => UnitCost * Math.Max(Open, 0);
-        public int Rcv { get; set; }
-        public string Status { get; set; } = "Open";
-    }
 }
 
 <script>

@@ -2,8 +2,10 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Pages.POTransfer.SeedData
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using static Prototype.Pages.POTransfer.SeedData.PurchaseOrdersSeedData
 
 @inherits PageWithSidebarBase
 
@@ -302,7 +304,7 @@
         }
     }
 
-    // Scalars -> URL map (cleaned up, no "option")
+    // Scalars -> URL map
     protected override IReadOnlyDictionary<string, string?> Scalars =>
        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
        {
@@ -325,7 +327,7 @@
 
         // Initialize data if needed
         if (AllPos.Count == 0)
-            SeedPoList();
+            AllPos.AddRange(PurchaseOrdersSeedData.GetPoSummaries());
 
         var filtered = FilteredPos;
 
@@ -363,7 +365,6 @@
     // ============================================================
     // Sidebar facets
     // ============================================================
-
     protected override IEnumerable<Facet> Facets()
     {
         // Option facet (cross-page)
@@ -393,7 +394,6 @@
             }
         );
 
-        // PO facet - let AppendPreserved handle status automatically
         yield return new Facet(
             Key: "po",
             Title: "PO",
@@ -417,18 +417,13 @@
     // ============================================================
     protected override void OnInitialized()
     {
-        SeedPoList();
+        AllPos.AddRange(PurchaseOrdersSeedData.GetPoSummaries());
         base.OnInitialized();
     }
 
     // ============================================================
     // Page state & computed lists
     // ============================================================
-    private sealed record PoSummary(string Number, DateTime Date, string Status)
-    {
-        public string Display => $"{Number} - {Date:MM/dd/yyyy}";
-    }
-
     private List<PoSummary> AllPos = new();
 
     private List<PoSummary> FilteredPos =>
@@ -441,19 +436,8 @@
     private PurchaseOrder Model { get; set; } = new();
 
     // ============================================================
-    // Data seeding & loading
+    // Data loading
     // ============================================================
-    private void SeedPoList()
-    {
-        AllPos = new()
-        {
-            new PoSummary("PO-200996",      new DateTime(2025, 07, 29), "Closed"),
-            new PoSummary("PO-200995",      new DateTime(2025, 07, 24), "Open – Acknowledged"),
-            new PoSummary("PO-200994",      new DateTime(2025, 07, 22), "Pending"),
-            new PoSummary("PO-000010929",   new DateTime(2025, 07, 09), "Closed"),
-        };
-    }
-
     private void LoadPoDetail(string? poNumber)
     {
         if (string.IsNullOrWhiteSpace(poNumber))
@@ -462,76 +446,8 @@
             return;
         }
 
-        // Find the PO summary by number
-        var poSummary = AllPos.FirstOrDefault(p =>
-            p.Number.Equals(poNumber, StringComparison.OrdinalIgnoreCase));
-
-        if (poSummary == null)
-        {
-            Model = new();
-            return;
-        }
-
-        Model = new PurchaseOrder
-        {
-            PoNumber = poNumber.Replace(" ", ""),
-            PoDate = poSummary.Date,
-            VendorName = "Cornwell Quality Tools",
-            ShipToName = "TODARO, MEL J.",
-            Attention = "1405 Hightower Dr",
-            Address1 = "",
-            Address2 = "",
-            City = "Uniontown",
-            State = "OH",
-            Zip = "44685",
-            SpecialInstructions = "",
-            SalesOrderNumber = "0003285168",
-            PoStatus = Status,
-            DefaultShipMethod = "UPS",
-            PremiumShipMethod = "—",
-            RallyPricing = false,
-            NoPaperwork = true,
-            LiftGateRequired = false,
-            Comments = "Purchase Order Added via CQT",
-            ReleaseBackorders = false,
-            BackorderUnfilled = false,
-            Lines = new List<PurchaseOrderLine>
-            {
-                new()
-                {
-                    Item = "THCE5401",
-                    Description = "Articulating Borescope, 5\" 6mm Cam",
-                    Comment = "Added - CQT",
-                    Ordered = 1, Received = 1, Open = 0,
-                    DefCbx = "None", Transit = 0, SalesOrderLine = 0,
-                    UnitCost = 299.99m, TotalCost = 299.99m,
-                    RallyUnit = 0, RallyExt = 0, Status = "Closed", CancelFlag = 0
-                },
-                new()
-                {
-                    Item = "PFNPSB8",
-                    Description = "Sovereign True Wriss Bluetooth Earplugs",
-                    Comment = "Added - CQT",
-                    Ordered = 1, Received = 1, Open = 0,
-                    DefCbx = "None", Transit = 0, SalesOrderLine = 0,
-                    UnitCost = 89.99m, TotalCost = 89.99m,
-                    RallyUnit = 0, RallyExt = 0, Status = "Closed", CancelFlag = 0
-                },
-                new()
-                {
-                    Item = "WT5500",
-                    Description = "5-Piece Wrench Set",
-                    Comment = "Pending Shipment",
-                    Ordered = 2, Received = 0, Open = 2,
-                    DefCbx = "DEF", Transit = 2, SalesOrderLine = 5,
-                    UnitCost = 45.50m, TotalCost = 91.00m,
-                    RallyUnit = 0, RallyExt = 0, Status = "Open", CancelFlag = 0
-                }
-            }
-        };
-
-        Model.TotalCost = Model.Lines.Sum(l => l.TotalCost);
-        Model.OpenCost = Model.Lines.Where(l => l.Open > 0).Sum(l => l.TotalCost);
+        // Load PO detail from seed data
+        Model = PurchaseOrdersSeedData.GetPoDetail(poNumber, Status);
 
         // Only clear selection if not restoring from URL
         if (!SelectedLineItems.Any())
@@ -585,58 +501,6 @@
     // Helpers
     // ============================================================
     private static string BoolText(bool v) => v ? "Yes" : "No";
-
-    // ============================================================
-    // Data models
-    // ============================================================
-    private sealed class PurchaseOrder
-    {
-        public string PoNumber { get; set; } = "";
-        public DateTime PoDate { get; set; } = DateTime.Today;
-        public string VendorName { get; set; } = "";
-        public string ShipToName { get; set; } = "";
-        public string Attention { get; set; } = "";
-        public string Address1 { get; set; } = "";
-        public string Address2 { get; set; } = "";
-        public string City { get; set; } = "";
-        public string State { get; set; } = "";
-        public string Zip { get; set; } = "";
-        public string SpecialInstructions { get; set; } = "";
-
-        public string SalesOrderNumber { get; set; } = "";
-        public string PoStatus { get; set; } = "";
-        public string DefaultShipMethod { get; set; } = "";
-        public string PremiumShipMethod { get; set; } = "";
-        public bool RallyPricing { get; set; }
-        public bool NoPaperwork { get; set; }
-        public bool LiftGateRequired { get; set; }
-        public decimal TotalCost { get; set; }
-        public decimal OpenCost { get; set; }
-        public string Comments { get; set; } = "";
-        public bool ReleaseBackorders { get; set; }
-        public bool BackorderUnfilled { get; set; }
-
-        public List<PurchaseOrderLine> Lines { get; set; } = new();
-    }
-
-    private sealed class PurchaseOrderLine
-    {
-        public string Item { get; set; } = "";
-        public string Description { get; set; } = "";
-        public string Comment { get; set; } = "";
-        public int Ordered { get; set; }
-        public int Received { get; set; }
-        public int Open { get; set; }
-        public string DefCbx { get; set; } = "None";
-        public int Transit { get; set; }
-        public int SalesOrderLine { get; set; }
-        public decimal UnitCost { get; set; }
-        public decimal TotalCost { get; set; }
-        public int RallyUnit { get; set; }
-        public int RallyExt { get; set; }
-        public string Status { get; set; } = "";
-        public int CancelFlag { get; set; }
-    }
 }
 
 <style>

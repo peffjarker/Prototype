@@ -6,8 +6,10 @@
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Pages.POTransfer.SeedData
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using static Prototype.Pages.POTransfer.SeedData.ReceiptOfProductSeedData
 
 @inherits PageWithSidebarBase
 
@@ -237,8 +239,8 @@
     protected override string MultiKeyName => "asnlines";
 
     // ===== URL-bound state (singletons) =====
-    public enum ReceiptStatus { All, Open, Closed }
     private ReceiptStatus Status = ReceiptStatus.Open;
+    private string Class = "All";
     private string? SelectedAsnId;
     private string? DealerId;
 
@@ -257,8 +259,12 @@
 
     // Data
     private List<AsnSummary> AsnList = new();
+
+    private List<AsnSummary> DisplayedAsns =>
+        Class == "All" ? AsnList : AsnList.Where(a => a.Class == Class).ToList();
+
     private List<AsnSummary> FilteredAsns =>
-        (Status == ReceiptStatus.All ? AsnList : AsnList.Where(a => a.Status == Status))
+        (Status == ReceiptStatus.All ? DisplayedAsns : DisplayedAsns.Where(a => a.Status == Status))
         .OrderByDescending(a => a.ShipDate)
         .ToList();
 
@@ -290,6 +296,7 @@
             ["dealer"] = DealerId,
             ["option"] = "Receipt of Product",
             ["status"] = Status.ToString(),
+            ["class"] = Class,
             ["asn"] = SelectedAsnId
         };
 
@@ -306,6 +313,9 @@
         Status = (!string.IsNullOrWhiteSpace(statusVal) && Enum.TryParse<ReceiptStatus>(statusVal, true, out var parsedStatus))
             ? parsedStatus
             : ReceiptStatus.Open;
+
+        // Read class from URL
+        Class = Url.Get("class") ?? "All";
 
         // Read ASN selection
         SelectedAsnId = Url.Get("asn");
@@ -333,7 +343,6 @@
     // ============================================================
     // Sidebar facets
     // ============================================================
-
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -379,8 +388,10 @@
     // ===== Lifecycle =====
     protected override void OnInitialized()
     {
-        // Seed demo data (replace with real data source)
-        AsnList = DemoAsns().OrderByDescending(a => a.ShipDate).ToList();
+        // Load seed data
+        AsnList = ReceiptOfProductSeedData.GetAsnSummaries()
+            .OrderByDescending(a => a.ShipDate)
+            .ToList();
 
         // Important: base wires Nav/Sidebar and builds initial sections from current URL
         base.OnInitialized();
@@ -410,67 +421,8 @@
 
         if (string.IsNullOrWhiteSpace(asnId)) return;
 
-        // DEMO lines - expanded with more data
-        if (asnId == "0044501566")
-        {
-            CurrentLines.AddRange(new[]
-            {
-                new AsnLine
-                {
-                    Item = "MWE289120",
-                    LabelCount = 1,
-                    Description = "M18 & M12 Wireless Spkr",
-                    UnitCost = 185.46m,
-                    ExtCost = 185.46m,
-                    PONumber = "PO-200996",
-                    POLine = 7,
-                    NeedFor = "Truck",
-                    QtyOnHand = 0,
-                    TotalQtyNeeds = 0,
-                    QtyShip = 1,
-                    PreviouslyReceived = 0,
-                    ReceiveQty = 1,
-                    Status = "Open"
-                },
-                new AsnLine
-                {
-                    Item = "SB4820",
-                    LabelCount = 2,
-                    Description = "20pc 1/2\" Drive SAE Socket Set",
-                    UnitCost = 89.99m,
-                    ExtCost = 179.98m,
-                    PONumber = "PO-200996",
-                    POLine = 8,
-                    NeedFor = "Stock",
-                    QtyOnHand = 2,
-                    TotalQtyNeeds = 3,
-                    QtyShip = 2,
-                    PreviouslyReceived = 0,
-                    ReceiveQty = 2,
-                    Status = "Open"
-                }
-            });
-        }
-        else if (asnId == "0044453050")
-        {
-            CurrentLines.Add(new AsnLine
-            {
-                Item = "WT3350",
-                LabelCount = 1,
-                Description = "Adjustable Wrench 12\"",
-                UnitCost = 92.10m,
-                ExtCost = 92.10m,
-                PONumber = "PO-200994",
-                POLine = 3,
-                NeedFor = "Customer",
-                QtyOnHand = 1,
-                TotalQtyNeeds = 1,
-                QtyShip = 1,
-                PreviouslyReceived = 0,
-                ReceiveQty = 0,
-                Status = "Open"
-            });
-        }
+        // Load lines from seed data
+        CurrentLines.AddRange(ReceiptOfProductSeedData.GetAsnLines(asnId));
 
         // Only clear selection if not restoring from URL
         if (!SelectedLineItems.Any())
@@ -586,51 +538,6 @@
             "ONTRAC" => $"https://www.ontrac.com/trackingres.asp?tracking_number={enc}",
             _ => $"https://www.google.com/search?q={Uri.EscapeDataString($"{carrier} {tracking}")}"
         };
-    }
-
-    // ===== Models =====
-    private sealed record AsnSummary(
-        string AsnId,
-        DateTime ShipDate,
-        string ShipFrom,
-        decimal Total,
-        ReceiptStatus Status,
-        bool PrintNeedsOnly = false,
-        decimal ReceivedAmount = 0m,
-        string? TrackingNumber = null,
-        string Carrier = "UPS")
-    {
-        public string Display => $"{AsnId} - {ShipDate:MM/dd/yyyy}";
-    }
-
-    private sealed class AsnLine
-    {
-        public string Item { get; set; } = "";
-        public int LabelCount { get; set; }
-        public string Description { get; set; } = "";
-        public decimal UnitCost { get; set; }
-        public decimal ExtCost { get; set; }
-        public string PONumber { get; set; } = "";
-        public int POLine { get; set; }
-        public string NeedFor { get; set; } = "";
-        public int QtyOnHand { get; set; }
-        public int TotalQtyNeeds { get; set; }
-        public int QtyShip { get; set; }
-        public int PreviouslyReceived { get; set; }
-        public int ReceiveQty { get; set; }
-        public string Status { get; set; } = "Open";
-    }
-
-    // ===== Demo data =====
-    private static IEnumerable<AsnSummary> DemoAsns()
-    {
-        yield return new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 185.46m, ReceiptStatus.Open,
-                                    PrintNeedsOnly: false, ReceivedAmount: 0m,
-                                    TrackingNumber: "1Z4824G30934141682", Carrier: "UPS");
-        yield return new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m, ReceiptStatus.Open);
-        yield return new AsnSummary("0044249540", new DateTime(2025, 8, 13), "1DC", 410.00m, ReceiptStatus.Closed);
-        yield return new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m, ReceiptStatus.Closed);
-        yield return new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m, ReceiptStatus.Open);
     }
 }
 
