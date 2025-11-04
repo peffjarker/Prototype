@@ -35,7 +35,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     protected virtual bool ShowFranchiseSelector => true;
 
     /// <summary>Query keys that should be preserved during navigation</summary>
-    protected virtual IReadOnlyCollection<string> PreservedKeys => new[] { "dealer" };
+    protected virtual IReadOnlyCollection<string> PreservedKeys => new[] { "dealer", "class" };
 
     /// <summary>Query key name for multi-select values</summary>
     protected virtual string MultiKeyName => "items";
