@@ -466,9 +466,17 @@
             Title: "Option",
             Options: () => new[]
             {
-                new FacetOption("Items On Order","Items On Order", Href: AppendPreserved("/po-transfer/items-on-order?status=All")),
-                new FacetOption("Purchase Orders","Purchase Orders", Href: AppendPreserved("/po-transfer/purchase-orders?status=All")),
-                new FacetOption("Receipt of Product","Receipt of Product", Href: AppendPreserved("/po-transfer/receipt-of-product?status=All"))
+        new FacetOption("Items On Order", "Items On Order",
+            Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                new Dictionary<string, string?> { ["status"] = "All" }))),
+
+        new FacetOption("Purchase Orders", "Purchase Orders",
+            Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                new Dictionary<string, string?> { ["status"] = "All" }))),
+
+        new FacetOption("Receipt of Product", "Receipt of Product",
+            Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                new Dictionary<string, string?> { ["status"] = "All" })))
             }
         );
 
