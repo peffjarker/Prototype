@@ -1,5 +1,6 @@
 ﻿@page "/product/webcat"
 
+@using System.Linq
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Pages.Product.SeedData
@@ -42,9 +43,11 @@
 
                 <div class="field">
                     <label>Subcategory:</label>
-                    <select @bind="SelectedSubcategory" @bind:after="OnFilterChanged" disabled="@string.IsNullOrEmpty(SelectedCategory)">
+                    <select @bind="SelectedSubcategory"
+                            @bind:after="OnFilterChanged"
+                            disabled="@string.IsNullOrEmpty(SelectedCategory)">
                         <option value="">All Subcategories</option>
-                        @foreach (var sub in Subcategories)
+                        @foreach (var sub in SubcategoriesForSelectedCategory)
                         {
                             <option value="@sub">@sub</option>
                         }
@@ -392,6 +395,9 @@
     private string SearchText = "";
     private string? SelectedItemNumber;
 
+    // Track last category to detect category changes coming through the generic handler.
+    private string _lastCategory = "";
+
     // Other Inventory state
     private bool ShowOtherInventory = false;
     private string SelectedWarehouse = "Cornwell";
@@ -427,6 +433,16 @@
         OnlyShowInventory = Url.Get("inventory") == "true";
         SelectedItemNumber = Url.Get("item");
 
+        // Keep the tracker in sync with the URL state
+        _lastCategory = SelectedCategory;
+
+        // If current Subcategory is not valid for the Category in the URL, clear it
+        if (!string.IsNullOrEmpty(SelectedSubcategory) &&
+            !SubcategoriesForSelectedCategory.Contains(SelectedSubcategory, StringComparer.OrdinalIgnoreCase))
+        {
+            SelectedSubcategory = "";
+        }
+
         // Select first item if none selected
         if (string.IsNullOrEmpty(SelectedItemNumber))
         {
@@ -437,7 +453,6 @@
     // ============================================================
     // Sidebar facets
     // ============================================================
-
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -498,19 +513,32 @@
     private List<WebcatItem> AllItems = new();
 
     private readonly string[] Categories = new[] { "Drive Tools", "Hand Tools", "Power Tools", "Storage", "Diagnostics" };
-    private readonly string[] Subcategories = new[] { "3/8\" Ratchets", "1/2\" Ratchets", "Wrenches", "Sockets", "Extensions" };
+
+    // Dynamic, data-driven subcategories for the currently selected Category
+    private IReadOnlyList<string> SubcategoriesForSelectedCategory =>
+        string.IsNullOrEmpty(SelectedCategory)
+            ? Array.Empty<string>()
+            : AllItems
+                .Where(x => string.Equals(x.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase))
+                .Select(x => x.Subcategory)
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(s => s)
+                .ToList();
+
     public readonly IReadOnlyList<string> Brands = new[]
     {
-            "Bosch",
-            "Cornwell Quality Tools",
-            "DeWalt",
-            "Fluke",
-            "Generic",
-            "Knipex",
-            "Makita",
-            "Mechanix Wear",
-            "Milwaukee"
-        };
+        "Bosch",
+        "Cornwell Quality Tools",
+        "DeWalt",
+        "Fluke",
+        "Generic",
+        "Knipex",
+        "Makita",
+        "Mechanix Wear",
+        "Milwaukee"
+    };
+
     private readonly string[] ShipFromLocations = new[] { "CQT", "1DC", "2DC", "3DC" };
 
     private List<WebcatItem> FilteredItems
@@ -582,17 +610,8 @@
         new SharedDealer { Name = "Donald W. Muffley", Quantity = 0 }
     };
 
-    private int GetWarehouseQuantity(string warehouse)
-    {
-        // TODO: Fetch actual warehouse inventory
-        return 0;
-    }
-
-    private string GetWarehouseStockDate(string warehouse)
-    {
-        // TODO: Fetch actual stock date
-        return "";
-    }
+    private int GetWarehouseQuantity(string warehouse) => 0;
+    private string GetWarehouseStockDate(string warehouse) => "";
 
     // ============================================================
     // Actions
@@ -605,8 +624,23 @@
 
     private void OnFilterChanged()
     {
+        // If Category changed, ensure Subcategory is valid for the new Category
+        if (!string.Equals(_lastCategory, SelectedCategory, StringComparison.OrdinalIgnoreCase))
+        {
+            // If the selected subcategory isn't in the new list, clear it
+            if (!string.IsNullOrEmpty(SelectedSubcategory) &&
+                !SubcategoriesForSelectedCategory.Contains(SelectedSubcategory, StringComparer.OrdinalIgnoreCase))
+            {
+                SelectedSubcategory = "";
+            }
+
+            _lastCategory = SelectedCategory;
+        }
+
         // Reset item selection when filters change
         SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+
+        // Push URL state
         NavigateWithPageState();
     }
 
@@ -614,6 +648,7 @@
     {
         SelectedClass = "All";
         SelectedCategory = "";
+        _lastCategory = "";          // keep tracker consistent
         SelectedSubcategory = "";
         SelectedBrand = "";
         SelectedShipFrom = "";
