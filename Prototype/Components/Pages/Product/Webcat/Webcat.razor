@@ -20,89 +20,15 @@
     </header>
 
     <!-- Filter Panel -->
-    <section class="card filter-panel">
-        <div class="filter-grid">
-            <div class="filter-col">
-                <div class="field">
-                    <label>Class:</label>
-                    <select @bind="Params.Class" @bind:after="OnFilterChanged">
-                        <option value="All Items">All Items</option>
-                        <option value="CQT Stock">CQT Stock</option>
-                        <option value="Local Only">Local Only</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Category:</label>
-                    <select @bind="Params.Category" @bind:after="OnCategoryChanged">
-                        <option value="">All Categories</option>
-                        @foreach (var cat in Categories)
-                        {
-                            <option value="@cat">@cat</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Subcategory:</label>
-                    <select @bind="Params.Subcategory"
-                            @bind:after="OnFilterChanged"
-                            disabled="@string.IsNullOrEmpty(Params.Category)">
-                        <option value="">All Subcategories</option>
-                        @foreach (var sub in SubcategoriesForSelectedCategory)
-                        {
-                            <option value="@sub">@sub</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Brand:</label>
-                    <select @bind="Params.Brand" @bind:after="OnFilterChanged">
-                        <option value="">All Brands</option>
-                        @foreach (var brand in Brands)
-                        {
-                            <option value="@brand">@brand</option>
-                        }
-                    </select>
-                </div>
-            </div>
-
-            <div class="filter-col">
-                <div class="field">
-                    <label>Ship From:</label>
-                    <select @bind="Params.ShipFrom" @bind:after="OnFilterChanged">
-                        <option value="">All Locations</option>
-                        @foreach (var loc in ShipFromLocations)
-                        {
-                            <option value="@loc">@loc</option>
-                        }
-                    </select>
-                </div>
-
-                <div class="field checkbox-field">
-                    <label>
-                        <input type="checkbox" @bind="Params.DisplayDiscontinued" @bind:after="OnFilterChanged" />
-                        Display Discontinued
-                    </label>
-                </div>
-
-                <div class="field checkbox-field">
-                    <label>
-                        <input type="checkbox" @bind="Params.OnlyShowInventory" @bind:after="OnFilterChanged" />
-                        Only Show Items with Inventory
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <div class="filter-actions">
-            <button class="btn" @onclick="ClearFilters">Clear Filters</button>
-            <span class="filter-summary">
-                Showing @FilteredItems.Count of @AllItems.Count items
-            </span>
-        </div>
-    </section>
+    <WebcatFilterPanel Params="@Params"
+                       ParamsChanged="@OnFilterPanelChanged"
+                       OnClear="@ClearFilters"
+                       FilteredCount="@FilteredItems.Count"
+                       TotalCount="@AllItems.Count"
+                       Categories="@Categories"
+                       Subcategories="@SubcategoriesForSelectedCategory"
+                       Brands="@Brands"
+                       ShipFromLocations="@ShipFromLocations" />
 
     <!-- Items List & Detail -->
     <section class="card items-section">
@@ -222,10 +148,10 @@
                         <InventorySummaryBar OnHand="@SelectedItemObject.OnHand"
                                              Pending="@SelectedItemObject.Pending"
                                              OnOrder="@SelectedItemObject.OnOrder"
-                                             Alloc="@SelectedItemObject.Alloc" 
-                                             BKO="@SelectedItemObject.BKO" 
-                                             InTransit="@SelectedItemObject.InTransit" 
-                                             Needs="@SelectedItemObject.Needs" 
+                                             Alloc="@SelectedItemObject.Alloc"
+                                             BKO="@SelectedItemObject.BKO"
+                                             InTransit="@SelectedItemObject.InTransit"
+                                             Needs="@SelectedItemObject.Needs"
                                              Interests="@SelectedItemObject.Interests" />
 
                         <!-- Pricing Info -->
@@ -512,6 +438,21 @@
     private void SelectItem(string itemNumber)
     {
         Params.SelectedItem = itemNumber;
+        NavigateWithPageState();
+    }
+
+    private void OnFilterPanelChanged(WebcatParameters updatedParams)
+    {
+        // Update params from filter panel
+        Params = updatedParams;
+
+        // Validate subcategory against current category
+        Params.ValidateSubcategory(SubcategoriesForSelectedCategory);
+
+        // Reset item selection when filters change
+        Params.SelectedItem = DisplayedItems.FirstOrDefault()?.Item;
+
+        // Push URL state
         NavigateWithPageState();
     }
 

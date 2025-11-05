@@ -1,0 +1,125 @@
+﻿@using Prototype.Components.Pages.Product.Webcat
+@using Prototype.Pages.Product
+
+<section class="card filter-panel">
+    <div class="filter-grid">
+        <div class="filter-col">
+            <div class="field">
+                <label>Class:</label>
+                <select @bind="LocalParams.Class" @bind:after="OnFilterChanged">
+                    <option value="All Items">All Items</option>
+                    <option value="CQT Stock">CQT Stock</option>
+                    <option value="Local Only">Local Only</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Category:</label>
+                <select @bind="LocalParams.Category" @bind:after="OnCategoryChanged">
+                    <option value="">All Categories</option>
+                    @foreach (var cat in Categories)
+                    {
+                        <option value="@cat">@cat</option>
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Subcategory:</label>
+                <select @bind="LocalParams.Subcategory"
+                        @bind:after="OnFilterChanged"
+                        disabled="@string.IsNullOrEmpty(LocalParams.Category)">
+                    <option value="">All Subcategories</option>
+                    @foreach (var sub in Subcategories)
+                    {
+                        <option value="@sub">@sub</option>
+                    }
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Brand:</label>
+                <select @bind="LocalParams.Brand" @bind:after="OnFilterChanged">
+                    <option value="">All Brands</option>
+                    @foreach (var brand in Brands)
+                    {
+                        <option value="@brand">@brand</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-col">
+            <div class="field">
+                <label>Ship From:</label>
+                <select @bind="LocalParams.ShipFrom" @bind:after="OnFilterChanged">
+                    <option value="">All Locations</option>
+                    @foreach (var loc in ShipFromLocations)
+                    {
+                        <option value="@loc">@loc</option>
+                    }
+                </select>
+            </div>
+
+            <div class="field checkbox-field">
+                <label>
+                    <input type="checkbox" @bind="LocalParams.DisplayDiscontinued" @bind:after="OnFilterChanged" />
+                    Display Discontinued
+                </label>
+            </div>
+
+            <div class="field checkbox-field">
+                <label>
+                    <input type="checkbox" @bind="LocalParams.OnlyShowInventory" @bind:after="OnFilterChanged" />
+                    Only Show Items with Inventory
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter-actions">
+        <button class="btn" @onclick="HandleClearFilters">Clear Filters</button>
+        <span class="filter-summary">
+            Showing @FilteredCount of @TotalCount items
+        </span>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public WebcatParameters Params { get; set; } = null!;
+    [Parameter] public EventCallback<WebcatParameters> ParamsChanged { get; set; }
+    [Parameter] public EventCallback OnClear { get; set; }
+    
+    [Parameter] public int FilteredCount { get; set; }
+    [Parameter] public int TotalCount { get; set; }
+
+    [Parameter] public IReadOnlyList<string> Categories { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyList<string> Subcategories { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyList<string> Brands { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyList<string> ShipFromLocations { get; set; } = Array.Empty<string>();
+
+    // Local copy to allow two-way binding without modifying parent's reference directly
+    private WebcatParameters LocalParams = new();
+
+    protected override void OnParametersSet()
+    {
+        // Create a copy of the parameters for local binding
+        LocalParams = Params.Clone();
+    }
+
+    private async Task OnCategoryChanged()
+    {
+        // Notify parent about category change so it can update subcategories
+        await ParamsChanged.InvokeAsync(LocalParams);
+    }
+
+    private async Task OnFilterChanged()
+    {
+        await ParamsChanged.InvokeAsync(LocalParams);
+    }
+
+    private async Task HandleClearFilters()
+    {
+        await OnClear.InvokeAsync();
+    }
+}

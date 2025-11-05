@@ -95,5 +95,21 @@ namespace Prototype.Pages.Product
                 Subcategory = null;
             }
         }
+
+        public WebcatParameters Clone()
+        {
+            return new WebcatParameters
+            {
+                Class = this.Class,
+                Category = this.Category,
+                Subcategory = this.Subcategory,
+                Brand = this.Brand,
+                ShipFrom = this.ShipFrom,
+                DisplayDiscontinued = this.DisplayDiscontinued,
+                OnlyShowInventory = this.OnlyShowInventory,
+                SelectedItem = this.SelectedItem
+            };
+        }
+
     }
 }
