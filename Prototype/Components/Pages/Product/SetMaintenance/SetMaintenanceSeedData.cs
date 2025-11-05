@@ -1,4 +1,4 @@
-﻿namespace Prototype.Pages.Product.SeedData;
+﻿namespace Prototype.Components.Pages.Product.SetMaintenance;
 
 public static class SetMaintenanceSeedData
 {
@@ -499,7 +499,7 @@ public static class SetMaintenanceSeedData
             {
                 Item = $"{itemPrefix}{i:D3}",
                 Description = $"Universal Tool Set {i * 5}pc",
-                ListPrice = 99.99m + (i * 25m),
+                ListPrice = 99.99m + i * 25m,
                 Discount = new[] { "A", "B", "C", "TECH" }[random.Next(4)],
                 Class = itemClass,
                 OnHand = random.Next(5, 50),

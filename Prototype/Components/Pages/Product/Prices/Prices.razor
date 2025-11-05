@@ -2,10 +2,11 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Prototype.Pages.Product.SeedData
+@using Prototype.Components.Pages.Product.Prices
+@using Prototype.Pages.Product
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
-@using static Prototype.Pages.Product.SeedData.PricesSeedData
+@using static Prototype.Components.Pages.Product.Prices.PricesSeedData
 
 @inherits PageWithSidebarBase
 
@@ -28,7 +29,7 @@
                 <div class="list-body">
                     @foreach (var item in DisplayedItems)
                     {
-                        <div class="item-row @(item.Item == SelectedItemNumber ? "selected" : "") @GetItemStatusClass(item)"
+                        <div class="item-row @(item.Item == Params.SelectedItem ? "selected" : "") @GetItemStatusClass(item)"
                              @onclick="() => SelectItem(item.Item)">
                             <div class="item-number">@item.Item</div>
                             <div class="item-name">@item.Description</div>
@@ -51,7 +52,7 @@
 
             <!-- Item Detail -->
             <div class="item-detail">
-                @if (SelectedItem != null)
+                @if (SelectedItemObject != null)
                 {
                     <div class="pricing-detail">
                         <!-- Item Pricing Header -->
@@ -60,39 +61,39 @@
 
                             <div class="field">
                                 <label>Item</label>
-                                <input readonly value="@SelectedItem.Item" />
+                                <input readonly value="@SelectedItemObject.Item" />
                             </div>
 
                             <div class="field">
                                 <label>Description</label>
-                                <input readonly value="@SelectedItem.Description" class="full-width" />
+                                <input readonly value="@SelectedItemObject.Description" class="full-width" />
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>List Price</label>
-                                    <input readonly value="@SelectedItem.ListPrice.ToString("C")" />
+                                    <input readonly value="@SelectedItemObject.ListPrice.ToString("C")" />
                                 </div>
                                 <div class="field">
                                     <label>Discount</label>
-                                    <input readonly value="@SelectedItem.Discount" />
+                                    <input readonly value="@SelectedItemObject.Discount" />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>Category</label>
-                                    <input readonly value="@SelectedItem.Category" />
+                                    <input readonly value="@SelectedItemObject.Category" />
                                 </div>
                                 <div class="field">
                                     <label>Subcategory</label>
-                                    <input readonly value="@SelectedItem.Subcategory" />
+                                    <input readonly value="@SelectedItemObject.Subcategory" />
                                 </div>
                             </div>
 
                             <div class="field checkbox-field">
                                 <label>
-                                    <input type="checkbox" checked="@SelectedItem.TaxExempt" disabled />
+                                    <input type="checkbox" checked="@SelectedItemObject.TaxExempt" disabled />
                                     Tax Exempt
                                 </label>
                             </div>
@@ -100,7 +101,7 @@
 
                         <!-- Price History Grid -->
                         <div class="price-history-section">
-                            <TelerikGrid Data="@SelectedItem.PriceHistory"
+                            <TelerikGrid Data="@SelectedItemObject.PriceHistory"
                                          Pageable="false"
                                          Sortable="true"
                                          Height="300px"
@@ -135,7 +136,7 @@
 
                         <!-- Promotions Grid -->
                         <div class="promotions-section">
-                            <TelerikGrid Data="@SelectedItem.Promotions"
+                            <TelerikGrid Data="@SelectedItemObject.Promotions"
                                          Pageable="false"
                                          Sortable="true"
                                          Height="200px"
@@ -172,45 +173,36 @@
     // Enable franchise selector in sidebar
     protected override bool ShowFranchiseSelector => true;
 
+    // Centralized parameters
+    private PricesParameters Params = new();
+
+    // Local UI state (not in URL)
+    private string SearchText = "";
+
     // ============================================================
     // Page contract & URL bindings
     // ============================================================
     protected override string BasePath => "/product/prices";
 
-    private string? DealerId;
-    private string? Option = "View/Change Prices";
-    private string SelectedClass = "All Items";
-    private string SearchText = "";
-    private string? SelectedItemNumber;
-
-    protected override IReadOnlyDictionary<string, string?> Scalars =>
-        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["dealer"] = DealerId,
-            ["option"] = Option,
-            ["class"] = SelectedClass,
-            ["item"] = SelectedItemNumber
-        };
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
 
     protected override void ReadFromUrl()
     {
-        DealerId = Url.Get("dealer");
-        Option = Url.Get("option") ?? "View/Change Prices";
-        SelectedClass = Url.Get("class") ?? "All Items";
-        SelectedItemNumber = Url.Get("item");
+        // Read raw values from URL
+        Params = PricesParameters.FromUrl(Url);
 
         // Select first item if none selected
-        if (string.IsNullOrEmpty(SelectedItemNumber))
+        if (string.IsNullOrEmpty(Params.SelectedItem))
         {
-            SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+            Params.SelectedItem = DisplayedItems.FirstOrDefault()?.Item;
         }
     }
+
     // ============================================================
     // Sidebar facets
     // ============================================================
-
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -218,17 +210,17 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Webcat", "Webcat",
-                Href: AppendPreserved(Url.BuildHref("/product/webcat",
-                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+                new FacetOption("Webcat", "Webcat",
+                    Href: AppendPreserved(Url.BuildHref("/product/webcat",
+                        new Dictionary<string, string?> { ["class"] = "All Items" }))),
 
-            new FacetOption("Set Maintenance", "Set Maintenance",
-                Href: AppendPreserved(Url.BuildHref("/product/set-maintenance",
-                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+                new FacetOption("Set Maintenance", "Set Maintenance",
+                    Href: AppendPreserved(Url.BuildHref("/product/set-maintenance",
+                        new Dictionary<string, string?> { ["class"] = "All Items" }))),
 
-            new FacetOption("View/Change Prices", "View/Change Prices",
-                Href: AppendPreserved(Url.BuildHref("/product/prices",
-                    new Dictionary<string, string?> { ["class"] = "All Items" })))
+                new FacetOption("View/Change Prices", "View/Change Prices",
+                    Href: AppendPreserved(Url.BuildHref("/product/prices",
+                        new Dictionary<string, string?> { ["class"] = "All Items" })))
             }
         );
 
@@ -257,8 +249,8 @@
         {
             var items = AllItems.AsEnumerable();
 
-            if (SelectedClass != "All Items")
-                items = items.Where(x => x.Class == SelectedClass);
+            if (Params.Class != "All Items")
+                items = items.Where(x => x.Class == Params.Class);
 
             if (!string.IsNullOrEmpty(SearchText))
             {
@@ -273,15 +265,15 @@
         }
     }
 
-    private PricingItem? SelectedItem =>
-        DisplayedItems.FirstOrDefault(x => x.Item == SelectedItemNumber);
+    private PricingItem? SelectedItemObject =>
+        DisplayedItems.FirstOrDefault(x => x.Item == Params.SelectedItem);
 
     // ============================================================
     // Actions
     // ============================================================
     private void SelectItem(string itemNumber)
     {
-        SelectedItemNumber = itemNumber;
+        Params.SelectedItem = itemNumber;
         NavigateWithPageState();
     }
 
@@ -302,193 +294,3 @@
         AllItems = PricesSeedData.GetItems();
     }
 }
-
-<style>
-    .items-section {
-        padding: 0;
-    }
-
-    .items-layout {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        min-height: 600px;
-    }
-
-    .items-list {
-        border-right: 1px solid #dee2e6;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .list-header {
-        padding: 1rem;
-        border-bottom: 1px solid #dee2e6;
-        background: #f8f9fa;
-    }
-
-    .search-box {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-    }
-
-    .list-body {
-        flex: 1;
-        overflow-y: auto;
-        max-height: calc(100vh - 200px);
-    }
-
-    .item-row {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        gap: 0.5rem;
-        position: relative;
-    }
-
-        .item-row:hover {
-            background-color: #f8f9fa;
-        }
-
-        .item-row.selected {
-            background-color: #e7f3ff;
-            border-left: 3px solid #007bff;
-        }
-
-        .item-row.item-discontinued {
-            color: #6c757d;
-        }
-
-    .item-number {
-        font-weight: 600;
-        min-width: 100px;
-    }
-
-    .item-name {
-        flex: 1;
-        font-size: 0.875rem;
-    }
-
-    .item-badge {
-        font-size: 1.2em;
-        line-height: 1;
-    }
-
-        .item-badge.disc {
-            color: #e11d48;
-        }
-
-        .item-badge.price {
-            color: #111827;
-        }
-
-        .item-badge.ds {
-            color: #f59e0b;
-        }
-
-    .item-detail {
-        padding: 1.5rem;
-        overflow-y: auto;
-        max-height: calc(100vh - 150px);
-    }
-
-    .detail-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: #6c757d;
-    }
-
-    .pricing-detail {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .pricing-header-section {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        padding: 1rem;
-        background: #f8f9fa;
-        border-radius: 0.25rem;
-    }
-
-        .pricing-header-section h4 {
-            margin: 0 0 1rem 0;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid #dee2e6;
-            color: #212529;
-        }
-
-    .field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-        .field label {
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: #495057;
-        }
-
-        .field input,
-        .field select {
-            padding: 0.5rem;
-            border: 1px solid #dee2e6;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-        }
-
-            .field input[readonly] {
-                background-color: #fff;
-                border-color: #ced4da;
-            }
-
-            .field input.full-width {
-                width: 100%;
-            }
-
-    .field-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
-
-    .checkbox-field {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0;
-    }
-
-        .checkbox-field label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            margin: 0;
-            font-weight: 600;
-        }
-
-        .checkbox-field input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-
-    .price-history-section,
-    .promotions-section {
-        margin-top: 1rem;
-    }
-
-    .price-grid,
-    .promo-grid {
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-    }
-</style>

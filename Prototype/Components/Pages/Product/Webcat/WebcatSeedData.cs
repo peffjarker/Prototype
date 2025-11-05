@@ -1,4 +1,4 @@
-﻿namespace Prototype.Pages.Product.SeedData;
+﻿namespace Prototype.Components.Pages.Product.Webcat;
 
 public static class WebcatSeedData
 {
@@ -1069,7 +1069,7 @@ public static class WebcatSeedData
                 Description = selectedCategory == "Hand Tools"
                     ? $"Socket 12pt {10 + i}mm"
                     : $"{selectedCategory.Replace(" Tools", "")} Tool Item {i}",
-                ListPrice = 15.99m + (i * 2.50m),
+                ListPrice = 15.99m + i * 2.50m,
                 Discount = new[] { "A", "B", "C", "TECH" }[random.Next(4)],
                 Warranty = selectedBrand == "Cornwell Quality Tools" || selectedBrand == "Knipex" ? "Lifetime" : $"{random.Next(1, 6)} Year",
                 Action = selectedBrand == "Cornwell Quality Tools" || selectedBrand == "Knipex" ? "Full Warranty" : "Limited Warranty",
@@ -1092,7 +1092,7 @@ public static class WebcatSeedData
                 Needs = random.Next(0, 15),
                 Interests = random.Next(0, 25),
                 EffectiveDate = new DateTime(2025, 7, 10),
-                LocalListPrice = 15.99m + (i * 2.50m),
+                LocalListPrice = 15.99m + i * 2.50m,
                 CatalogText = $"{selectedBrand} {selectedCategory.ToLower()} item. Professional quality construction."
             });
         }

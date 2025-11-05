@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Prototype.Pages.POTransfer.SeedData;
+namespace Prototype.Components.Pages.POXfer.ItemsOnOrder;
 
 public static class ItemsOnOrderSeedData
 {

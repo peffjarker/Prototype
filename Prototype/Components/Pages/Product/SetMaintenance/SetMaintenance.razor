@@ -2,10 +2,11 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Prototype.Pages.Product.SeedData
+@using Prototype.Components.Pages.Product.SetMaintenance
+@using Prototype.Pages.Product
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
-@using static Prototype.Pages.Product.SeedData.SetMaintenanceSeedData
+@using static Prototype.Components.Pages.Product.SetMaintenance.SetMaintenanceSeedData
 
 @inherits PageWithSidebarBase
 
@@ -28,7 +29,7 @@
                 <div class="list-body">
                     @foreach (var item in DisplayedItems)
                     {
-                        <div class="item-row @(item.Item == SelectedItemNumber ? "selected" : "") @GetItemStatusClass(item)"
+                        <div class="item-row @(item.Item == Params.SelectedItem ? "selected" : "") @GetItemStatusClass(item)"
                              @onclick="() => SelectItem(item.Item)">
                             <div class="item-number">@item.Item</div>
                             <div class="item-name">@item.Description</div>
@@ -51,7 +52,7 @@
 
             <!-- Item Detail -->
             <div class="item-detail">
-                @if (SelectedItem != null)
+                @if (SelectedItemObject != null)
                 {
                     <div class="set-maintenance-detail">
                         <!-- Header Section -->
@@ -59,25 +60,25 @@
                             <div class="field-group">
                                 <div class="field">
                                     <label>Item</label>
-                                    <input readonly value="@SelectedItem.Item" />
+                                    <input readonly value="@SelectedItemObject.Item" />
                                 </div>
                             </div>
 
                             <div class="field-group">
                                 <div class="field">
                                     <label>Description</label>
-                                    <input readonly value="@SelectedItem.Description" class="full-width" />
+                                    <input readonly value="@SelectedItemObject.Description" class="full-width" />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>List Price</label>
-                                    <input readonly value="@SelectedItem.ListPrice.ToString("C")" />
+                                    <input readonly value="@SelectedItemObject.ListPrice.ToString("C")" />
                                 </div>
                                 <div class="field">
                                     <label>Discount</label>
-                                    <input readonly value="@SelectedItem.Discount" />
+                                    <input readonly value="@SelectedItemObject.Discount" />
                                 </div>
                             </div>
                         </div>
@@ -86,41 +87,41 @@
                         <div class="inventory-bar">
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">On Hand</div>
-                                <div class="inv-bar-value">@SelectedItem.OnHand</div>
+                                <div class="inv-bar-value">@SelectedItemObject.OnHand</div>
                             </div>
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">Pending</div>
-                                <div class="inv-bar-value">@SelectedItem.Pending</div>
+                                <div class="inv-bar-value">@SelectedItemObject.Pending</div>
                             </div>
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">On Order</div>
-                                <div class="inv-bar-value">@SelectedItem.OnOrder</div>
+                                <div class="inv-bar-value">@SelectedItemObject.OnOrder</div>
                             </div>
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">Alloc</div>
-                                <div class="inv-bar-value">@SelectedItem.Alloc</div>
+                                <div class="inv-bar-value">@SelectedItemObject.Alloc</div>
                             </div>
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">BKO</div>
-                                <div class="inv-bar-value">@SelectedItem.BKO</div>
+                                <div class="inv-bar-value">@SelectedItemObject.BKO</div>
                             </div>
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">In Transit</div>
-                                <div class="inv-bar-value">@SelectedItem.InTransit</div>
+                                <div class="inv-bar-value">@SelectedItemObject.InTransit</div>
                             </div>
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">Needs</div>
-                                <div class="inv-bar-value">@SelectedItem.Needs</div>
+                                <div class="inv-bar-value">@SelectedItemObject.Needs</div>
                             </div>
                             <div class="inv-bar-col">
                                 <div class="inv-bar-header">Interests</div>
-                                <div class="inv-bar-value">@SelectedItem.Interests</div>
+                                <div class="inv-bar-value">@SelectedItemObject.Interests</div>
                             </div>
                         </div>
 
                         <!-- Components Grid -->
                         <div class="components-section">
-                            <TelerikGrid Data="@SelectedItem.Components"
+                            <TelerikGrid Data="@SelectedItemObject.Components"
                                          Pageable="false"
                                          Sortable="true"
                                          FilterMode="@GridFilterMode.FilterRow"
@@ -159,46 +160,36 @@
     // Enable franchise selector in sidebar
     protected override bool ShowFranchiseSelector => true;
 
+    // Centralized parameters
+    private SetMaintenanceParameters Params = new();
+
+    // Local UI state (not in URL)
+    private string SearchText = "";
+
     // ============================================================
     // Page contract & URL bindings
     // ============================================================
     protected override string BasePath => "/product/set-maintenance";
 
-    private string? DealerId;
-    private string? Option = "Set Maintenance";
-    private string SelectedClass = "All Items";
-    private string SearchText = "";
-    private string? SelectedItemNumber;
-
-    protected override IReadOnlyDictionary<string, string?> Scalars =>
-        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["dealer"] = DealerId,
-            ["option"] = Option,
-            ["class"] = SelectedClass,
-            ["item"] = SelectedItemNumber
-        };
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
 
     protected override void ReadFromUrl()
     {
-        DealerId = Url.Get("dealer");
-        Option = Url.Get("option") ?? "Set Maintenance";
-        SelectedClass = Url.Get("class") ?? "All Items";
-        SelectedItemNumber = Url.Get("item");
+        // Read raw values from URL
+        Params = SetMaintenanceParameters.FromUrl(Url);
 
         // Select first item if none selected
-        if (string.IsNullOrEmpty(SelectedItemNumber))
+        if (string.IsNullOrEmpty(Params.SelectedItem))
         {
-            SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+            Params.SelectedItem = DisplayedItems.FirstOrDefault()?.Item;
         }
     }
 
     // ============================================================
     // Sidebar facets
     // ============================================================
-
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -206,17 +197,17 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Webcat", "Webcat",
-                Href: AppendPreserved(Url.BuildHref("/product/webcat",
-                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+                new FacetOption("Webcat", "Webcat",
+                    Href: AppendPreserved(Url.BuildHref("/product/webcat",
+                        new Dictionary<string, string?> { ["class"] = "All Items" }))),
 
-            new FacetOption("Set Maintenance", "Set Maintenance",
-                Href: AppendPreserved(Url.BuildHref("/product/set-maintenance",
-                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+                new FacetOption("Set Maintenance", "Set Maintenance",
+                    Href: AppendPreserved(Url.BuildHref("/product/set-maintenance",
+                        new Dictionary<string, string?> { ["class"] = "All Items" }))),
 
-            new FacetOption("View/Change Prices", "View/Change Prices",
-                Href: AppendPreserved(Url.BuildHref("/product/prices",
-                    new Dictionary<string, string?> { ["class"] = "All Items" })))
+                new FacetOption("View/Change Prices", "View/Change Prices",
+                    Href: AppendPreserved(Url.BuildHref("/product/prices",
+                        new Dictionary<string, string?> { ["class"] = "All Items" })))
             }
         );
 
@@ -245,8 +236,8 @@
         {
             var items = AllItems.AsEnumerable();
 
-            if (SelectedClass != "All Items")
-                items = items.Where(x => x.Class == SelectedClass);
+            if (Params.Class != "All Items")
+                items = items.Where(x => x.Class == Params.Class);
 
             if (!string.IsNullOrEmpty(SearchText))
             {
@@ -261,15 +252,15 @@
         }
     }
 
-    private SetMaintenanceItem? SelectedItem =>
-        DisplayedItems.FirstOrDefault(x => x.Item == SelectedItemNumber);
+    private SetMaintenanceItem? SelectedItemObject =>
+        DisplayedItems.FirstOrDefault(x => x.Item == Params.SelectedItem);
 
     // ============================================================
     // Actions
     // ============================================================
     private void SelectItem(string itemNumber)
     {
-        SelectedItemNumber = itemNumber;
+        Params.SelectedItem = itemNumber;
         NavigateWithPageState();
     }
 
@@ -290,192 +281,3 @@
         AllItems = SetMaintenanceSeedData.GetItems();
     }
 }
-<style>
-    .items-section {
-        padding: 0;
-    }
-
-    .items-layout {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        min-height: 600px;
-    }
-
-    .items-list {
-        border-right: 1px solid #dee2e6;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .list-header {
-        padding: 1rem;
-        border-bottom: 1px solid #dee2e6;
-        background: #f8f9fa;
-    }
-
-    .search-box {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-    }
-
-    .list-body {
-        flex: 1;
-        overflow-y: auto;
-        max-height: calc(100vh - 200px);
-    }
-
-    .item-row {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        gap: 0.5rem;
-        position: relative;
-    }
-
-        .item-row:hover {
-            background-color: #f8f9fa;
-        }
-
-        .item-row.selected {
-            background-color: #e7f3ff;
-            border-left: 3px solid #007bff;
-        }
-
-        .item-row.item-discontinued {
-            color: #6c757d;
-        }
-
-    .item-number {
-        font-weight: 600;
-        min-width: 100px;
-    }
-
-    .item-name {
-        flex: 1;
-        font-size: 0.875rem;
-    }
-
-    .item-badge {
-        font-size: 1.2em;
-        line-height: 1;
-    }
-
-        .item-badge.disc {
-            color: #e11d48;
-        }
-
-        .item-badge.price {
-            color: #111827;
-        }
-
-        .item-badge.ds {
-            color: #f59e0b;
-        }
-
-    .item-detail {
-        padding: 1.5rem;
-        overflow-y: auto;
-        max-height: calc(100vh - 150px);
-    }
-
-    .detail-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: #6c757d;
-    }
-
-    .set-maintenance-detail {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .detail-header-section {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .field-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .field-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
-
-    .field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-        .field label {
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: #495057;
-        }
-
-        .field input,
-        .field select {
-            padding: 0.5rem;
-            border: 1px solid #dee2e6;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-        }
-
-            .field input[readonly] {
-                background-color: #e9ecef;
-            }
-
-            .field input.full-width {
-                width: 100%;
-            }
-
-    .inventory-bar {
-        display: grid;
-        grid-template-columns: repeat(8, 1fr);
-        gap: 1px;
-        background: #dee2e6;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        overflow: hidden;
-    }
-
-    .inv-bar-col {
-        background: #f8f9fa;
-        padding: 0.75rem;
-        text-align: center;
-    }
-
-    .inv-bar-header {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #fff;
-        background: #007bff;
-        padding: 0.25rem;
-        margin: -0.75rem -0.75rem 0.5rem -0.75rem;
-    }
-
-    .inv-bar-value {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #212529;
-    }
-
-    .components-section {
-        margin-top: 1rem;
-    }
-</style>

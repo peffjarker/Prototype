@@ -3,10 +3,11 @@
 @using System.Linq
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Prototype.Pages.Product.SeedData
+@using Prototype.Components.Pages.Product.Webcat
+@using Prototype.Pages.Product
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
-@using static Prototype.Pages.Product.SeedData.WebcatSeedData
+@using static Prototype.Components.Pages.Product.Webcat.WebcatSeedData
 
 @inherits PageWithSidebarBase
 
@@ -23,7 +24,7 @@
             <div class="filter-col">
                 <div class="field">
                     <label>Class:</label>
-                    <select @bind="SelectedClass" @bind:after="OnFilterChanged">
+                    <select @bind="Params.Class" @bind:after="OnFilterChanged">
                         <option value="All Items">All Items</option>
                         <option value="CQT Stock">CQT Stock</option>
                         <option value="Local Only">Local Only</option>
@@ -32,7 +33,7 @@
 
                 <div class="field">
                     <label>Category:</label>
-                    <select @bind="SelectedCategory" @bind:after="OnFilterChanged">
+                    <select @bind="Params.Category" @bind:after="OnCategoryChanged">
                         <option value="">All Categories</option>
                         @foreach (var cat in Categories)
                         {
@@ -43,9 +44,9 @@
 
                 <div class="field">
                     <label>Subcategory:</label>
-                    <select @bind="SelectedSubcategory"
+                    <select @bind="Params.Subcategory"
                             @bind:after="OnFilterChanged"
-                            disabled="@string.IsNullOrEmpty(SelectedCategory)">
+                            disabled="@string.IsNullOrEmpty(Params.Category)">
                         <option value="">All Subcategories</option>
                         @foreach (var sub in SubcategoriesForSelectedCategory)
                         {
@@ -56,7 +57,7 @@
 
                 <div class="field">
                     <label>Brand:</label>
-                    <select @bind="SelectedBrand" @bind:after="OnFilterChanged">
+                    <select @bind="Params.Brand" @bind:after="OnFilterChanged">
                         <option value="">All Brands</option>
                         @foreach (var brand in Brands)
                         {
@@ -69,7 +70,7 @@
             <div class="filter-col">
                 <div class="field">
                     <label>Ship From:</label>
-                    <select @bind="SelectedShipFrom" @bind:after="OnFilterChanged">
+                    <select @bind="Params.ShipFrom" @bind:after="OnFilterChanged">
                         <option value="">All Locations</option>
                         @foreach (var loc in ShipFromLocations)
                         {
@@ -80,14 +81,14 @@
 
                 <div class="field checkbox-field">
                     <label>
-                        <input type="checkbox" @bind="DisplayDiscontinued" @bind:after="OnFilterChanged" />
+                        <input type="checkbox" @bind="Params.DisplayDiscontinued" @bind:after="OnFilterChanged" />
                         Display Discontinued
                     </label>
                 </div>
 
                 <div class="field checkbox-field">
                     <label>
-                        <input type="checkbox" @bind="OnlyShowInventory" @bind:after="OnFilterChanged" />
+                        <input type="checkbox" @bind="Params.OnlyShowInventory" @bind:after="OnFilterChanged" />
                         Only Show Items with Inventory
                     </label>
                 </div>
@@ -114,7 +115,7 @@
                 <div class="list-body">
                     @foreach (var item in DisplayedItems)
                     {
-                        <div class="item-row @(item.Item == SelectedItemNumber ? "selected" : "") @GetItemStatusClass(item)"
+                        <div class="item-row @(item.Item == Params.SelectedItem ? "selected" : "") @GetItemStatusClass(item)"
                              @onclick="() => SelectItem(item.Item)">
                             <div class="item-number">@item.Item</div>
                             <div class="item-name">@item.Description</div>
@@ -137,10 +138,10 @@
 
             <!-- Item Detail -->
             <div class="item-detail">
-                @if (SelectedItem != null)
+                @if (SelectedItemObject != null)
                 {
                     <div class="detail-header">
-                        <h4>@SelectedItem.Item - @SelectedItem.Description</h4>
+                        <h4>@SelectedItemObject.Item - @SelectedItemObject.Description</h4>
                     </div>
 
                     <div class="detail-grid">
@@ -148,95 +149,95 @@
                             <div class="field-row">
                                 <div class="field">
                                     <label>Item:</label>
-                                    <input readonly value="@SelectedItem.Item" />
+                                    <input readonly value="@SelectedItemObject.Item" />
                                 </div>
                                 <div class="field">
                                     <label>Discount:</label>
                                     <select disabled>
-                                        <option>@SelectedItem.Discount</option>
+                                        <option>@SelectedItemObject.Discount</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div class="field">
                                 <label>Description:</label>
-                                <input readonly value="@SelectedItem.Description" />
+                                <input readonly value="@SelectedItemObject.Description" />
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>List Price:</label>
-                                    <input readonly value="@SelectedItem.ListPrice.ToString("C")" />
+                                    <input readonly value="@SelectedItemObject.ListPrice.ToString("C")" />
                                 </div>
                                 <div class="field checkbox-field">
                                     <label>Drop Ship:</label>
-                                    <input type="checkbox" checked="@SelectedItem.IsDropShip" disabled />
+                                    <input type="checkbox" checked="@SelectedItemObject.IsDropShip" disabled />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>Warranty:</label>
-                                    <input readonly value="@SelectedItem.Warranty" />
+                                    <input readonly value="@SelectedItemObject.Warranty" />
                                 </div>
                                 <div class="field">
                                     <label>Action:</label>
-                                    <input readonly value="@SelectedItem.Action" />
+                                    <input readonly value="@SelectedItemObject.Action" />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>Status:</label>
-                                    <input readonly value="@SelectedItem.Status" />
+                                    <input readonly value="@SelectedItemObject.Status" />
                                 </div>
                                 <div class="field">
                                     <label>Category:</label>
-                                    <input readonly value="@SelectedItem.Category" />
+                                    <input readonly value="@SelectedItemObject.Category" />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>Class:</label>
-                                    <input readonly value="@SelectedItem.Class" />
+                                    <input readonly value="@SelectedItemObject.Class" />
                                 </div>
                                 <div class="field">
                                     <label>Subcategory:</label>
-                                    <input readonly value="@SelectedItem.Subcategory" />
+                                    <input readonly value="@SelectedItemObject.Subcategory" />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>Ship From:</label>
-                                    <input readonly value="@SelectedItem.ShipFrom" />
+                                    <input readonly value="@SelectedItemObject.ShipFrom" />
                                 </div>
                                 <div class="field">
                                     <label>Brand:</label>
-                                    <input readonly value="@SelectedItem.Brand" />
+                                    <input readonly value="@SelectedItemObject.Brand" />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>Replaced by:</label>
-                                    <input readonly value="@SelectedItem.ReplacedBy" />
+                                    <input readonly value="@SelectedItemObject.ReplacedBy" />
                                 </div>
                                 <div class="field">
                                     <label>Supplier:</label>
-                                    <input readonly value="@SelectedItem.Supplier" />
+                                    <input readonly value="@SelectedItemObject.Supplier" />
                                 </div>
                             </div>
 
                             <div class="field-row">
                                 <div class="field">
                                     <label>Buy Qty:</label>
-                                    <input readonly value="@SelectedItem.BuyQty" />
+                                    <input readonly value="@SelectedItemObject.BuyQty" />
                                 </div>
                                 <div class="field">
                                     <label>Sell Qty:</label>
-                                    <input readonly value="@SelectedItem.SellQty" />
+                                    <input readonly value="@SelectedItemObject.SellQty" />
                                 </div>
                             </div>
                         </div>
@@ -247,35 +248,35 @@
                             <div class="inventory-grid">
                                 <div class="inv-col">
                                     <div class="inv-label">On Hand</div>
-                                    <div class="inv-value">@SelectedItem.OnHand</div>
+                                    <div class="inv-value">@SelectedItemObject.OnHand</div>
                                 </div>
                                 <div class="inv-col">
                                     <div class="inv-label">Pending</div>
-                                    <div class="inv-value">@SelectedItem.Pending</div>
+                                    <div class="inv-value">@SelectedItemObject.Pending</div>
                                 </div>
                                 <div class="inv-col">
                                     <div class="inv-label">On Order</div>
-                                    <div class="inv-value">@SelectedItem.OnOrder</div>
+                                    <div class="inv-value">@SelectedItemObject.OnOrder</div>
                                 </div>
                                 <div class="inv-col">
                                     <div class="inv-label">Alloc</div>
-                                    <div class="inv-value">@SelectedItem.Alloc</div>
+                                    <div class="inv-value">@SelectedItemObject.Alloc</div>
                                 </div>
                                 <div class="inv-col">
                                     <div class="inv-label">BKO</div>
-                                    <div class="inv-value">@SelectedItem.BKO</div>
+                                    <div class="inv-value">@SelectedItemObject.BKO</div>
                                 </div>
                                 <div class="inv-col">
                                     <div class="inv-label">In Transit</div>
-                                    <div class="inv-value">@SelectedItem.InTransit</div>
+                                    <div class="inv-value">@SelectedItemObject.InTransit</div>
                                 </div>
                                 <div class="inv-col">
                                     <div class="inv-label">Needs</div>
-                                    <div class="inv-value">@SelectedItem.Needs</div>
+                                    <div class="inv-value">@SelectedItemObject.Needs</div>
                                 </div>
                                 <div class="inv-col">
                                     <div class="inv-label">Interests</div>
-                                    <div class="inv-value">@SelectedItem.Interests</div>
+                                    <div class="inv-value">@SelectedItemObject.Interests</div>
                                 </div>
                             </div>
                         </div>
@@ -286,15 +287,15 @@
                             <div class="pricing-grid">
                                 <div class="pricing-row">
                                     <span class="pricing-label">Effective:</span>
-                                    <span class="pricing-value">@SelectedItem.EffectiveDate?.ToString("MM/dd/yyyy")</span>
+                                    <span class="pricing-value">@SelectedItemObject.EffectiveDate?.ToString("MM/dd/yyyy")</span>
                                 </div>
                                 <div class="pricing-row">
                                     <span class="pricing-label">Local List:</span>
-                                    <span class="pricing-value">@SelectedItem.LocalListPrice.ToString("C")</span>
+                                    <span class="pricing-value">@SelectedItemObject.LocalListPrice.ToString("C")</span>
                                 </div>
                                 <div class="pricing-row">
                                     <span class="pricing-label">Discount:</span>
-                                    <span class="pricing-value">@SelectedItem.Discount</span>
+                                    <span class="pricing-value">@SelectedItemObject.Discount</span>
                                 </div>
                             </div>
                         </div>
@@ -359,7 +360,7 @@
                         <!-- Catalog Text -->
                         <div class="catalog-section">
                             <label>Catalog Text:</label>
-                            <textarea readonly rows="8">@SelectedItem.CatalogText</textarea>
+                            <textarea readonly rows="8">@SelectedItemObject.CatalogText</textarea>
                         </div>
                     </div>
                 }
@@ -378,75 +379,38 @@
     // Enable franchise selector in sidebar
     protected override bool ShowFranchiseSelector => true;
 
+    // Centralized parameters
+    private WebcatParameters Params = new();
+
+    // Local UI state (not in URL)
+    private string SearchText = "";
+    private bool ShowOtherInventory = false;
+    private string SelectedWarehouse = "Cornwell";
+
     // ============================================================
     // Page contract & URL bindings
     // ============================================================
     protected override string BasePath => "/product/webcat";
 
-    private string? DealerId;
-    private string? Option = "Webcat";
-    private string SelectedClass = "All Items";
-    private string SelectedCategory = "";
-    private string SelectedSubcategory = "";
-    private string SelectedBrand = "";
-    private string SelectedShipFrom = "";
-    private bool DisplayDiscontinued = false;
-    private bool OnlyShowInventory = false;
-    private string SearchText = "";
-    private string? SelectedItemNumber;
-
-    // Track last category to detect category changes coming through the generic handler.
-    private string _lastCategory = "";
-
-    // Other Inventory state
-    private bool ShowOtherInventory = false;
-    private string SelectedWarehouse = "Cornwell";
-    private string[] Warehouses => new[] { "Cornwell", "1DC", "2DC", "3DC" };
-
-    protected override IReadOnlyDictionary<string, string?> Scalars =>
-        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["dealer"] = DealerId,
-            ["option"] = Option,
-            ["class"] = SelectedClass,
-            ["category"] = !string.IsNullOrEmpty(SelectedCategory) ? SelectedCategory : null,
-            ["subcategory"] = !string.IsNullOrEmpty(SelectedSubcategory) ? SelectedSubcategory : null,
-            ["brand"] = !string.IsNullOrEmpty(SelectedBrand) ? SelectedBrand : null,
-            ["shipfrom"] = !string.IsNullOrEmpty(SelectedShipFrom) ? SelectedShipFrom : null,
-            ["discontinued"] = DisplayDiscontinued ? "true" : null,
-            ["inventory"] = OnlyShowInventory ? "true" : null,
-            ["item"] = SelectedItemNumber
-        };
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
 
     protected override void ReadFromUrl()
     {
-        DealerId = Url.Get("dealer");
-        Option = Url.Get("option") ?? "Webcat";
-        SelectedClass = Url.Get("class") ?? "All Items";
-        SelectedCategory = Url.Get("category") ?? "";
-        SelectedSubcategory = Url.Get("subcategory") ?? "";
-        SelectedBrand = Url.Get("brand") ?? "";
-        SelectedShipFrom = Url.Get("shipfrom") ?? "";
-        DisplayDiscontinued = Url.Get("discontinued") == "true";
-        OnlyShowInventory = Url.Get("inventory") == "true";
-        SelectedItemNumber = Url.Get("item");
+        // Read raw values from URL
+        var rawParams = WebcatParameters.FromUrl(Url);
 
-        // Keep the tracker in sync with the URL state
-        _lastCategory = SelectedCategory;
+        // No dependency validation needed for this page - just use the raw params
+        Params = rawParams;
 
-        // If current Subcategory is not valid for the Category in the URL, clear it
-        if (!string.IsNullOrEmpty(SelectedSubcategory) &&
-            !SubcategoriesForSelectedCategory.Contains(SelectedSubcategory, StringComparer.OrdinalIgnoreCase))
-        {
-            SelectedSubcategory = "";
-        }
+        // Validate subcategory against current category
+        Params.ValidateSubcategory(SubcategoriesForSelectedCategory);
 
         // Select first item if none selected
-        if (string.IsNullOrEmpty(SelectedItemNumber))
+        if (string.IsNullOrEmpty(Params.SelectedItem))
         {
-            SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+            Params.SelectedItem = DisplayedItems.FirstOrDefault()?.Item;
         }
     }
 
@@ -460,17 +424,17 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Webcat", "Webcat",
-                Href: AppendPreserved(Url.BuildHref("/product/webcat",
-                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+                new FacetOption("Webcat", "Webcat",
+                    Href: AppendPreserved(Url.BuildHref("/product/webcat",
+                        new Dictionary<string, string?> { ["class"] = "All Items" }))),
 
-            new FacetOption("Set Maintenance", "Set Maintenance",
-                Href: AppendPreserved(Url.BuildHref("/product/set-maintenance",
-                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
+                new FacetOption("Set Maintenance", "Set Maintenance",
+                    Href: AppendPreserved(Url.BuildHref("/product/set-maintenance",
+                        new Dictionary<string, string?> { ["class"] = "All Items" }))),
 
-            new FacetOption("View/Change Prices", "View/Change Prices",
-                Href: AppendPreserved(Url.BuildHref("/product/prices",
-                    new Dictionary<string, string?> { ["class"] = "All Items" })))
+                new FacetOption("View/Change Prices", "View/Change Prices",
+                    Href: AppendPreserved(Url.BuildHref("/product/prices",
+                        new Dictionary<string, string?> { ["class"] = "All Items" })))
             }
         );
 
@@ -497,10 +461,10 @@
 
     // Dynamic, data-driven subcategories for the currently selected Category
     private IReadOnlyList<string> SubcategoriesForSelectedCategory =>
-        string.IsNullOrEmpty(SelectedCategory)
+        string.IsNullOrEmpty(Params.Category)
             ? Array.Empty<string>()
             : AllItems
-                .Where(x => string.Equals(x.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase))
+                .Where(x => string.Equals(x.Category, Params.Category, StringComparison.OrdinalIgnoreCase))
                 .Select(x => x.Subcategory)
                 .Where(s => !string.IsNullOrWhiteSpace(s))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -521,6 +485,7 @@
     };
 
     private readonly string[] ShipFromLocations = new[] { "CQT", "1DC", "2DC", "3DC" };
+    private string[] Warehouses => new[] { "Cornwell", "1DC", "2DC", "3DC" };
 
     private List<WebcatItem> FilteredItems
     {
@@ -528,25 +493,25 @@
         {
             var query = AllItems.AsEnumerable();
 
-            if (SelectedClass != "All Items")
-                query = query.Where(x => x.Class == SelectedClass);
+            if (Params.Class != "All Items")
+                query = query.Where(x => x.Class == Params.Class);
 
-            if (!string.IsNullOrEmpty(SelectedCategory))
-                query = query.Where(x => x.Category == SelectedCategory);
+            if (!string.IsNullOrEmpty(Params.Category))
+                query = query.Where(x => x.Category == Params.Category);
 
-            if (!string.IsNullOrEmpty(SelectedSubcategory))
-                query = query.Where(x => x.Subcategory == SelectedSubcategory);
+            if (!string.IsNullOrEmpty(Params.Subcategory))
+                query = query.Where(x => x.Subcategory == Params.Subcategory);
 
-            if (!string.IsNullOrEmpty(SelectedBrand))
-                query = query.Where(x => x.Brand == SelectedBrand);
+            if (!string.IsNullOrEmpty(Params.Brand))
+                query = query.Where(x => x.Brand == Params.Brand);
 
-            if (!string.IsNullOrEmpty(SelectedShipFrom))
-                query = query.Where(x => x.ShipFrom == SelectedShipFrom);
+            if (!string.IsNullOrEmpty(Params.ShipFrom))
+                query = query.Where(x => x.ShipFrom == Params.ShipFrom);
 
-            if (!DisplayDiscontinued)
+            if (!Params.DisplayDiscontinued)
                 query = query.Where(x => !x.IsDiscontinued);
 
-            if (OnlyShowInventory)
+            if (Params.OnlyShowInventory)
                 query = query.Where(x => x.OnHand > 0);
 
             return query.ToList();
@@ -572,8 +537,8 @@
         }
     }
 
-    private WebcatItem? SelectedItem =>
-        DisplayedItems.FirstOrDefault(x => x.Item == SelectedItemNumber);
+    private WebcatItem? SelectedItemObject =>
+        DisplayedItems.FirstOrDefault(x => x.Item == Params.SelectedItem);
 
     // ============================================================
     // Other Inventory Data
@@ -599,27 +564,21 @@
     // ============================================================
     private void SelectItem(string itemNumber)
     {
-        SelectedItemNumber = itemNumber;
+        Params.SelectedItem = itemNumber;
         NavigateWithPageState();
+    }
+
+    private void OnCategoryChanged()
+    {
+        // When category changes, validate and potentially clear subcategory
+        Params.ValidateSubcategory(SubcategoriesForSelectedCategory);
+        OnFilterChanged();
     }
 
     private void OnFilterChanged()
     {
-        // If Category changed, ensure Subcategory is valid for the new Category
-        if (!string.Equals(_lastCategory, SelectedCategory, StringComparison.OrdinalIgnoreCase))
-        {
-            // If the selected subcategory isn't in the new list, clear it
-            if (!string.IsNullOrEmpty(SelectedSubcategory) &&
-                !SubcategoriesForSelectedCategory.Contains(SelectedSubcategory, StringComparer.OrdinalIgnoreCase))
-            {
-                SelectedSubcategory = "";
-            }
-
-            _lastCategory = SelectedCategory;
-        }
-
         // Reset item selection when filters change
-        SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+        Params.SelectedItem = DisplayedItems.FirstOrDefault()?.Item;
 
         // Push URL state
         NavigateWithPageState();
@@ -627,17 +586,16 @@
 
     private void ClearFilters()
     {
-        SelectedClass = "All Items";
-        SelectedCategory = "";
-        _lastCategory = "";          // keep tracker consistent
-        SelectedSubcategory = "";
-        SelectedBrand = "";
-        SelectedShipFrom = "";
-        DisplayDiscontinued = false;
-        OnlyShowInventory = false;
+        Params.Class = "All Items";
+        Params.Category = null;
+        Params.Subcategory = null;
+        Params.Brand = null;
+        Params.ShipFrom = null;
+        Params.DisplayDiscontinued = false;
+        Params.OnlyShowInventory = false;
         SearchText = "";
 
-        SelectedItemNumber = DisplayedItems.FirstOrDefault()?.Item;
+        Params.SelectedItem = DisplayedItems.FirstOrDefault()?.Item;
         NavigateWithPageState(replace: true);
     }
 
@@ -658,338 +616,3 @@
         AllItems = WebcatSeedData.GetItems();
     }
 }
-
-<style>
-    .filter-panel {
-        margin-bottom: 1rem;
-    }
-
-    .filter-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-        padding: 1rem;
-    }
-
-    .filter-col {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .checkbox-field {
-        display: flex;
-        align-items: center;
-    }
-
-        .checkbox-field label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            margin: 0;
-        }
-
-        .checkbox-field input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-
-    .filter-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        border-top: 1px solid #dee2e6;
-        background: #f8f9fa;
-    }
-
-    .filter-summary {
-        font-weight: 600;
-        color: #6c757d;
-    }
-
-    .items-section {
-        padding: 0;
-    }
-
-    .items-layout {
-        display: grid;
-        grid-template-columns: 300px 1fr;
-        min-height: 600px;
-    }
-
-    .items-list {
-        border-right: 1px solid #dee2e6;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .list-header {
-        padding: 1rem;
-        border-bottom: 1px solid #dee2e6;
-        background: #f8f9fa;
-    }
-
-    .search-box {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-    }
-
-    .list-body {
-        flex: 1;
-        overflow-y: auto;
-        max-height: 600px;
-    }
-
-    .item-row {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #f0f0f0;
-        cursor: pointer;
-        gap: 0.5rem;
-        position: relative;
-    }
-
-        .item-row:hover {
-            background-color: #f8f9fa;
-        }
-
-        .item-row.selected {
-            background-color: #e7f3ff;
-            border-left: 3px solid #007bff;
-        }
-
-        .item-row.item-discontinued {
-            color: #6c757d;
-        }
-
-    .item-number {
-        font-weight: 600;
-        min-width: 120px;
-    }
-
-    .item-name {
-        flex: 1;
-        font-size: 0.875rem;
-    }
-
-    .item-badge {
-        font-size: 1.2em;
-        line-height: 1;
-    }
-
-        .item-badge.disc {
-            color: #e11d48;
-        }
-
-        .item-badge.price {
-            color: #111827;
-        }
-
-        .item-badge.ds {
-            color: #f59e0b;
-        }
-
-    .item-detail {
-        padding: 1.5rem;
-        overflow-y: auto;
-        max-height: 600px;
-    }
-
-    .detail-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: #6c757d;
-    }
-
-    .detail-header h4 {
-        margin: 0 0 1.5rem 0;
-        padding-bottom: 0.75rem;
-        border-bottom: 2px solid #dee2e6;
-    }
-
-    .detail-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .detail-section {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-    .field-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
-
-    .inventory-summary {
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        overflow: hidden;
-    }
-
-    .inventory-header {
-        background: #007bff;
-        color: white;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-    }
-
-    .inventory-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1px;
-        background: #dee2e6;
-        padding: 1px;
-    }
-
-    .inv-col {
-        background: white;
-        padding: 0.75rem;
-        text-align: center;
-    }
-
-    .inv-label {
-        font-size: 0.75rem;
-        color: #6c757d;
-        margin-bottom: 0.25rem;
-    }
-
-    .inv-value {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #212529;
-    }
-
-    .pricing-section {
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        overflow: hidden;
-    }
-
-    .pricing-header {
-        background: #007bff;
-        color: white;
-        padding: 0.5rem 1rem;
-        font-weight: 600;
-    }
-
-    .pricing-grid {
-        padding: 1rem;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .pricing-row {
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .pricing-label {
-        font-weight: 600;
-        color: #6c757d;
-    }
-
-    .pricing-value {
-        font-weight: 600;
-    }
-
-    .other-inventory-section {
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        overflow: hidden;
-    }
-
-    .collapsible-header {
-        width: 100%;
-        background: #f8f9fa;
-        border: none;
-        padding: 0.75rem 1rem;
-        text-align: left;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-        transition: background-color 0.2s;
-    }
-
-        .collapsible-header:hover {
-            background: #e9ecef;
-        }
-
-        .collapsible-header.expanded {
-            background: #e9ecef;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-    .chevron {
-        font-size: 0.75em;
-        color: #6c757d;
-    }
-
-    .other-inventory-content {
-        padding: 1rem;
-        background: white;
-    }
-
-    .inventory-warehouse-section {
-        margin-bottom: 1.5rem;
-    }
-
-    .shared-dealers-section {
-        border-top: 1px solid #dee2e6;
-        padding-top: 1rem;
-    }
-
-    .shared-dealers-header {
-        display: grid;
-        grid-template-columns: 1fr 100px;
-        padding: 0.5rem;
-        background: #f8f9fa;
-        font-weight: 600;
-        border-radius: 0.25rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .shared-dealer-row {
-        display: grid;
-        grid-template-columns: 1fr 100px;
-        padding: 0.5rem;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-        .shared-dealer-row:last-child {
-            border-bottom: none;
-        }
-
-        .shared-dealer-row span:last-child {
-            text-align: right;
-        }
-
-    .catalog-section {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-        .catalog-section textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #dee2e6;
-            border-radius: 0.25rem;
-            resize: vertical;
-            font-family: inherit;
-        }
-</style>

@@ -6,13 +6,15 @@
 @using Prototype.Components.Layout
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Components.Pages.POXfer.ItemsOnOrder
 @using Prototype.Components.Services
 @using Prototype.Components.Services.Reports
-@using Prototype.Pages.POTransfer.SeedData
-@using global::Services
+@using Prototype.Pages.POTransfer
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
-@using static Prototype.Pages.POTransfer.SeedData.ItemsOnOrderSeedData
+@using global::Services
+@using static Prototype.Components.Pages.POXfer.ItemsOnOrder.ItemsOnOrderSeedData
+@using static Prototype.Pages.POTransfer.ItemsOnOrderParameters
 
 @inherits PageWithSidebarBase
 
@@ -46,8 +48,8 @@
                 <TelerikButton OnClick="@ClearAllFilters" Icon="@SvgIcon.FilterClear">Clear Filters</TelerikButton>
                 <span style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
                     <span style="font-weight: bold;">Total Items: @FilteredRows.Count</span>
-                    <span style="font-weight: bold; color: #007bff;">Selected: @SelectedItems.Count</span>
-                    @if (SelectedItems.Count > 0)
+                    <span style="font-weight: bold; color: #007bff;">Selected: @Params.SelectedItems.Count</span>
+                    @if (Params.SelectedItems.Count > 0)
                     {
                         <TelerikButton OnClick="@(() => { SelectedItemsCollection = new List<Row>(); })"
                                        Icon="@SvgIcon.X"
@@ -160,13 +162,13 @@
             </GridSettings>
         </TelerikGrid>
 
-        @if (SelectedItems.Count > 0)
+        @if (Params.SelectedItems.Count > 0)
         {
             <div style="padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6;">
                 <div class="chips-row">
                     <div class="chips">
                         <span class="chips-label" style="font-weight: 600;">Filtering PO Lines by Selected Items:</span>
-                        @foreach (var it in SelectedItems.OrderBy(x => x))
+                        @foreach (var it in Params.SelectedItems.OrderBy(x => x))
                         {
                             <span class="chip" title="Remove filter">
                                 <strong>@it</strong>
@@ -212,11 +214,11 @@
                     @VisibleOpenLines.Count Lines
                 </span>
             </h4>
-            @if (SelectedItems.Count > 0)
+            @if (Params.SelectedItems.Count > 0)
             {
                 <div class="chips compact" style="margin-top: 0.5rem;">
                     <span class="chips-label">Showing PO lines for:</span>
-                    @foreach (var it in SelectedItems.OrderBy(x => x))
+                    @foreach (var it in Params.SelectedItems.OrderBy(x => x))
                     {
                         <span class="chip" title="Remove filter">
                             <strong>@it</strong>
@@ -419,50 +421,32 @@
     // Enable franchise selector in sidebar
     protected override bool ShowFranchiseSelector => true;
 
+    // Centralized parameters
+    private ItemsOnOrderParameters Params = new();
+
     // Grid references for programmatic control
     private TelerikGrid<Row>? ItemsGridRef;
     private TelerikGrid<OpenPOLine>? POLinesGridRef;
 
     // ============================================================
-    // Page contract & URL bindings (overrides + sidebar + decode)
+    // Page contract & URL bindings
     // ============================================================
     protected override string BasePath => "/po-transfer/items-on-order";
 
-    protected override IReadOnlyDictionary<string, string?> Scalars =>
-        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["dealer"] = DealerId,
-            ["option"] = "Items On Order",
-            ["status"] = Status.ToString()
-        };
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
 
-    protected override IReadOnlyCollection<string> MultiValues => SelectedItems;
+    protected override IReadOnlyCollection<string> MultiValues => Params.SelectedItems;
 
     protected override void ReadFromUrl()
     {
         // Read raw values from URL
-        var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["dealer"] = Url.Get("dealer"),
-            ["option"] = "Items On Order",
-            ["status"] = Url.Get("status")
-        };
+        var rawParams = ItemsOnOrderParameters.FromUrl(Url);
 
-        // Validate dependencies - this will auto-clear status if coming from wrong page
-        var validated = ValidateFacetDependencies(rawScalars);
+        // Validate dependencies - auto-clear status if coming from wrong page
+        var validated = ValidateFacetDependencies(rawParams.ToScalars());
 
-        // Apply validated values
-        DealerId = validated.TryGetValue("dealer", out var d) ? d : null;
-        var statusVal = validated.TryGetValue("status", out var s) ? s : null;
-        Status = !string.IsNullOrWhiteSpace(statusVal) ? MapStatus(statusVal) : StatusKind.All;
-
-        // Read multi-select items using GetMulti
-        SelectedItems.Clear();
-        var items = Url.GetMulti("items");
-        foreach (var item in items)
-        {
-            SelectedItems.Add(item);
-        }
+        // Rebuild from validated scalars
+        Params = ItemsOnOrderParameters.FromScalars(validated, rawParams.SelectedItems);
     }
 
     // ============================================================
@@ -475,17 +459,17 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Items On Order", "Items On Order",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
-                    new Dictionary<string, string?> { ["status"] = "All" }))),
+                new FacetOption("Items On Order", "Items On Order",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
 
-            new FacetOption("Purchase Orders", "Purchase Orders",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
-                    new Dictionary<string, string?> { ["status"] = "All" }))),
+                new FacetOption("Purchase Orders", "Purchase Orders",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
 
-            new FacetOption("Receipt of Product", "Receipt of Product",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
-                    new Dictionary<string, string?> { ["status"] = "All" })))
+                new FacetOption("Receipt of Product", "Receipt of Product",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                        new Dictionary<string, string?> { ["status"] = "All" })))
             }
         );
 
@@ -496,10 +480,10 @@
             IsValidForParent: (parentVal) => string.Equals(parentVal, "Items On Order", StringComparison.OrdinalIgnoreCase),
             Options: () => new[]
             {
-            new FacetOption("All", "All"),
-            new FacetOption("Backorders", "Backorders"),
-            new FacetOption("In Transit", "In Transit"),
-            new FacetOption("Unacknowledged", "Unacknowledged")
+                new FacetOption("All", "All"),
+                new FacetOption("Backorders", "Backorders"),
+                new FacetOption("In Transit", "In Transit"),
+                new FacetOption("Unacknowledged", "Unacknowledged")
             }
         );
 
@@ -519,25 +503,12 @@
         base.OnInitialized();
 
         // Initialize selected items from URL AFTER base.OnInitialized()
-        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
+        _selectedItemsCollection = FilteredRows.Where(r => Params.SelectedItems.Contains(r.Item)).ToList();
     }
 
     // ============================================================
     // Page state, data & computed views
     // ============================================================
-    private string? DealerId;
-
-    public enum StatusKind { All, Backorders, InTransit, Unacknowledged }
-    private static StatusKind MapStatus(string s) => s switch
-    {
-        "Backorders" => StatusKind.Backorders,
-        "In Transit" => StatusKind.InTransit,
-        "Unacknowledged" => StatusKind.Unacknowledged,
-        _ => StatusKind.All
-    };
-    private StatusKind Status = StatusKind.All;
-
-    private readonly HashSet<string> SelectedItems = new(StringComparer.OrdinalIgnoreCase);
     private IEnumerable<Row> _selectedItemsCollection = new List<Row>();
     private IEnumerable<Row> SelectedItemsCollection
     {
@@ -554,10 +525,12 @@
     private readonly List<Row> AllRows = new();
     private readonly List<OpenPOLine> OpenLines = new();
 
-    private List<Row> FilteredRows => ApplyStatusFilter(AllRows, Status);
+    private List<Row> FilteredRows => ApplyStatusFilter(AllRows, Params.Status);
 
     private List<OpenPOLine> VisibleOpenLines =>
-        SelectedItems.Count == 0 ? OpenLines : OpenLines.Where(x => SelectedItems.Contains(x.Item)).ToList();
+        Params.SelectedItems.Count == 0
+            ? OpenLines
+            : OpenLines.Where(x => Params.SelectedItems.Contains(x.Item)).ToList();
 
     // ============================================================
     // UI event handlers
@@ -565,19 +538,16 @@
     private void SyncSelectedItems()
     {
         var newItems = _selectedItemsCollection.Select(r => r.Item).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var changed = !SelectedItems.SetEquals(newItems);
+        var changed = !Params.SelectedItems.ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(newItems);
 
         if (changed)
         {
-            SelectedItems.Clear();
-            foreach (var item in newItems)
-            {
-                SelectedItems.Add(item);
-            }
+            Params.SelectedItems.Clear();
+            Params.SelectedItems.AddRange(newItems);
 
             NavigateWithPageState();
 
-            if (SelectedItems.Count > 0)
+            if (Params.SelectedItems.Count > 0)
             {
                 InvokeAsync(async () => await ScrollToPOLinesAsync());
             }
@@ -587,7 +557,7 @@
     private async Task OnRowClickHandler(GridRowClickEventArgs args)
     {
         // Grid handles selection automatically, we just need to scroll
-        if (SelectedItems.Count > 0)
+        if (Params.SelectedItems.Count > 0)
         {
             await ScrollToPOLinesAsync();
         }
@@ -595,17 +565,17 @@
 
     private void HandleItemClick(string item)
     {
-        if (SelectedItems.Contains(item))
+        if (Params.SelectedItems.Contains(item))
         {
-            SelectedItems.Remove(item);
+            Params.SelectedItems.Remove(item);
         }
         else
         {
-            SelectedItems.Add(item);
+            Params.SelectedItems.Add(item);
         }
 
         // Update the grid selection
-        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
+        _selectedItemsCollection = FilteredRows.Where(r => Params.SelectedItems.Contains(r.Item)).ToList();
 
         NavigateWithPageState();
         StateHasChanged();
@@ -613,19 +583,19 @@
 
     private void RemoveItem(string item)
     {
-        if (!SelectedItems.Remove(item)) return;
+        if (!Params.SelectedItems.Remove(item)) return;
 
         // Update the grid selection
-        _selectedItemsCollection = FilteredRows.Where(r => SelectedItems.Contains(r.Item)).ToList();
+        _selectedItemsCollection = FilteredRows.Where(r => Params.SelectedItems.Contains(r.Item)).ToList();
 
-        NavigateWithPageState(replace: SelectedItems.Count == 0);
+        NavigateWithPageState(replace: Params.SelectedItems.Count == 0);
         StateHasChanged();
     }
 
     private void ClearItemFilter()
     {
-        if (SelectedItems.Count == 0) return;
-        SelectedItems.Clear();
+        if (Params.SelectedItems.Count == 0) return;
+        Params.SelectedItems.Clear();
         _selectedItemsCollection = new List<Row>();
         NavigateWithPageState(replace: true);
         StateHasChanged();
@@ -713,77 +683,3 @@
         el.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
     };
 </script>
-
-<style>
-    .badge {
-        display: inline-block;
-        padding: 0.25em 0.6em;
-        font-size: 0.875em;
-        font-weight: 600;
-        line-height: 1;
-        color: #fff;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 0.25rem;
-    }
-
-    .badge-success {
-        background-color: #28a745;
-    }
-
-    .badge-secondary {
-        background-color: #6c757d;
-    }
-
-    .badge-danger {
-        background-color: #dc3545;
-    }
-
-    .badge-info {
-        background-color: #17a2b8;
-    }
-
-    .badge-warning {
-        background-color: #ffc107;
-        color: #212529;
-    }
-
-    .text-danger {
-        color: #dc3545 !important;
-    }
-
-    .text-warning {
-        color: #ffc107 !important;
-    }
-
-    .link-button {
-        background: none;
-        border: none;
-        color: #007bff;
-        text-decoration: underline;
-        cursor: pointer;
-        padding: 0;
-        font: inherit;
-    }
-
-        .link-button:hover {
-            color: #0056b3;
-        }
-
-    .btn-primary {
-        background-color: #007bff;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-</style>

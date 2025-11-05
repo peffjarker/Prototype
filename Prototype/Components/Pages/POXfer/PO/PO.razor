@@ -2,10 +2,12 @@
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
-@using Prototype.Pages.POTransfer.SeedData
+@using Prototype.Components.Pages.POXfer.PO
+@using Prototype.Pages.POTransfer
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
-@using static Prototype.Pages.POTransfer.SeedData.PurchaseOrdersSeedData
+@using static Prototype.Components.Pages.POXfer.PO.PurchaseOrdersSeedData
+@using static Prototype.Pages.POTransfer.PurchaseOrdersParameters
 
 @inherits PageWithSidebarBase
 
@@ -161,7 +163,7 @@
                     <GridCommandButton Command="ExcelExport" Icon="@SvgIcon.FileExcel">Export to Excel</GridCommandButton>
                     <GridSearchBox />
                     <span style="margin-left: auto; font-weight: bold;">
-                        Total Lines: @Model.Lines.Count | Selected: @SelectedLineItems.Count
+                        Total Lines: @Model.Lines.Count | Selected: @Params.SelectedLines.Count
                     </span>
                 </GridToolBarTemplate>
                 <GridExport>
@@ -266,8 +268,8 @@
         <footer class="rop-footer" style="margin-top: 1rem;">
             <button class="btn" @onclick="PrintPo">Print</button>
             <button class="btn" @onclick="CreateNewPo">Create New</button>
-            <button class="btn warn" @onclick="CancelSelectedLines" disabled="@(!SelectedLineItems.Any())">
-                Cancel PO Line(s) @(SelectedLineItems.Any() ? $"({SelectedLineItems.Count})" : "")
+            <button class="btn warn" @onclick="CancelSelectedLines" disabled="@(!Params.SelectedLines.Any())">
+                Cancel PO Line(s) @(Params.SelectedLines.Any() ? $"({Params.SelectedLines.Count})" : "")
             </button>
             <button class="btn danger" @onclick="CancelPo">Cancel PO</button>
         </footer>
@@ -278,99 +280,65 @@
     // Enable franchise selector in sidebar
     protected override bool ShowFranchiseSelector => true;
 
+    // Centralized parameters
+    private PurchaseOrdersParameters Params = new();
+
     // ============================================================
     // Page contract & URL bindings
     // ============================================================
     protected override string BasePath => "/po-transfer/purchase-orders";
 
-    // MultiKey name for grid selections
-    protected override string MultiKeyName => "lines";
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
 
-    // URL-bound (singletons)
-    private string Status = "All";
-    private string? SelectedPoNumber;
-    private string? DealerId;
-
-    // Grid selection tracking
-    private readonly HashSet<string> SelectedLineItems = new(StringComparer.OrdinalIgnoreCase);
-    private IEnumerable<PurchaseOrderLine> _selectedLinesCollection = new List<PurchaseOrderLine>();
-    private IEnumerable<PurchaseOrderLine> SelectedLinesCollection
-    {
-        get => _selectedLinesCollection;
-        set
-        {
-            _selectedLinesCollection = value;
-            SyncSelectedLines();
-        }
-    }
-
-    // Scalars -> URL map
-    protected override IReadOnlyDictionary<string, string?> Scalars =>
-       new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-       {
-           ["dealer"] = DealerId,
-           ["option"] = "Purchase Orders",
-           ["status"] = Status,
-           ["po"] = SelectedPoNumber
-       };
-
-    // Expose selected line items as MultiValues
-    protected override IReadOnlyCollection<string> MultiValues => SelectedLineItems;
+    protected override IReadOnlyCollection<string> MultiValues => Params.SelectedLines;
 
     // Parse URL -> state, then load model
     protected override void ReadFromUrl()
     {
-        // Read raw values from URL - DON'T include po here
+        // Read raw values from URL
+        var rawParams = PurchaseOrdersParameters.FromUrl(Url);
+
+        // Read raw scalars WITHOUT po for dependency validation
         var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
-            ["dealer"] = Url.Get("dealer"),
-            ["option"] = "Purchase Orders",
-            ["status"] = Url.Get("status")
+            ["dealer"] = rawParams.Dealer,
+            ["option"] = rawParams.Option,
+            ["status"] = PurchaseOrdersParameters.StatusToString(rawParams.Status)
         };
 
         // Validate dependencies for facet-level filters only
         var validated = ValidateFacetDependencies(rawScalars);
 
-        // Apply validated values
-        DealerId = validated.TryGetValue("dealer", out var d) ? d : null;
-        Status = validated.TryGetValue("status", out var s) ? s ?? "All" : "All";
-
-        // NOW read the po parameter directly from URL (after Status is set)
-        var urlPo = Url.Get("po");
+        // Rebuild from validated scalars, preserving PO and lines
+        Params = PurchaseOrdersParameters.FromScalars(validated, rawParams.SelectedLines);
+        Params.PoNumber = rawParams.PoNumber; // Restore PO number after validation
 
         // Initialize data if needed
         if (AllPos.Count == 0)
             AllPos.AddRange(PurchaseOrdersSeedData.GetPoSummaries());
 
-        // NOW FilteredPos will use the correct Status value
+        // Get filtered list based on validated status
         var filtered = FilteredPos;
 
         // Select PO based on URL parameter or default to first
+        var urlPo = rawParams.PoNumber;
         if (!string.IsNullOrWhiteSpace(urlPo) &&
             filtered.Any(x => x.Number.Equals(urlPo, StringComparison.OrdinalIgnoreCase)))
         {
-            SelectedPoNumber = urlPo;
+            Params.PoNumber = urlPo;
         }
         else
         {
-            SelectedPoNumber = filtered.FirstOrDefault()?.Number;
+            Params.PoNumber = filtered.FirstOrDefault()?.Number;
         }
 
-        LoadPoDetail(SelectedPoNumber);
-
-        // Read selected lines from URL
-        SelectedLineItems.Clear();
-        var lineItems = Url.GetMulti(MultiKeyName);
-        foreach (var item in lineItems)
-        {
-            SelectedLineItems.Add(item);
-        }
+        LoadPoDetail(Params.PoNumber);
 
         // Restore grid selection
-        _selectedLinesCollection = Model.Lines.Where(l => SelectedLineItems.Contains(l.Item)).ToList();
+        _selectedLinesCollection = Model.Lines.Where(l => Params.SelectedLines.Contains(l.Item)).ToList();
 
-        // NEW: Ensure URL reflects current selection
-        if (SelectedPoNumber != urlPo)
+        // Ensure URL reflects current selection
+        if (Params.PoNumber != urlPo)
         {
             NavigateWithPageState(replace: true);
         }
@@ -383,17 +351,17 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Items On Order", "Items On Order",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
-                    new Dictionary<string, string?> { ["status"] = "All" }))),
+                new FacetOption("Items On Order", "Items On Order",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
 
-            new FacetOption("Purchase Orders", "Purchase Orders",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
-                    new Dictionary<string, string?> { ["status"] = "All" }))),
+                new FacetOption("Purchase Orders", "Purchase Orders",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
 
-            new FacetOption("Receipt of Product", "Receipt of Product",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
-                    new Dictionary<string, string?> { ["status"] = "All" })))
+                new FacetOption("Receipt of Product", "Receipt of Product",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                        new Dictionary<string, string?> { ["status"] = "All" })))
             }
         );
 
@@ -404,13 +372,13 @@
             IsValidForParent: (parentVal) => string.Equals(parentVal, "Purchase Orders", StringComparison.OrdinalIgnoreCase),
             Options: () => new[]
             {
-            new FacetOption("All", "All"),
-            new FacetOption("Pending", "Pending"),
-            new FacetOption("In Process", "In Process"),
-            new FacetOption("Issued – UnAcknowledged", "Issued – UnAcknowledged"),
-            new FacetOption("Open – Acknowledged", "Open – Acknowledged"),
-            new FacetOption("Closed", "Closed"),
-            new FacetOption("Cancelled", "Cancelled")
+                new FacetOption("All", "All"),
+                new FacetOption("Pending", "Pending"),
+                new FacetOption("In Process", "In Process"),
+                new FacetOption("Issued – UnAcknowledged", "Issued – UnAcknowledged"),
+                new FacetOption("Open – Acknowledged", "Open – Acknowledged"),
+                new FacetOption("Closed", "Closed"),
+                new FacetOption("Cancelled", "Cancelled")
             }
         );
 
@@ -441,14 +409,32 @@
     // ============================================================
     private List<PoSummary> AllPos = new();
 
-    private List<PoSummary> FilteredPos =>
-        (string.Equals(Status, "All", StringComparison.OrdinalIgnoreCase)
-            ? AllPos
-            : AllPos.Where(p => string.Equals(p.Status, Status, StringComparison.OrdinalIgnoreCase)))
-        .OrderByDescending(p => p.Date)
-        .ToList();
+    private List<PoSummary> FilteredPos
+    {
+        get
+        {
+            var statusString = PurchaseOrdersParameters.StatusToString(Params.Status);
+            return (string.Equals(statusString, "All", StringComparison.OrdinalIgnoreCase)
+                ? AllPos
+                : AllPos.Where(p => string.Equals(p.Status, statusString, StringComparison.OrdinalIgnoreCase)))
+                .OrderByDescending(p => p.Date)
+                .ToList();
+        }
+    }
 
     private PurchaseOrder Model { get; set; } = new();
+
+    // Grid selection tracking
+    private IEnumerable<PurchaseOrderLine> _selectedLinesCollection = new List<PurchaseOrderLine>();
+    private IEnumerable<PurchaseOrderLine> SelectedLinesCollection
+    {
+        get => _selectedLinesCollection;
+        set
+        {
+            _selectedLinesCollection = value;
+            SyncSelectedLines();
+        }
+    }
 
     // ============================================================
     // Data loading
@@ -462,10 +448,11 @@
         }
 
         // Load PO detail from seed data
-        Model = PurchaseOrdersSeedData.GetPoDetail(poNumber, Status);
+        var statusString = PurchaseOrdersParameters.StatusToString(Params.Status);
+        Model = PurchaseOrdersSeedData.GetPoDetail(poNumber, statusString);
 
         // Only clear selection if not restoring from URL
-        if (!SelectedLineItems.Any())
+        if (!Params.SelectedLines.Any())
         {
             _selectedLinesCollection = new List<PurchaseOrderLine>();
         }
@@ -477,15 +464,12 @@
     private void SyncSelectedLines()
     {
         var newItems = _selectedLinesCollection.Select(l => l.Item).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var changed = !SelectedLineItems.SetEquals(newItems);
+        var changed = !Params.SelectedLines.ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(newItems);
 
         if (changed)
         {
-            SelectedLineItems.Clear();
-            foreach (var item in newItems)
-            {
-                SelectedLineItems.Add(item);
-            }
+            Params.SelectedLines.Clear();
+            Params.SelectedLines.AddRange(newItems);
 
             NavigateWithPageState();
         }
@@ -499,14 +483,14 @@
 
     private async Task CancelSelectedLines()
     {
-        if (!SelectedLineItems.Any()) return;
+        if (!Params.SelectedLines.Any()) return;
 
-        var items = string.Join(", ", SelectedLineItems);
+        var items = string.Join(", ", Params.SelectedLines);
         await JS.InvokeVoidAsync("console.log", $"Cancel Lines: {items}");
 
         // TODO: Call actual service to cancel lines
         // After successful cancellation, refresh the data
-        // LoadPoDetail(SelectedPoNumber);
+        // LoadPoDetail(Params.PoNumber);
     }
 
     private Task CancelPo() => JS.InvokeVoidAsync("console.log", "Cancel PO").AsTask();
@@ -517,54 +501,3 @@
     // ============================================================
     private static string BoolText(bool v) => v ? "Yes" : "No";
 }
-
-<style>
-    .badge {
-        display: inline-block;
-        padding: 0.25em 0.6em;
-        font-size: 0.875em;
-        font-weight: 600;
-        line-height: 1;
-        color: #fff;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 0.25rem;
-    }
-
-    .badge-success {
-        background-color: #28a745;
-    }
-
-    .badge-secondary {
-        background-color: #6c757d;
-    }
-
-    .badge-danger {
-        background-color: #dc3545;
-    }
-
-    .badge-info {
-        background-color: #17a2b8;
-    }
-
-    .badge-warning {
-        background-color: #ffc107;
-        color: #212529;
-    }
-
-    .btn.warn {
-        background-color: #ffc107;
-        color: #212529;
-    }
-
-    .btn.danger {
-        background-color: #dc3545;
-        color: #fff;
-    }
-
-    .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-</style>

@@ -1,4 +1,4 @@
-﻿namespace Prototype.Pages.Product.SeedData;
+﻿namespace Prototype.Components.Pages.Product.Prices;
 
 public static class PricesSeedData
 {
@@ -617,7 +617,7 @@ public static class PricesSeedData
         {
             var hasPromo = random.Next(0, 3) == 0;
             var hasFuturePrice = random.Next(0, 4) == 0;
-            var basePrice = 29.99m + (i * 5m);
+            var basePrice = 29.99m + i * 5m;
 
             // Determine class - 70% CQT Stock, 30% Local Only
             var itemClass = random.Next(0, 10) < 7 ? "CQT Stock" : "Local Only";

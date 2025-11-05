@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Prototype.Pages.POTransfer.SeedData;
+namespace Prototype.Components.Pages.POXfer.PO;
 
 public static class PurchaseOrdersSeedData
 {
