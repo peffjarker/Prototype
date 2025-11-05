@@ -1,0 +1,75 @@
+﻿/* ============================================================ */
+/* InventorySummaryBar - Webcat "summary" variant */
+/* ============================================================ */
+.inventory-summary {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.inventory-header {
+    background: #007bff;
+    color: white;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #dee2e6;
+    padding: 1px;
+}
+
+.inv-col {
+    background: white;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.inv-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.inv-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+/* ============================================================ */
+/* InventorySummaryBar - Set Maintenance "bar" variant */
+/* ============================================================ */
+.inventory-bar {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 1px;
+    background: #dee2e6;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.inv-bar-col {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.inv-bar-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    background: #007bff;
+    padding: 0.25rem;
+    margin: -0.75rem -0.75rem 0.5rem -0.75rem;
+}
+
+.inv-bar-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #212529;
+}

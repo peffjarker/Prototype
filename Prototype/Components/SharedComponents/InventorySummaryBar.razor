@@ -1,0 +1,71 @@
+﻿@* Reusable inventory summary component - used in Webcat and Set Maintenance *@
+
+<div class="@ContainerClass">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="@HeaderClass">@Title</div>
+    }
+    <div class="@GridClass">
+        <div class="@ColumnClass">
+            <div class="@LabelClass">On Hand</div>
+            <div class="@ValueClass">@OnHand</div>
+        </div>
+        <div class="@ColumnClass">
+            <div class="@LabelClass">Pending</div>
+            <div class="@ValueClass">@Pending</div>
+        </div>
+        <div class="@ColumnClass">
+            <div class="@LabelClass">On Order</div>
+            <div class="@ValueClass">@OnOrder</div>
+        </div>
+        <div class="@ColumnClass">
+            <div class="@LabelClass">Alloc</div>
+            <div class="@ValueClass">@Alloc</div>
+        </div>
+        <div class="@ColumnClass">
+            <div class="@LabelClass">BKO</div>
+            <div class="@ValueClass">@BKO</div>
+        </div>
+        <div class="@ColumnClass">
+            <div class="@LabelClass">In Transit</div>
+            <div class="@ValueClass">@InTransit</div>
+        </div>
+        <div class="@ColumnClass">
+            <div class="@LabelClass">Needs</div>
+            <div class="@ValueClass">@Needs</div>
+        </div>
+        <div class="@ColumnClass">
+            <div class="@LabelClass">Interests</div>
+            <div class="@ValueClass">@Interests</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int OnHand { get; set; }
+    [Parameter] public int Pending { get; set; }
+    [Parameter] public int OnOrder { get; set; }
+    [Parameter] public int Alloc { get; set; }
+    [Parameter] public int BKO { get; set; }
+    [Parameter] public int InTransit { get; set; }
+    [Parameter] public int Needs { get; set; }
+    [Parameter] public int Interests { get; set; }
+
+    /// <summary>
+    /// Optional title to display above the inventory grid
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// Styling variant: "bar" for Set Maintenance style, "summary" for Webcat style
+    /// </summary>
+    [Parameter] public string Variant { get; set; } = "summary";
+
+    // Dynamic CSS classes based on variant
+    private string ContainerClass => Variant == "bar" ? "inventory-bar" : "inventory-summary";
+    private string HeaderClass => Variant == "bar" ? "inv-bar-header" : "inventory-header";
+    private string GridClass => Variant == "bar" ? "" : "inventory-grid";
+    private string ColumnClass => Variant == "bar" ? "inv-bar-col" : "inv-col";
+    private string LabelClass => Variant == "bar" ? "inv-bar-header" : "inv-label";
+    private string ValueClass => Variant == "bar" ? "inv-bar-value" : "inv-value";
+}

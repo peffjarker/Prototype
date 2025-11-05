@@ -60,40 +60,14 @@
                         </div>
 
                         <!-- Inventory Summary Bar -->
-                        <div class="inventory-bar">
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">On Hand</div>
-                                <div class="inv-bar-value">@SelectedItemObject.OnHand</div>
-                            </div>
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">Pending</div>
-                                <div class="inv-bar-value">@SelectedItemObject.Pending</div>
-                            </div>
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">On Order</div>
-                                <div class="inv-bar-value">@SelectedItemObject.OnOrder</div>
-                            </div>
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">Alloc</div>
-                                <div class="inv-bar-value">@SelectedItemObject.Alloc</div>
-                            </div>
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">BKO</div>
-                                <div class="inv-bar-value">@SelectedItemObject.BKO</div>
-                            </div>
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">In Transit</div>
-                                <div class="inv-bar-value">@SelectedItemObject.InTransit</div>
-                            </div>
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">Needs</div>
-                                <div class="inv-bar-value">@SelectedItemObject.Needs</div>
-                            </div>
-                            <div class="inv-bar-col">
-                                <div class="inv-bar-header">Interests</div>
-                                <div class="inv-bar-value">@SelectedItemObject.Interests</div>
-                            </div>
-                        </div>
+                        <InventorySummaryBar OnHand="@SelectedItemObject.OnHand"
+                                             Pending="@SelectedItemObject.Pending"
+                                             OnOrder="@SelectedItemObject.OnOrder"
+                                             Alloc="@SelectedItemObject.Alloc"
+                                             BKO="@SelectedItemObject.BKO"
+                                             InTransit="@SelectedItemObject.InTransit"
+                                             Needs="@SelectedItemObject.Needs"
+                                             Interests="@SelectedItemObject.Interests" />
 
                         <!-- Components Grid -->
                         <div class="components-section">
