@@ -220,30 +220,9 @@
             }
         );
 
-        yield return new Facet(
-            Key: "class",
-            Title: "Class",
-            Options: () => new[]
-            {
-                new FacetOption("All Items", "All Items"),
-                new FacetOption("CQT Stock", "CQT Stock"),
-                new FacetOption("Local Only", "Local Only")
-            }
-        );
+        yield return CommonFacets.ClassFacet;
 
-        yield return new Facet(
-            Key: "legend",
-            Title: "Item Legend",
-            Options: () => new[]
-            {
-            new FacetOption("Discontinued",  "disc",  ColorHex: "#e11d48"),
-            new FacetOption("Price Confirm", "price", ColorHex: "#111827"),
-            new FacetOption("CSI",           "csi",   ColorHex: "#2563eb"),
-            new FacetOption("Drop Ship",     "ds",    ColorHex: "#f59e0b"),
-            new FacetOption("Special Orders","so",    ColorHex: "#eab308")
-            },
-            IsLegend: true
-        );
+        yield return CommonFacets.ItemLegend;
     }
 
     // ============================================================

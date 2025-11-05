@@ -503,19 +503,7 @@
             }
         );
 
-        yield return new Facet(
-            Key: "legend",
-            Title: "Item Legend",
-            Options: () => new[]
-            {
-            new FacetOption("Discontinued", "disc", ColorHex: "#e11d48"),
-            new FacetOption("Price Confirm", "price", ColorHex: "#111827"),
-            new FacetOption("CSI", "csi", ColorHex: "#2563eb"),
-            new FacetOption("Drop Ship", "ds", ColorHex: "#f59e0b"),
-            new FacetOption("Special Orders", "so", ColorHex: "#eab308")
-            },
-            IsLegend: true
-        );
+        yield return CommonFacets.ItemLegend;
     }
 
     // ============================================================
