@@ -305,25 +305,37 @@
 
     protected override void ReadFromUrl()
     {
-        // Read parameters using UrlState
-        DealerId = Url.Get("dealer");
+        // Read raw values from URL - DON'T include asn here
+        var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["dealer"] = Url.Get("dealer"),
+            ["option"] = "Receipt of Product",
+            ["status"] = Url.Get("status"),
+            ["class"] = Url.Get("class")
+        };
 
-        // Read and parse status enum
-        var statusVal = Url.Get("status");
+        // Validate dependencies for facet-level filters only
+        var validated = ValidateFacetDependencies(rawScalars);
+
+        // Apply validated values
+        DealerId = validated.TryGetValue("dealer", out var d) ? d : null;
+
+        var statusVal = validated.TryGetValue("status", out var s) ? s : null;
         Status = (!string.IsNullOrWhiteSpace(statusVal) && Enum.TryParse<ReceiptStatus>(statusVal, true, out var parsedStatus))
             ? parsedStatus
             : ReceiptStatus.Open;
 
-        // Read class from URL
-        Class = Url.Get("class") ?? "All";
+        Class = validated.TryGetValue("class", out var c) ? c ?? "All" : "All";
 
-        // Read ASN selection
-        SelectedAsnId = Url.Get("asn");
+        // NOW read the asn parameter directly from URL (after Status is set)
+        var urlAsn = Url.Get("asn");
 
-        // Keep selection valid against current filter
+        // NOW FilteredAsns will use the correct Status value
         var list = FilteredAsns;
-        if (SelectedAsnId is null || !list.Any(x => x.AsnId.Equals(SelectedAsnId, StringComparison.OrdinalIgnoreCase)))
+        if (string.IsNullOrWhiteSpace(urlAsn) || !list.Any(x => x.AsnId.Equals(urlAsn, StringComparison.OrdinalIgnoreCase)))
             SelectedAsnId = list.FirstOrDefault()?.AsnId;
+        else
+            SelectedAsnId = urlAsn;
 
         LoadHeaderFor(SelectedAsnId);
         LoadLinesFor(SelectedAsnId);
@@ -338,11 +350,14 @@
 
         // Restore grid selection
         _selectedLinesCollection = CurrentLines.Where(l => SelectedLineItems.Contains(l.Item)).ToList();
+
+        // NEW: Ensure URL reflects current selection
+        if (SelectedAsnId != urlAsn)
+        {
+            NavigateWithPageState(replace: true);
+        }
     }
 
-    // ============================================================
-    // Sidebar facets
-    // ============================================================
     protected override IEnumerable<Facet> Facets()
     {
         yield return new Facet(
@@ -350,47 +365,44 @@
             Title: "Option",
             Options: () => new[]
             {
-        new FacetOption("Items On Order", "Items On Order",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
-                new Dictionary<string, string?> { ["status"] = "All" }))),
+            new FacetOption("Items On Order", "Items On Order",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                    new Dictionary<string, string?> { ["status"] = "All" }))),
 
-        new FacetOption("Purchase Orders", "Purchase Orders",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
-                new Dictionary<string, string?> { ["status"] = "All" }))),
+            new FacetOption("Purchase Orders", "Purchase Orders",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                    new Dictionary<string, string?> { ["status"] = "All" }))),
 
-        new FacetOption("Receipt of Product", "Receipt of Product",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
-                new Dictionary<string, string?> { ["status"] = "All" })))
+            new FacetOption("Receipt of Product", "Receipt of Product",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                    new Dictionary<string, string?> { ["status"] = "All" })))
             }
         );
 
         yield return new Facet(
             Key: "status",
             Title: "Status",
+            DependsOn: "option",
+            IsValidForParent: (parentVal) => string.Equals(parentVal, "Receipt of Product", StringComparison.OrdinalIgnoreCase),
             Options: () => new[]
             {
-                new FacetOption("All","All",       Href: AppendPreserved($"{BasePath}?status=All")),
-                new FacetOption("Open","Open",     Href: AppendPreserved($"{BasePath}?status=Open")),
-                new FacetOption("Closed","Closed", Href: AppendPreserved($"{BasePath}?status=Closed"))
+            new FacetOption("All", "All"),
+            new FacetOption("Open", "Open"),
+            new FacetOption("Closed", "Closed")
             }
         );
 
         yield return new Facet(
             Key: "asn",
             Title: "ASN",
+            DependsOn: "status",
+            IsValidForParent: (parentVal) => !string.IsNullOrEmpty(parentVal),
             Options: () => FilteredAsns.Select(a =>
                 new FacetOption(
                     $"{a.AsnId} - {a.ShipDate:MM/dd/yyyy}",
-                    a.AsnId,
-                    Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString(Status.ToString())}&asn={Uri.EscapeDataString(a.AsnId)}")
+                    a.AsnId
                 ))
         );
-    }
-
-    protected override void OnSidebarClick(SidebarItem item)
-    {
-        if (!string.IsNullOrWhiteSpace(item.Url))
-            Nav.NavigateTo(item.Url);
     }
 
     // ===== Lifecycle =====

@@ -320,15 +320,29 @@
     // Parse URL -> state, then load model
     protected override void ReadFromUrl()
     {
-        // Read parameters using UrlState
-        DealerId = Url.Get("dealer");
-        Status = Url.Get("status") ?? "All";
+        // Read raw values from URL - DON'T include po here
+        var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["dealer"] = Url.Get("dealer"),
+            ["option"] = "Purchase Orders",
+            ["status"] = Url.Get("status")
+        };
+
+        // Validate dependencies for facet-level filters only
+        var validated = ValidateFacetDependencies(rawScalars);
+
+        // Apply validated values
+        DealerId = validated.TryGetValue("dealer", out var d) ? d : null;
+        Status = validated.TryGetValue("status", out var s) ? s ?? "All" : "All";
+
+        // NOW read the po parameter directly from URL (after Status is set)
         var urlPo = Url.Get("po");
 
         // Initialize data if needed
         if (AllPos.Count == 0)
             AllPos.AddRange(PurchaseOrdersSeedData.GetPoSummaries());
 
+        // NOW FilteredPos will use the correct Status value
         var filtered = FilteredPos;
 
         // Select PO based on URL parameter or default to first
@@ -355,69 +369,62 @@
         // Restore grid selection
         _selectedLinesCollection = Model.Lines.Where(l => SelectedLineItems.Contains(l.Item)).ToList();
 
-        // Ensure URL is in sync - if we auto-selected a PO and it's not in URL, update it
-        if (!string.IsNullOrWhiteSpace(SelectedPoNumber) && urlPo != SelectedPoNumber)
+        // NEW: Ensure URL reflects current selection
+        if (SelectedPoNumber != urlPo)
         {
             NavigateWithPageState(replace: true);
         }
     }
 
-    // ============================================================
-    // Sidebar facets
-    // ============================================================
     protected override IEnumerable<Facet> Facets()
     {
-        // Option facet (cross-page)
         yield return new Facet(
             Key: "option",
             Title: "Option",
             Options: () => new[]
             {
-        new FacetOption("Items On Order", "Items On Order",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
-                new Dictionary<string, string?> { ["status"] = "All" }))),
+            new FacetOption("Items On Order", "Items On Order",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                    new Dictionary<string, string?> { ["status"] = "All" }))),
 
-        new FacetOption("Purchase Orders", "Purchase Orders",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
-                new Dictionary<string, string?> { ["status"] = "All" }))),
+            new FacetOption("Purchase Orders", "Purchase Orders",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                    new Dictionary<string, string?> { ["status"] = "All" }))),
 
-        new FacetOption("Receipt of Product", "Receipt of Product",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
-                new Dictionary<string, string?> { ["status"] = "All" })))
+            new FacetOption("Receipt of Product", "Receipt of Product",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                    new Dictionary<string, string?> { ["status"] = "All" })))
             }
         );
 
         yield return new Facet(
             Key: "status",
             Title: "Status",
+            DependsOn: "option",
+            IsValidForParent: (parentVal) => string.Equals(parentVal, "Purchase Orders", StringComparison.OrdinalIgnoreCase),
             Options: () => new[]
             {
-                new FacetOption("All","All",                                   Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("All")}")),
-                new FacetOption("Pending","Pending",                           Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Pending")}")),
-                new FacetOption("In Process","In Process",                     Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("In Process")}")),
-                new FacetOption("Issued – UnAcknowledged","Issued – UnAcknowledged", Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Issued – UnAcknowledged")}")),
-                new FacetOption("Open – Acknowledged","Open – Acknowledged",   Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Open – Acknowledged")}")),
-                new FacetOption("Closed","Closed",                             Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Closed")}")),
-                new FacetOption("Cancelled","Cancelled",                       Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString("Cancelled")}"))
+            new FacetOption("All", "All"),
+            new FacetOption("Pending", "Pending"),
+            new FacetOption("In Process", "In Process"),
+            new FacetOption("Issued – UnAcknowledged", "Issued – UnAcknowledged"),
+            new FacetOption("Open – Acknowledged", "Open – Acknowledged"),
+            new FacetOption("Closed", "Closed"),
+            new FacetOption("Cancelled", "Cancelled")
             }
         );
 
         yield return new Facet(
             Key: "po",
             Title: "PO",
+            DependsOn: "status",
+            IsValidForParent: (parentVal) => !string.IsNullOrEmpty(parentVal),
             Options: () => FilteredPos.Select(p =>
                 new FacetOption(
                     Text: p.Display,
-                    Value: p.Number,
-                    Href: AppendPreserved($"{BasePath}?status={Uri.EscapeDataString(Status)}&po={Uri.EscapeDataString(p.Number)}")
+                    Value: p.Number
                 ))
         );
-    }
-
-    protected override void OnSidebarClick(SidebarItem item)
-    {
-        if (!string.IsNullOrWhiteSpace(item.Url))
-            Nav.NavigateTo(item.Url);
     }
 
     // ============================================================

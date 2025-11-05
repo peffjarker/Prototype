@@ -57,12 +57,12 @@ public sealed class SidebarState : ISidebarState
         {
             if (s.IsLegend) continue;
             var key = s.SectionKey ?? s.Title ?? string.Empty;
-            _selectedBySection.TryGetValue(key, out var selectedText);
+            _selectedBySection.TryGetValue(key, out var selectedValue);
 
             foreach (var it in s.Items)
             {
-                it.Selected = selectedText != null &&
-                              string.Equals(it.Text, selectedText, StringComparison.OrdinalIgnoreCase);
+                it.Selected = selectedValue != null &&
+                              string.Equals(it.Key, selectedValue, StringComparison.OrdinalIgnoreCase);
             }
         }
 
@@ -85,8 +85,10 @@ public sealed class SidebarState : ISidebarState
         if (target is not null && !target.IsLegend)
         {
             foreach (var it in target.Items)
+            {
                 it.Selected = selectedText != null &&
-                              string.Equals(it.Text, selectedText, StringComparison.OrdinalIgnoreCase);
+                              string.Equals(it.Key, selectedText, StringComparison.OrdinalIgnoreCase);
+            }
         }
 
         NotifyStateChanged();

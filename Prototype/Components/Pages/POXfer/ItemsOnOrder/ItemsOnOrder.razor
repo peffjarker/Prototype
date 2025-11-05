@@ -440,11 +440,20 @@
 
     protected override void ReadFromUrl()
     {
-        // Read dealer from URL using UrlState
-        DealerId = Url.Get("dealer");
+        // Read raw values from URL
+        var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["dealer"] = Url.Get("dealer"),
+            ["option"] = "Items On Order",
+            ["status"] = Url.Get("status")
+        };
 
-        // Read status from URL
-        var statusVal = Url.Get("status");
+        // Validate dependencies - this will auto-clear status if coming from wrong page
+        var validated = ValidateFacetDependencies(rawScalars);
+
+        // Apply validated values
+        DealerId = validated.TryGetValue("dealer", out var d) ? d : null;
+        var statusVal = validated.TryGetValue("status", out var s) ? s : null;
         Status = !string.IsNullOrWhiteSpace(statusVal) ? MapStatus(statusVal) : StatusKind.All;
 
         // Read multi-select items using GetMulti
@@ -466,29 +475,31 @@
             Title: "Option",
             Options: () => new[]
             {
-        new FacetOption("Items On Order", "Items On Order",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
-                new Dictionary<string, string?> { ["status"] = "All" }))),
+            new FacetOption("Items On Order", "Items On Order",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                    new Dictionary<string, string?> { ["status"] = "All" }))),
 
-        new FacetOption("Purchase Orders", "Purchase Orders",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
-                new Dictionary<string, string?> { ["status"] = "All" }))),
+            new FacetOption("Purchase Orders", "Purchase Orders",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                    new Dictionary<string, string?> { ["status"] = "All" }))),
 
-        new FacetOption("Receipt of Product", "Receipt of Product",
-            Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
-                new Dictionary<string, string?> { ["status"] = "All" })))
+            new FacetOption("Receipt of Product", "Receipt of Product",
+                Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                    new Dictionary<string, string?> { ["status"] = "All" })))
             }
         );
 
         yield return new Facet(
             Key: "status",
             Title: "Status",
+            DependsOn: "option",
+            IsValidForParent: (parentVal) => string.Equals(parentVal, "Items On Order", StringComparison.OrdinalIgnoreCase),
             Options: () => new[]
             {
-                new FacetOption("All","All", Href: AppendPreserved($"{BasePath}?status=All")),
-                new FacetOption("Backorders","Backorders", Href: AppendPreserved($"{BasePath}?status=Backorders")),
-                new FacetOption("In Transit","In Transit", Href: AppendPreserved($"{BasePath}?status=In Transit")),
-                new FacetOption("Unacknowledged","Unacknowledged", Href: AppendPreserved($"{BasePath}?status=Unacknowledged"))
+            new FacetOption("All", "All"),
+            new FacetOption("Backorders", "Backorders"),
+            new FacetOption("In Transit", "In Transit"),
+            new FacetOption("Unacknowledged", "Unacknowledged")
             }
         );
 
@@ -497,20 +508,14 @@
             Title: "Item Legend",
             Options: () => new[]
             {
-                new FacetOption("Discontinued","disc", ColorHex:"#e11d48"),
-                new FacetOption("Price Confirm","price", ColorHex:"#111827"),
-                new FacetOption("CSI","csi", ColorHex:"#2563eb"),
-                new FacetOption("Drop Ship","ds", ColorHex:"#f59e0b"),
-                new FacetOption("Special Orders","so", ColorHex:"#eab308")
+            new FacetOption("Discontinued", "disc", ColorHex: "#e11d48"),
+            new FacetOption("Price Confirm", "price", ColorHex: "#111827"),
+            new FacetOption("CSI", "csi", ColorHex: "#2563eb"),
+            new FacetOption("Drop Ship", "ds", ColorHex: "#f59e0b"),
+            new FacetOption("Special Orders", "so", ColorHex: "#eab308")
             },
             IsLegend: true
         );
-    }
-
-    protected override void OnSidebarClick(SidebarItem item)
-    {
-        if (!string.IsNullOrWhiteSpace(item.Url))
-            Nav.NavigateTo(AppendPreserved(item.Url));
     }
 
     // ============================================================
