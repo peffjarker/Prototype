@@ -8,6 +8,7 @@
 @using Prototype.Pages.Product
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using static Prototype.Components.Pages.Product.Webcat.WebcatOtherInventory
 @using static Prototype.Components.Pages.Product.Webcat.WebcatSeedData
 
 @inherits PageWithSidebarBase
@@ -174,61 +175,11 @@
                         </div>
 
                         <!-- Other Inventory Section -->
-                        <div class="other-inventory-section">
-                            <button class="collapsible-header @(ShowOtherInventory ? "expanded" : "")"
-                                    @onclick="() => ShowOtherInventory = !ShowOtherInventory">
-                                <span class="chevron">@(ShowOtherInventory ? "▼" : "▶")</span>
-                                Other Inventory
-                            </button>
-
-                            @if (ShowOtherInventory)
-                            {
-                                <div class="other-inventory-content">
-                                    <div class="inventory-warehouse-section">
-                                        <div class="field-row" style="align-items: end; margin-bottom: 1rem;">
-                                            <div class="field">
-                                                <label>Warehouse</label>
-                                                <select @bind="SelectedWarehouse">
-                                                    @foreach (var wh in Warehouses)
-                                                    {
-                                                        <option value="@wh">@wh</option>
-                                                    }
-                                                </select>
-                                            </div>
-                                            <div class="field">
-                                                <label>Quantity</label>
-                                                <input readonly value="@GetWarehouseQuantity(SelectedWarehouse)" />
-                                            </div>
-                                        </div>
-
-                                        <div class="field-row" style="margin-bottom: 1rem;">
-                                            <div class="field">
-                                                <label>Stock In Date</label>
-                                                <input readonly value="@GetWarehouseStockDate(SelectedWarehouse)" />
-                                            </div>
-                                            <div class="field">
-                                                <label>As Of</label>
-                                                <input readonly value="about 13 hours ago" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="shared-dealers-section">
-                                        <div class="shared-dealers-header">
-                                            <strong>Shared Dealer</strong>
-                                            <strong>Quantity</strong>
-                                        </div>
-                                        @foreach (var dealer in SharedDealers)
-                                        {
-                                            <div class="shared-dealer-row">
-                                                <span>@dealer.Name</span>
-                                                <span>@dealer.Quantity</span>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                        <WebcatOtherInventory Warehouses="@Warehouses"
+                                              SharedDealers="@SharedDealersInfo"
+                                              GetWarehouseQuantity="@GetWarehouseQuantity"
+                                              GetWarehouseStockDate="@GetWarehouseStockDate"
+                                              InitiallyExpanded="false" />
 
                         <!-- Catalog Text -->
                         <div class="catalog-section">
@@ -416,17 +367,12 @@
     // ============================================================
     // Other Inventory Data
     // ============================================================
-    private sealed class SharedDealer
-    {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
-    }
 
-    private List<SharedDealer> SharedDealers => new()
+    private List<SharedDealerInfo> SharedDealersInfo => new()
     {
-        new SharedDealer { Name = "Donald D. Bricker", Quantity = 0 },
-        new SharedDealer { Name = "Shawn M. Lewis", Quantity = 0 },
-        new SharedDealer { Name = "Donald W. Muffley", Quantity = 0 }
+        new SharedDealerInfo { Name = "Donald D. Bricker", Quantity = 0 },
+        new SharedDealerInfo { Name = "Shawn M. Lewis", Quantity = 0 },
+        new SharedDealerInfo { Name = "Donald W. Muffley", Quantity = 0 }
     };
 
     private int GetWarehouseQuantity(string warehouse) => 0;

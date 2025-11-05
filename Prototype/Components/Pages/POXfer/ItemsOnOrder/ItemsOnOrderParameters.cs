@@ -1,7 +1,4 @@
 ﻿// Pages/POTransfer/ItemsOnOrderParameters.cs
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Services;
 
 namespace Prototype.Pages.POTransfer

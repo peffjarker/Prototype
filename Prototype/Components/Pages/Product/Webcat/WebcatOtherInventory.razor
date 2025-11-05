@@ -1,0 +1,98 @@
+﻿@* Collapsible section showing warehouse inventory and shared dealer information *@
+
+<div class="other-inventory-section">
+    <button class="collapsible-header @(isExpanded ? "expanded" : "")"
+            @onclick="ToggleExpanded">
+        <span class="chevron">@(isExpanded ? "▼" : "▶")</span>
+        Other Inventory
+    </button>
+
+    @if (isExpanded)
+    {
+        <div class="other-inventory-content">
+            <div class="inventory-warehouse-section">
+                <div class="field-row" style="align-items: end; margin-bottom: 1rem;">
+                    <div class="field">
+                        <label>Warehouse</label>
+                        <select @bind="selectedWarehouse">
+                            @foreach (var wh in Warehouses)
+                            {
+                                <option value="@wh">@wh</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Quantity</label>
+                        <input readonly value="@GetWarehouseQuantity(selectedWarehouse)" />
+                    </div>
+                </div>
+
+                <div class="field-row" style="margin-bottom: 1rem;">
+                    <div class="field">
+                        <label>Stock In Date</label>
+                        <input readonly value="@GetWarehouseStockDate(selectedWarehouse)" />
+                    </div>
+                    <div class="field">
+                        <label>As Of</label>
+                        <input readonly value="about 13 hours ago" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="shared-dealers-section">
+                <div class="shared-dealers-header">
+                    <strong>Shared Dealer</strong>
+                    <strong>Quantity</strong>
+                </div>
+                @foreach (var dealer in SharedDealers)
+                {
+                    <div class="shared-dealer-row">
+                        <span>@dealer.Name</span>
+                        <span>@dealer.Quantity</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<string> Warehouses { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyList<SharedDealerInfo> SharedDealers { get; set; } = Array.Empty<SharedDealerInfo>();
+
+    /// <summary>
+    /// Callback to get quantity for a specific warehouse
+    /// </summary>
+    [Parameter] public Func<string, int>? GetWarehouseQuantity { get; set; }
+
+    /// <summary>
+    /// Callback to get stock date for a specific warehouse
+    /// </summary>
+    [Parameter] public Func<string, string>? GetWarehouseStockDate { get; set; }
+
+    /// <summary>
+    /// Initial expanded state - defaults to collapsed
+    /// </summary>
+    [Parameter] public bool InitiallyExpanded { get; set; } = false;
+
+    private bool isExpanded;
+    private string selectedWarehouse = "";
+
+    protected override void OnInitialized()
+    {
+        isExpanded = InitiallyExpanded;
+        selectedWarehouse = Warehouses.FirstOrDefault() ?? "";
+    }
+
+    private void ToggleExpanded()
+    {
+        isExpanded = !isExpanded;
+    }
+
+    // Helper class for shared dealer information
+    public sealed class SharedDealerInfo
+    {
+        public string Name { get; set; } = "";
+        public int Quantity { get; set; }
+    }
+}
