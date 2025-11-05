@@ -225,17 +225,9 @@
             Title: "Class",
             Options: () => new[]
             {
-            new FacetOption("All Items",  "All Items",
-                Href: AppendPreserved(Url.BuildHref(BasePath,
-                    new Dictionary<string, string?> { ["class"] = "All Items" }))),
-
-            new FacetOption("CQT Stock",  "CQT Stock",
-                Href: AppendPreserved(Url.BuildHref(BasePath,
-                    new Dictionary<string, string?> { ["class"] = "CQT Stock" }))),
-
-            new FacetOption("Local Only", "Local Only",
-                Href: AppendPreserved(Url.BuildHref(BasePath,
-                    new Dictionary<string, string?> { ["class"] = "Local Only" })))
+                new FacetOption("All Items", "All Items"),
+                new FacetOption("CQT Stock", "CQT Stock"),
+                new FacetOption("Local Only", "Local Only")
             }
         );
 
