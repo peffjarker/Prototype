@@ -1,0 +1,61 @@
+﻿<!-- Components/Shared/ItemList.razor -->
+<div class="items-list">
+    <div class="list-header">
+        <input type="text" class="search-box" placeholder="Search items..."
+               @bind="InternalSearchText" @bind:event="oninput" />
+    </div>
+    <div class="list-body">
+        @foreach (var item in FilteredItems)
+        {
+            <div class="item-row @(item.Item == SelectedItem ? "selected" : "") @GetStatusClass(item)"
+                 @onclick="() => OnItemClick.InvokeAsync(item.Item)">
+                <div class="item-number">@item.Item</div>
+                <div class="item-name">@item.Description</div>
+                @if (item.IsDiscontinued)
+                {
+                    <span class="item-badge disc">●</span>
+                }
+                @if (item.IsPriceConfirm)
+                {
+                    <span class="item-badge price">●</span>
+                }
+                @if (item.IsDropShip)
+                {
+                    <span class="item-badge ds">●</span>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public IEnumerable<dynamic> Items { get; set; } = Enumerable.Empty<dynamic>();
+    [Parameter] public string? SelectedItem { get; set; }
+    [Parameter] public EventCallback<string> OnItemClick { get; set; }
+
+    private string InternalSearchText { get; set; } = "";
+
+    private IEnumerable<dynamic> FilteredItems
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(InternalSearchText))
+                return Items;
+
+            var search = InternalSearchText.ToLower();
+            return Items.Where(x =>
+                x.Item.ToLower().Contains(search) ||
+                x.Description.ToLower().Contains(search)
+            );
+        }
+    }
+
+    private string GetStatusClass(dynamic item)
+    {
+        var classes = new List<string>();
+        if (item.IsDiscontinued) classes.Add("item-discontinued");
+        if (item.IsPriceConfirm) classes.Add("item-price");
+        if (item.IsDropShip) classes.Add("item-ds");
+        return string.Join(" ", classes);
+    }
+}

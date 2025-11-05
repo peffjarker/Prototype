@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Pages.Product.Prices
+@using Prototype.Components.SharedComponents
 @using Prototype.Pages.Product
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
@@ -21,34 +22,9 @@
     <section class="card items-section">
         <div class="items-layout">
             <!-- Items List -->
-            <div class="items-list">
-                <div class="list-header">
-                    <input type="text" class="search-box" placeholder="Search items..."
-                           @bind="SearchText" @bind:event="oninput" />
-                </div>
-                <div class="list-body">
-                    @foreach (var item in DisplayedItems)
-                    {
-                        <div class="item-row @(item.Item == Params.SelectedItem ? "selected" : "") @GetItemStatusClass(item)"
-                             @onclick="() => SelectItem(item.Item)">
-                            <div class="item-number">@item.Item</div>
-                            <div class="item-name">@item.Description</div>
-                            @if (item.IsDiscontinued)
-                            {
-                                <span class="item-badge disc">●</span>
-                            }
-                            @if (item.IsPriceConfirm)
-                            {
-                                <span class="item-badge price">●</span>
-                            }
-                            @if (item.IsDropShip)
-                            {
-                                <span class="item-badge ds">●</span>
-                            }
-                        </div>
-                    }
-                </div>
-            </div>
+            <ItemList Items="@DisplayedItems"
+                      SelectedItem="@Params.SelectedItem"
+                      OnItemClick="@SelectItem" />
 
             <!-- Item Detail -->
             <div class="item-detail">
@@ -251,15 +227,6 @@
 
             if (Params.Class != "All Items")
                 items = items.Where(x => x.Class == Params.Class);
-
-            if (!string.IsNullOrEmpty(SearchText))
-            {
-                var search = SearchText.ToLower();
-                items = items.Where(x =>
-                    x.Item.ToLower().Contains(search) ||
-                    x.Description.ToLower().Contains(search)
-                );
-            }
 
             return items.ToList();
         }
