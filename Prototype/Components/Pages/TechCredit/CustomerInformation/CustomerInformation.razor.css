@@ -1,0 +1,195 @@
+﻿<style >
+.techcredit-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 0;
+    min-height: 600px;
+}
+
+.customers-panel {
+    border-right: 1px solid var(--kendo-color-border, #e5e7eb);
+    background: #f8f9fa;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.customer-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-item {
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+    transition: background 0.15s ease;
+    font-size: 0.875rem;
+}
+
+    .customer-item:hover {
+        background: #e9ecef;
+    }
+
+    .customer-item.selected {
+        background: #007bff;
+        color: white;
+        font-weight: 600;
+    }
+
+.detail-panel {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.detail-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+.detail-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--kendo-color-border, #e5e7eb);
+}
+
+.info-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+    .info-section h4 {
+        margin: 0 0 1rem 0;
+        color: #495057;
+        font-size: 1.1rem;
+    }
+
+.field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.field-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+    .field label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .field input {
+        padding: 0.5rem;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 4px;
+        font-size: 0.875rem;
+        background: white;
+    }
+
+        .field input:read-only {
+            background: #e9ecef;
+            cursor: default;
+        }
+
+        .field input.past-due {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+.sales-auth {
+    background: #fff3cd;
+}
+
+.sales-auth-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.blue-ribbon-section strong {
+    display: block;
+    margin-bottom: 0.75rem;
+    color: #495057;
+}
+
+.payment-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-success {
+    color: #28a745 !important;
+}
+
+.badge {
+    padding: 0.25em 0.6em;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.badge-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+@@media (max-width: 968px) {
+    .techcredit-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .customers-panel {
+        border-right: none;
+        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+        max-height: 300px;
+    }
+
+    .sales-auth-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .field-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style >

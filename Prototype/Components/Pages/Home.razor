@@ -1,17 +1,574 @@
 ﻿@page "/"
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
 @using Prototype.Components.Layout.Navigation.Sidebar
-@inherits ComponentBase
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 @inject ISidebarState Sidebar
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - IBN Dealer Suite</PageTitle>
 
 <div class="layout-no-sidebar">
-    <header class="top-nav">
-        <h2>IBN Dealer Suite</h2>
-    </header>
+    <main class="main-content home-page">
+        @if (FavoritePages.Any())
+        {
+            <section class="favorites-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                    <h2>Favorites</h2>
+                </div>
+                <div class="page-grid">
+                    @foreach (var Page in FavoritePages)
+                    {
+                        <div class="page-card favorite" @onclick="@(() => NavigateToPage(Page.Url))">
+                            <div class="card-header">
+                                <div class="card-icon-wrapper">
+                                    <TelerikSvgIcon Icon="@Page.IconValue" />
+                                </div>
+                                <button class="favorite-btn active"
+                                        @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
+                                        @onclick:stopPropagation="true"
+                                        title="Remove from favorites">
+                                    <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                                </button>
+                            </div>
+                            <h3>@Page.Title</h3>
+                            <p class="card-description">@Page.Description</p>
+                            <div class="card-meta">
+                                <span class="badge">@Page.Category</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
 
-    <main class="main-content">
-        <h1>Welcome</h1>
+        <section class="modules-section">
+            <div class="section-header">
+                <TelerikSvgIcon Icon="@SvgIcon.Grid" />
+                <h2>All Modules</h2>
+            </div>
+
+            @foreach (var module in GetModules())
+            {
+                <div class="module-group">
+                    <div class="module-title">
+                        <TelerikSvgIcon Icon="@module.IconValue" />
+                        <h3>@module.Name</h3>
+                    </div>
+                    <div class="page-grid">
+                        @foreach (var Page in module.Pages)
+                        {
+                            var isFav = IsFavorite(Page.Id);
+                            <div class="page-card" @onclick="@(() => NavigateToPage(Page.Url))">
+                                <div class="card-header">
+                                    <div class="card-icon-wrapper @(isFav ? "favorite" : "")">
+                                        <TelerikSvgIcon Icon="@Page.IconValue" />
+                                    </div>
+                                    <button class="favorite-btn @(isFav ? "active" : "")"
+                                            @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
+                                            @onclick:stopPropagation="true"
+                                            title="@(isFav ? "Remove from favorites" : "Add to favorites")">
+                                        <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                                    </button>
+                                </div>
+                                <h3>@Page.Title</h3>
+                                <p class="card-description">@Page.Description</p>
+                                <div class="card-meta">
+                                    <span class="badge">@Page.Category</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </section>
     </main>
 </div>
 
+@code {
+    private HashSet<string> FavoritePageIds = new();
+
+    private List<PageLink> FavoritePages
+    {
+        get
+        {
+            var allPages = GetModules().SelectMany(m => m.Pages).ToList();
+            return allPages.Where(p => FavoritePageIds.Contains(p.Id)).ToList();
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Set up the sidebar item handler for navigation
+        Sidebar.ItemSelectedHandler = async (item) =>
+        {
+            if (!string.IsNullOrWhiteSpace(item.Url))
+            {
+                Nav.NavigateTo(item.Url);
+            }
+            await Task.CompletedTask;
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadFavoritesAsync();
+            BuildFavoritesSidebar();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadFavoritesAsync()
+    {
+        try
+        {
+            var favoritesJson = await JS.InvokeAsync<string>("localStorage.getItem", "ibn-favorites");
+            if (!string.IsNullOrEmpty(favoritesJson))
+            {
+                var list = System.Text.Json.JsonSerializer.Deserialize<List<string>>(favoritesJson);
+                if (list != null)
+                {
+                    FavoritePageIds = new HashSet<string>(list);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading favorites: {ex.Message}");
+        }
+    }
+
+    private async Task SaveFavoritesAsync()
+    {
+        try
+        {
+            var list = FavoritePageIds.ToList();
+            var favoritesJson = System.Text.Json.JsonSerializer.Serialize(list);
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-favorites", favoritesJson);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving favorites: {ex.Message}");
+        }
+    }
+
+    private bool IsFavorite(string pageId) => FavoritePageIds.Contains(pageId);
+
+    private async Task ToggleFavoriteAsync(string pageId)
+    {
+        if (IsFavorite(pageId))
+        {
+            FavoritePageIds.Remove(pageId);
+        }
+        else
+        {
+            FavoritePageIds.Add(pageId);
+        }
+
+        await SaveFavoritesAsync();
+        BuildFavoritesSidebar(); // Rebuild sidebar when favorites change
+        StateHasChanged();
+    }
+
+    private void BuildFavoritesSidebar()
+    {
+        if (!FavoritePages.Any())
+        {
+            // No favorites, hide sidebar
+            Sidebar.ResetAll(hide: true);
+            return;
+        }
+
+        // Group favorites by category/module
+        var favoritesByCategory = FavoritePages
+            .GroupBy(p => p.Category)
+            .OrderBy(g => g.Key)
+            .ToList();
+
+        var sections = new List<SidebarSection>();
+
+        foreach (var categoryGroup in favoritesByCategory)
+        {
+            var section = new SidebarSection
+            {
+                SectionKey = categoryGroup.Key,
+                Title = categoryGroup.Key,
+                Items = categoryGroup.Select(page => new SidebarItem
+                {
+                    Text = page.Title,
+                    Key = page.Id,
+                    Url = page.Url,
+                    Icon = GetIconSvg(page.IconValue)
+                }).ToList()
+            };
+
+            sections.Add(section);
+        }
+
+        Sidebar.SetSections(sections);
+    }
+
+    private string GetIconSvg(ISvgIcon icon)
+    {
+        if (icon == SvgIcon.Star) return "⭐";
+        if (icon == SvgIcon.ListUnordered) return "📋";
+        if (icon == SvgIcon.FileAdd) return "📄";
+        if (icon == SvgIcon.Inbox) return "📥";
+        if (icon == SvgIcon.Search) return "🔍";
+        if (icon == SvgIcon.Wrench) return "🔧";
+        if (icon == SvgIcon.Dollar) return "💵";
+        if (icon == SvgIcon.User) return "👤";
+        if (icon == SvgIcon.CheckCircle) return "✅";
+        return "";
+    }
+
+    private void NavigateToPage(string url)
+    {
+        Nav.NavigateTo(url);
+    }
+
+    private List<Module> GetModules()
+    {
+        return new List<Module>
+        {
+            new Module
+            {
+                Name = "PO / Transfer",
+                IconValue = SvgIcon.ArrowsSwap,
+                Pages = new List<PageLink>
+                {
+                    new PageLink
+                    {
+                        Id = "items-on-order",
+                        Title = "Items On Order",
+                        Description = "View and manage items on order, track inventory, and monitor PO lines",
+                        Category = "PO / Transfer",
+                        IconValue = SvgIcon.ListUnordered,
+                        Url = "/po-transfer/items-on-order?status=All"
+                    },
+                    new PageLink
+                    {
+                        Id = "purchase-orders",
+                        Title = "Purchase Orders",
+                        Description = "Create, view, and manage purchase orders with vendors",
+                        Category = "PO / Transfer",
+                        IconValue = SvgIcon.FileAdd,
+                        Url = "/po-transfer/purchase-orders?status=All"
+                    },
+                    new PageLink
+                    {
+                        Id = "receipt-of-product",
+                        Title = "Receipt of Product",
+                        Description = "Process incoming shipments and receive products into inventory",
+                        Category = "PO / Transfer",
+                        IconValue = SvgIcon.Inbox,
+                        Url = "/po-transfer/receipt-of-product?status=Open"
+                    }
+                }
+            },
+            new Module
+            {
+                Name = "Product Management",
+                IconValue = SvgIcon.Cart,
+                Pages = new List<PageLink>
+                {
+                    new PageLink
+                    {
+                        Id = "webcat",
+                        Title = "Webcat - Item Availability",
+                        Description = "Browse catalog items, check availability, and view inventory details",
+                        Category = "Product",
+                        IconValue = SvgIcon.Search,
+                        Url = "/product/webcat?class=All Items"
+                    },
+                    new PageLink
+                    {
+                        Id = "set-maintenance",
+                        Title = "Set Maintenance",
+                        Description = "Manage product sets and their components",
+                        Category = "Product",
+                        IconValue = SvgIcon.Wrench,
+                        Url = "/product/set-maintenance?class=All Items"
+                    },
+                    new PageLink
+                    {
+                        Id = "prices",
+                        Title = "View/Change Prices",
+                        Description = "View pricing history, promotions, and manage product prices",
+                        Category = "Product",
+                        IconValue = SvgIcon.Dollar,
+                        Url = "/product/prices?class=All Items"
+                    }
+                }
+            },
+            new Module
+            {
+                Name = "TechCredit",
+                IconValue = SvgIcon.Dollar,
+                Pages = new List<PageLink>
+                {
+                    new PageLink
+                    {
+                        Id = "customer-information",
+                        Title = "Customer Information",
+                        Description = "View TechCredit customer details, balances, and transaction history",
+                        Category = "TechCredit",
+                        IconValue = SvgIcon.User,
+                        Url = "/techcredit/customerinformation?option=Information&status=All"
+                    },
+                    new PageLink
+                    {
+                        Id = "credit-application",
+                        Title = "Credit Application",
+                        Description = "Review and manage customer credit applications",
+                        Category = "TechCredit",
+                        IconValue = SvgIcon.FileAdd,
+                        Url = "/techcredit/creditapplication?status=All"
+                    },
+                    new PageLink
+                    {
+                        Id = "sales-authorizations",
+                        Title = "Sales Authorizations",
+                        Description = "Process and review TechCredit sales authorizations",
+                        Category = "TechCredit",
+                        IconValue = SvgIcon.CheckCircle,
+                        Url = "/techcredit/salesauthorizations?status=All"
+                    }
+                }
+            }
+        };
+    }
+
+    public class Module
+    {
+        public string Name { get; set; } = "";
+        public ISvgIcon IconValue { get; set; } = SvgIcon.Grid;
+        public List<PageLink> Pages { get; set; } = new();
+    }
+
+    public class PageLink
+    {
+        public string Id { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Category { get; set; } = "";
+        public ISvgIcon IconValue { get; set; } = SvgIcon.FileAdd;
+        public string Url { get; set; } = "";
+    }
+}
+
+<style>
+    .home-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .welcome-section {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem 0;
+    }
+
+        .welcome-section h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0c5ea8;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .welcome-section .subtitle {
+            font-size: 1.1rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--kendo-color-border, #e5e7eb);
+    }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .section-header .k-svg-icon {
+            color: #0c5ea8;
+        }
+
+    .favorites-section {
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+        border-radius: 12px;
+        border: 1px solid #ffc107;
+    }
+
+        .favorites-section .section-header {
+            border-bottom-color: #ffc107;
+        }
+
+            .favorites-section .section-header h2 {
+                color: #856404;
+            }
+
+            .favorites-section .section-header .k-svg-icon {
+                color: #ffc107;
+            }
+
+    .modules-section {
+        margin-bottom: 2rem;
+    }
+
+    .module-group {
+        margin-bottom: 3rem;
+    }
+
+        .module-group:last-child {
+            margin-bottom: 0;
+        }
+
+    .module-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #0c5ea8;
+    }
+
+        .module-title h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0c5ea8;
+        }
+
+        .module-title .k-svg-icon {
+            color: #0c5ea8;
+        }
+
+    .page-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .page-card {
+        position: relative;
+        padding: 1.5rem;
+        background: white;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+        .page-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-color: #0c5ea8;
+        }
+
+        .page-card.favorite {
+            border-color: #ffc107;
+            background: linear-gradient(135deg, #ffffff 0%, #fffef8 100%);
+        }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .card-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        padding: 12px;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-radius: 12px;
+        color: #0c5ea8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .card-icon-wrapper.favorite {
+            background: linear-gradient(135deg, #fff9e6 0%, #ffe082 100%);
+            color: #f57c00;
+        }
+
+    .favorite-btn {
+        padding: 0.5rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #dee2e6;
+        transition: all 0.2s ease;
+        border-radius: 6px;
+    }
+
+        .favorite-btn:hover {
+            background: #f8f9fa;
+            color: #ffc107;
+        }
+
+        .favorite-btn.active {
+            color: #ffc107;
+        }
+
+            .favorite-btn.active:hover {
+                background: #fff3cd;
+            }
+
+        .favorite-btn .k-svg-icon {
+            width: 20px;
+            height: 20px;
+        }
+
+    .page-card h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .card-description {
+        margin: 0 0 1rem 0;
+        font-size: 0.9rem;
+        color: #6c757d;
+        line-height: 1.5;
+    }
+
+    .card-meta {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #e9ecef;
+        color: #495057;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>

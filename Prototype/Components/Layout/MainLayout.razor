@@ -1,4 +1,5 @@
-﻿@using Prototype.Components.Layout
+﻿@* Components/Layout/MainLayout.razor *@
+@using Prototype.Components.Layout
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Services
 @inherits LayoutComponentBase
@@ -7,23 +8,18 @@
 
 <TelerikRootComponent>
     <Prototype.Components.Layout.Navigation.NavMenu />
-
+    
     <div class="ptl-page">
         <!-- Sidebar -->
         <aside class="ptl-sidebar">
-            <SidebarSections Width="255px"
-                             Sections="Sidebar.Sections"
-                             SectionQueryKeys="@(new Dictionary<string,string?>(StringComparer.OrdinalIgnoreCase)
-                             {
-                                 ["option"] = null,      // navigate via item.Url
-                                 ["status"] = "status",   // sync ?status query param
-                                 ["class"] = "class"    // sync ?class
-                             })"
-                             SelectedBySection="selected"
-                             SelectedBySectionChanged="@(v => selected = v)"
-                             OnItemSelected="Sidebar.ItemSelectedHandler" />
+            <SidebarSections
+                Width="255px"
+                Sections="@Sidebar.Sections"
+                SelectedBySection="@Sidebar.SelectedBySection"
+                OnItemSelected="@HandleItemSelected"
+                OnFranchiseChanged="@HandleFranchiseChanged" />
         </aside>
-
+        
         <!-- Main content area -->
         <main class="ptl-content">
             <article class="content px-4">
@@ -31,7 +27,7 @@
             </article>
         </main>
     </div>
-
+    
     <!-- Default Blazor error UI -->
     <div id="blazor-error-ui">
         An unhandled error has occurred.
@@ -41,9 +37,6 @@
 </TelerikRootComponent>
 
 @code {
-    // Local mirror of the current sidebar selection
-    private Dictionary<string, string?> selected = new(StringComparer.OrdinalIgnoreCase);
-
     protected override void OnInitialized()
     {
         // CRITICAL: keeps the layout reactive when pages call Sidebar.SetSections(...)
@@ -51,6 +44,19 @@
     }
 
     private void OnSidebarChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task HandleItemSelected(SidebarItem item)
+    {
+        // Delegate to the sidebar's handler if it exists
+        if (Sidebar.ItemSelectedHandler != null)
+            await Sidebar.ItemSelectedHandler(item);
+    }
+
+    private async Task HandleFranchiseChanged(string? dealerId)
+    {
+        // Handle franchise changes if needed
+        await Task.CompletedTask;
+    }
 
     public void Dispose()
     {
@@ -98,16 +104,16 @@
         display: none;
     }
 
-        #blazor-error-ui .reload {
-            margin-right: 1rem;
-            text-decoration: underline;
-        }
+    #blazor-error-ui .reload {
+        margin-right: 1rem;
+        text-decoration: underline;
+    }
 
-        #blazor-error-ui .dismiss {
-            float: right;
-            background: transparent;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
+    #blazor-error-ui .dismiss {
+        float: right;
+        background: transparent;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
 </style>

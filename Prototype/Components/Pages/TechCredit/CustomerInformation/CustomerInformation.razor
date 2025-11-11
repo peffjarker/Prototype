@@ -1,0 +1,343 @@
+﻿@page "/techcredit/customerinformation"
+
+@using Microsoft.AspNetCore.WebUtilities
+@using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Components.Pages.Collections.TechCredit
+@using Prototype.Pages.Collections
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using static Prototype.Components.Pages.Collections.TechCredit.CustomerInformationSeedData
+
+@inherits PageWithSidebarBase
+
+@inject IJSRuntime JS
+
+<div class="wrap">
+    <header class="header">
+        <h3 class="title">TechCredit Information</h3>
+    </header>
+
+    <section class="card techcredit-layout">
+        <div class="customers-panel">
+            <!-- Customer List -->
+            <div class="customer-list">
+                @foreach (var customer in FilteredCustomers)
+                {
+                    <button class="customer-item @(customer.CustomerId == Params.SelectedCustomer ? "selected" : "")"
+                            @onclick="() => SelectCustomer(customer.CustomerId)">
+                        @customer.Name
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="detail-panel">
+            @if (SelectedCustomerObject != null)
+            {
+                var cust = SelectedCustomerObject;
+
+                <!-- Customer Header -->
+                <div class="detail-header">
+                    <div class="field-row">
+                        <div class="field">
+                            <label>Name</label>
+                            <input readonly value="@cust.Name" />
+                        </div>
+                        <div class="field">
+                            <label>Phone</label>
+                            <input readonly value="@cust.Phone" />
+                        </div>
+                        <div class="field">
+                            <label>Customer Profile</label>
+                            <input readonly value="@cust.Profile" />
+                        </div>
+                        <div class="field">
+                            <label>Borrower ID</label>
+                            <input readonly value="@cust.CustomerId" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current TC Account Info -->
+                <div class="info-section">
+                    <h4>Current TC Account Info</h4>
+                    <div class="field-grid">
+                        <div class="field">
+                            <label>Credit Limit</label>
+                            <input readonly value="@cust.CreditLimit.ToString("C")" />
+                        </div>
+                        <div class="field">
+                            <label>Current Rate</label>
+                            <input readonly value="@cust.CurrentRate.ToString("F2")" />
+                        </div>
+                        <div class="field">
+                            <label>Balance</label>
+                            <input readonly value="@cust.Balance.ToString("C")" />
+                        </div>
+                        <div class="field">
+                            <label>Total Amt Due</label>
+                            <input readonly value="@cust.TotalAmtDue.ToString("C")" />
+                        </div>
+                        <div class="field">
+                            <label>Available Credit</label>
+                            <input readonly value="@cust.AvailableCredit.ToString("C")" />
+                        </div>
+                        <div class="field">
+                            <label>Available Rate</label>
+                            <input readonly value="@cust.CurrentRate.ToString("F2")" />
+                        </div>
+                        <div class="field">
+                            <label>Weekly Pmt</label>
+                            <input readonly value="@cust.WeeklyPmt.ToString("C")" />
+                        </div>
+                        <div class="field">
+                            <label>Past Due</label>
+                            <input readonly value="@cust.PastDue.ToString("C")" class="@(cust.PastDue > 0 ? "past-due" : "")" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Sales Authorization -->
+                @if (cust.LatestSalesAuth != null)
+                {
+                    var auth = cust.LatestSalesAuth;
+                    <div class="info-section sales-auth">
+                        <h4>Latest Sales Authorization</h4>
+                        <div class="sales-auth-layout">
+                            <div class="blue-ribbon-section">
+                                <strong>Blue Ribbon Sale</strong>
+                                <div class="field-grid">
+                                    <div class="field">
+                                        <label>A1. This Sale</label>
+                                        <input readonly value="@auth.ThisSale.ToString("C")" />
+                                    </div>
+                                    <div class="field">
+                                        <label>A2. Rollover Amount</label>
+                                        <input readonly value="@auth.RolloverAmount.ToString("C")" />
+                                    </div>
+                                    <div class="field">
+                                        <label>B. Less Trade In</label>
+                                        <input readonly value="@auth.LessTradeIn.ToString("C")" />
+                                    </div>
+                                    <div class="field">
+                                        <label>C. Sales Tax</label>
+                                        <input readonly value="@auth.SalesTax.ToString("C")" />
+                                    </div>
+                                    <div class="field">
+                                        <label>E. Admin Fee</label>
+                                        <input readonly value="@auth.AdminFee.ToString("C")" />
+                                    </div>
+                                    <div class="field">
+                                        <label>F. Previous Balance</label>
+                                        <input readonly value="@auth.PreviousBalance.ToString("C")" />
+                                    </div>
+                                    <div class="field">
+                                        <label>G. New CTC Balance</label>
+                                        <input readonly value="@auth.NewCTCBalance.ToString("C")" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="auth-details-section">
+                                <div class="field">
+                                    <label>IBN Sales Auth # - Processed</label>
+                                    <input readonly value="@auth.IBNSalesAuthNumber" />
+                                </div>
+                                <div class="field">
+                                    <label>Date</label>
+                                    <input readonly value="@auth.Date.ToString("MM/dd/yyyy")" />
+                                </div>
+                                <div class="field">
+                                    <label>CQT Sales Auth #</label>
+                                    <input readonly value="@auth.CQTSalesAuthNumber" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="payment-summary">
+                            <div class="field">
+                                <label>Weekly Pay Amt</label>
+                                <input readonly value="@cust.WeeklyPmt.ToString("C")" />
+                            </div>
+                            <div class="field">
+                                <label>Monthly Pay Amt</label>
+                                <input readonly value="@cust.MonthlyPmt.ToString("C")" />
+                            </div>
+                            <div class="field">
+                                <label>First Payment</label>
+                                <input readonly value="@cust.FirstPayment.ToString("MM/dd/yyyy")" />
+                            </div>
+                            <div class="field">
+                                <label>APR</label>
+                                <input readonly value="@(cust.APR.ToString("F2") + "%")" />
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- Credit/Debit Transactions Grid -->
+                <div class="info-section transactions">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="margin: 0;">Credit/Debit Received From Cornwell</h4>
+                        @{
+                            var netCredit = cust.Transactions.Sum(t => t.Amount);
+                            <div style="font-weight: bold; color: @(netCredit < 0 ? "#dc3545" : "#28a745");">
+                                Net Credit: @netCredit.ToString("C")
+                            </div>
+                        }
+                    </div>
+
+                    <TelerikGrid Data="@cust.Transactions"
+                                 Pageable="false"
+                                 Sortable="true"
+                                 Height="300px">
+                        <GridColumns>
+                            <GridColumn Field="@nameof(Transaction.Memo)" Title="Memo" Width="140px" />
+                            <GridColumn Field="@nameof(Transaction.Type)" Title="Type" Width="120px">
+                                <Template>
+                                    @{
+                                        var trans = (Transaction)context;
+                                        var typeClass = trans.Type.ToLower() switch
+                                        {
+                                            "sale" => "badge badge-info",
+                                            "withhold" => "badge badge-warning",
+                                            _ => ""
+                                        };
+                                        <span class="@typeClass">@trans.Type</span>
+                                    }
+                                </Template>
+                            </GridColumn>
+                            <GridColumn Field="@nameof(Transaction.Date)" Title="Date" Width="130px" DisplayFormat="{0:MM/dd/yyyy}" />
+                            <GridColumn Field="@nameof(Transaction.Amount)" Title="Amount" Width="150px" TextAlign="@ColumnTextAlign.Right">
+                                <Template>
+                                    @{
+                                        var trans = (Transaction)context;
+                                        var amountClass = trans.Amount < 0 ? "text-danger" : "text-success";
+                                        <span class="@amountClass" style="font-weight: 600;">@trans.Amount.ToString("C")</span>
+                                    }
+                                </Template>
+                                <FooterTemplate>
+                                    @{
+                                        var total = cust.Transactions.Sum(t => t.Amount);
+                                        var totalClass = total < 0 ? "text-danger" : "text-success";
+                                        <strong class="@totalClass" style="font-size: 1.1em;">@total.ToString("C")</strong>
+                                    }
+                                </FooterTemplate>
+                            </GridColumn>
+                        </GridColumns>
+                    </TelerikGrid>
+                </div>
+            }
+            else
+            {
+                <div class="detail-empty">
+                    <p>Select a customer to view TechCredit information</p>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
+
+    // Centralized parameters
+    private TechCreditParameters Params = new();
+
+    // ============================================================
+    // Page contract & URL bindings
+    // ============================================================
+    protected override string BasePath => "/techcredit/customerinformation";
+
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
+
+    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
+
+    protected override void ReadFromUrl()
+    {
+        // Read raw values from URL
+        Params = TechCreditParameters.FromUrl(Url);
+
+        // Select first customer if none selected
+        if (string.IsNullOrEmpty(Params.SelectedCustomer))
+        {
+            Params.SelectedCustomer = FilteredCustomers.FirstOrDefault()?.CustomerId;
+        }
+    }
+
+    // ============================================================
+    // Sidebar facets
+    // ============================================================
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+                new FacetOption("Customer Information", "Customer Information",
+                    Href: Url.BuildHref("/techcredit/customerinformation",
+                        new Dictionary<string, string?> { ["status"] = "All" })),
+                new FacetOption("Credit Application", "Credit Application",
+                    Href: Url.BuildHref("/techcredit/creditapplication",
+                        new Dictionary<string, string?> { ["status"] = "All" })),
+                new FacetOption("Sales Authorizations", "Sales Authorizations",
+                    Href: Url.BuildHref("/techcredit/salesauthorizations",
+                        new Dictionary<string, string?> { ["status"] = "All" })),
+            }
+        );
+
+        yield return new Facet(
+            Key: "status",
+            Title: "Customer Status",
+            Options: () => new[]
+            {
+                new FacetOption("All", "All"),
+                new FacetOption("TC Borrowers", "TC Borrowers"),
+                new FacetOption("TC Past Due", "TC Past Due")
+            }
+        );
+    }
+
+    // ============================================================
+    // Lifecycle
+    // ============================================================
+    protected override void OnInitialized()
+    {
+        AllCustomers = CustomerInformationSeedData.GetCustomers();
+        base.OnInitialized();
+    }
+
+    // ============================================================
+    // Data & Filtering
+    // ============================================================
+    private List<CustomerInfo> AllCustomers = new();
+
+    private List<CustomerInfo> FilteredCustomers
+    {
+        get
+        {
+            var customers = AllCustomers.AsEnumerable();
+
+            customers = Params.CustomerStatus switch
+            {
+                "TC Borrowers" => customers.Where(c => c.IsTCBorrower),
+                "TC Past Due" => customers.Where(c => c.IsPastDue),
+                _ => customers
+            };
+
+            return customers.ToList();
+        }
+    }
+
+    private CustomerInfo? SelectedCustomerObject =>
+        FilteredCustomers.FirstOrDefault(c => c.CustomerId == Params.SelectedCustomer);
+
+    // ============================================================
+    // Actions
+    // ============================================================
+    private void SelectCustomer(string customerId)
+    {
+        Params.SelectedCustomer = customerId;
+        NavigateWithPageState();
+    }
+}

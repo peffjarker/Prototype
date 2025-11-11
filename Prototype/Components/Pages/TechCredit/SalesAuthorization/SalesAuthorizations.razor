@@ -1,0 +1,735 @@
+@page "/techcredit/salesauthorizations"
+
+@using Microsoft.AspNetCore.WebUtilities
+@using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Components.Pages.Collections.SalesAuthorizations
+@using Prototype.Pages.Collections
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using static Prototype.Components.Pages.Collections.SalesAuthorizations.SalesAuthorizationsSeedData
+
+@inherits PageWithSidebarBase
+
+@inject IJSRuntime JS
+
+<div class="wrap">
+    <header class="header">
+        <h3 class="title">Sales Authorizations</h3>
+    </header>
+
+    <section class="card sales-auth-layout">
+        <div class="customers-panel">
+            <!-- Customer List -->
+            <div class="customer-list">
+                @foreach (var customer in FilteredCustomers)
+                {
+                    <button class="customer-item @(customer.CustomerId == Params.SelectedCustomer ? "selected" : "")"
+                            @onclick="() => SelectCustomer(customer.CustomerId)">
+                        @customer.CustomerName
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="detail-panel">
+            @if (SelectedAuthorization != null)
+            {
+                var auth = SelectedAuthorization;
+
+                <!-- Customer Header -->
+                <div class="customer-header">
+                    <div class="header-field">
+                        <label>Phone</label>
+                        <input readonly value="@auth.Phone" />
+                    </div>
+                    <div class="header-field">
+                        <label>Customer Profile</label>
+                        <input readonly value="@auth.CustomerProfile" />
+                    </div>
+                    <div class="header-field">
+                        <label>Borrower ID</label>
+                        <input readonly value="@auth.CustomerId" />
+                    </div>
+                </div>
+
+                <!-- Sales Authorization Recap -->
+                <div class="recap-section">
+                    <div class="recap-header">
+                        <h4>Sales Authorization Recap</h4>
+                    </div>
+
+                    <div class="recap-layout">
+                        <!-- Blue Ribbon Sale Column -->
+                        <div class="blue-ribbon-column">
+                            <div class="section-title">Blue Ribbon Sale</div>
+
+                            <div class="form-field">
+                                <label>A1. This Sale</label>
+                                <input readonly value="@auth.ThisSale.ToString("C")" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>A2. Rollover Amount</label>
+                                <input readonly value="@auth.RolloverAmount.ToString("C")" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>B. Less Trade In</label>
+                                <input readonly value="@auth.LessTradeIn.ToString("C")" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>C. Sales Tax</label>
+                                <input readonly value="@auth.SalesTax.ToString("C")" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>E. Admin Fee</label>
+                                <input readonly value="@auth.AdminFee.ToString("C")" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>F. Previous Balance</label>
+                                <input readonly value="@auth.PreviousBalance.ToString("C")" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>G. New CTC Balance</label>
+                                <input readonly value="@auth.NewCTCBalance.ToString("C")" class="highlight-field" />
+                            </div>
+                        </div>
+
+                        <!-- Auth Details Column -->
+                        <div class="auth-details-column">
+                            <div class="form-field">
+                                <label>IBN Sales Auth #</label>
+                                <input readonly value="@auth.IBNSalesAuthNumber" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>Date</label>
+                                <input readonly value="@auth.IBNDate.ToString("MM/dd/yyyy")" />
+                            </div>
+
+                            <div class="spacer"></div>
+
+                            <div class="form-field">
+                                <label>CQT Sales Auth #</label>
+                                <input readonly value="@auth.CQTSalesAuthNumber" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>D. Net Sale</label>
+                                <input readonly value="@auth.NetSale.ToString("C")" />
+                            </div>
+
+                            <div class="form-field">
+                                <label>Date</label>
+                                <input readonly value="@auth.CQTDate.ToString("MM/dd/yyyy")" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Details Row -->
+                    <div class="payment-details">
+                        <div class="form-field">
+                            <label>Weekly Pay Amt</label>
+                            <input readonly value="@auth.WeeklyPayAmt.ToString("C")" />
+                        </div>
+                        <div class="form-field">
+                            <label>Monthly Pay Amt</label>
+                            <input readonly value="@auth.MonthlyPayAmt.ToString("C")" />
+                        </div>
+                        <div class="form-field">
+                            <label>First Payment</label>
+                            <input readonly value="@auth.FirstPayment.ToString("MM/dd/yyyy")" />
+                        </div>
+                        <div class="form-field">
+                            <label>APR</label>
+                            <input readonly value="@(auth.APR.ToString("F2") + "%")" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Authorization History Grid -->
+                <div class="history-section">
+                    <div class="history-header">
+                        <div class="history-tabs">
+                            <button class="history-tab @(Params.HistoryView == "recap" ? "active" : "")"
+                                    @onclick='() => SetHistoryView("recap")'>
+                                Sales Authorization Recap
+                            </button>
+                            <button class="history-tab @(Params.HistoryView == "grid" ? "active" : "")"
+                                    @onclick='() => SetHistoryView("grid")'>
+                                Sales Authorizations
+                            </button>
+                        </div>
+                        <div class="grid-controls">
+                            <span class="status-badge status-@auth.Status.ToLower()">@auth.Status</span>
+                            <div class="why-pmt-info">
+                                <span class="label">Why Pmt</span>
+                                <span class="value">@auth.WhyPmt</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Params.HistoryView == "recap")
+                    {
+                        <!-- Items Grid -->
+                        <TelerikGrid Data="@auth.Items"
+                                     Pageable="false"
+                                     Sortable="true"
+                                     Height="300px">
+                            <GridColumns>
+                                <GridColumn Field="@nameof(SalesAuthItem.ItemId)" Title="Item ID" Width="150px" />
+                                <GridColumn Field="@nameof(SalesAuthItem.Description)" Title="Description" />
+                                <GridColumn Field="@nameof(SalesAuthItem.Qty)" Title="Qty" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                                <GridColumn Field="@nameof(SalesAuthItem.Price)" Title="Price" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                                    <Template>
+                                        @{
+                                            var item = (SalesAuthItem)context;
+                                            <span>@item.Price.ToString("C")</span>
+                                        }
+                                    </Template>
+                                    <FooterTemplate>
+                                        <strong>Total: @auth.Items.Sum(i => i.Price * i.Qty).ToString("C")</strong>
+                                    </FooterTemplate>
+                                </GridColumn>
+                            </GridColumns>
+                        </TelerikGrid>
+                    }
+                    else
+                    {
+                        <!-- Authorization History Grid -->
+                        <TelerikGrid Data="@GetAuthorizationHistory(auth.CustomerId)"
+                                     Pageable="true"
+                                     PageSize="10"
+                                     Sortable="true"
+                                     Height="300px">
+                            <GridColumns>
+                                <GridColumn Field="@nameof(AuthorizationHistory.Date)" Title="Date" Width="130px" DisplayFormat="{0:MM/dd/yyyy}" />
+                                <GridColumn Field="@nameof(AuthorizationHistory.Status)" Title="Status" Width="120px">
+                                    <Template>
+                                        @{
+                                            var hist = (AuthorizationHistory)context;
+                                            <span class="status-badge status-@hist.Status.ToLower()">@hist.Status</span>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field="@nameof(AuthorizationHistory.IBNSalesAuthNumber)" Title="IBN Sales Auth #" Width="150px" />
+                                <GridColumn Field="@nameof(AuthorizationHistory.SaleAmt)" Title="Sale Amt" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                                    <Template>
+                                        @{
+                                            var hist = (AuthorizationHistory)context;
+                                            <span>@hist.SaleAmt.ToString("C")</span>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field="@nameof(AuthorizationHistory.Rollover)" Title="Rollover" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                                    <Template>
+                                        @{
+                                            var hist = (AuthorizationHistory)context;
+                                            <span>@hist.Rollover.ToString("C")</span>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field="@nameof(AuthorizationHistory.Tax)" Title="Tax" Width="100px" TextAlign="@ColumnTextAlign.Right">
+                                    <Template>
+                                        @{
+                                            var hist = (AuthorizationHistory)context;
+                                            <span>@hist.Tax.ToString("C")</span>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field="@nameof(AuthorizationHistory.Total)" Title="Total" Width="120px" TextAlign="@ColumnTextAlign.Right">
+                                    <Template>
+                                        @{
+                                            var hist = (AuthorizationHistory)context;
+                                            <span>@hist.Total.ToString("C")</span>
+                                        }
+                                    </Template>
+                                </GridColumn>
+                                <GridColumn Field="@nameof(AuthorizationHistory.WhyPmt)" Title="Why Pmt" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                            </GridColumns>
+                        </TelerikGrid>
+                    }
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-actions">
+                    <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                   OnClick="@PrintAuthorization">
+                        Print
+                    </TelerikButton>
+                    <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Secondary"
+                                   OnClick="@ReverseSale"
+                                   Enabled="@(auth.Status == "Processed")">
+                        Reverse Sale
+                    </TelerikButton>
+                </div>
+            }
+            else
+            {
+                <div class="detail-empty">
+                    <p>Select a customer to view sales authorizations</p>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    // Enable franchise selector in sidebar
+    protected override bool ShowFranchiseSelector => true;
+
+    // Centralized parameters
+    private SalesAuthorizationsParameters Params = new();
+
+    // ============================================================
+    // Page contract & URL bindings
+    // ============================================================
+    protected override string BasePath => "/techcredit/salesauthorizations";
+
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
+
+    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
+
+    protected override void ReadFromUrl()
+    {
+        Params = SalesAuthorizationsParameters.FromUrl(Url);
+
+        if (string.IsNullOrEmpty(Params.SelectedCustomer))
+        {
+            Params.SelectedCustomer = FilteredCustomers.FirstOrDefault()?.CustomerId;
+        }
+
+        if (string.IsNullOrEmpty(Params.HistoryView))
+        {
+            Params.HistoryView = "recap";
+        }
+    }
+
+    // ============================================================
+    // Sidebar facets
+    // ============================================================
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+                new FacetOption("Customer Information", "Customer Information",
+                    Href: Url.BuildHref("/techcredit/customerinformation",
+                        new Dictionary<string, string?> { ["status"] = "All" })),
+                new FacetOption("Credit Application", "Credit Application",
+                    Href: Url.BuildHref("/techcredit/creditapplication",
+                        new Dictionary<string, string?> { ["status"] = "All" })),
+                new FacetOption("Sales Authorizations", "Sales Authorizations",
+                    Href: Url.BuildHref("/techcredit/salesauthorizations",
+                        new Dictionary<string, string?> { ["status"] = "All" })),
+            }
+        );
+
+        yield return new Facet(
+            Key: "status",
+            Title: "Customer Status",
+            Options: () => new[]
+            {
+                new FacetOption("All", "All"),
+                new FacetOption("TC Borrowers", "TC Borrowers"),
+                new FacetOption("TC Past Due", "TC Past Due")
+            }
+        );
+    }
+
+    // ============================================================
+    // Lifecycle
+    // ============================================================
+    protected override void OnInitialized()
+    {
+        AllAuthorizations = SalesAuthorizationsSeedData.GetSalesAuthorizations();
+        base.OnInitialized();
+    }
+
+    // ============================================================
+    // Data & Filtering
+    // ============================================================
+    private List<SalesAuth> AllAuthorizations = new();
+
+    private List<SalesAuth> FilteredCustomers
+    {
+        get
+        {
+            var auths = AllAuthorizations.AsEnumerable();
+
+            auths = Params.CustomerStatus switch
+            {
+                "TC Borrowers" => auths.Where(a => a.IsTCBorrower),
+                "TC Past Due" => auths.Where(a => a.IsPastDue),
+                _ => auths
+            };
+
+            return auths.ToList();
+        }
+    }
+
+    private SalesAuth? SelectedAuthorization =>
+        FilteredCustomers.FirstOrDefault(a => a.CustomerId == Params.SelectedCustomer);
+
+    private List<AuthorizationHistory> GetAuthorizationHistory(string customerId)
+    {
+        return SalesAuthorizationsSeedData.GetAuthorizationHistory(customerId);
+    }
+
+    // ============================================================
+    // Actions
+    // ============================================================
+    private void SelectCustomer(string customerId)
+    {
+        Params.SelectedCustomer = customerId;
+        NavigateWithPageState();
+    }
+
+    private void SetHistoryView(string view)
+    {
+        Params.HistoryView = view;
+        NavigateWithPageState();
+    }
+
+    private void PrintAuthorization()
+    {
+        Console.WriteLine($"Print authorization for: {SelectedAuthorization?.CustomerName}");
+    }
+
+    private void ReverseSale()
+    {
+        Console.WriteLine($"Reverse sale for: {SelectedAuthorization?.CustomerName}");
+    }
+}
+
+<style>
+    .sales-auth-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 0;
+        min-height: 600px;
+    }
+
+    .customers-panel {
+        border-right: 1px solid var(--kendo-color-border, #e5e7eb);
+        background: #f8f9fa;
+        overflow-y: auto;
+        max-height: calc(100vh - 200px);
+    }
+
+    .customer-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .customer-item {
+        padding: 0.75rem 1rem;
+        border: none;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+        transition: background 0.15s ease;
+        font-size: 0.875rem;
+    }
+
+        .customer-item:hover {
+            background: #e9ecef;
+        }
+
+        .customer-item.selected {
+            background: #007bff;
+            color: white;
+            font-weight: 600;
+        }
+
+    .detail-panel {
+        padding: 1.5rem;
+        overflow-y: auto;
+        max-height: calc(100vh - 200px);
+    }
+
+    .detail-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 400px;
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .customer-header {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+    }
+
+    .header-field {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+        .header-field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .header-field input {
+            padding: 0.5rem;
+            border: 1px solid var(--kendo-color-border, #e5e7eb);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            background: white;
+        }
+
+            .header-field input:read-only {
+                background: #e9ecef;
+                cursor: default;
+            }
+
+    .recap-section {
+        background: #f8f9fa;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .recap-header {
+        background: #007bff;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 1rem;
+    }
+
+        .recap-header h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+    .recap-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        padding: 1.5rem;
+    }
+
+    .section-title {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .blue-ribbon-column,
+    .auth-details-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+        .form-field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-field input {
+            padding: 0.5rem;
+            border: 1px solid var(--kendo-color-border, #e5e7eb);
+            border-radius: 4px;
+            font-size: 0.875rem;
+            background: white;
+        }
+
+            .form-field input:read-only {
+                background: #e9ecef;
+                cursor: default;
+            }
+
+            .form-field input.highlight-field {
+                background: #fff3cd !important;
+                font-weight: 600;
+            }
+
+    .spacer {
+        height: 1rem;
+    }
+
+    .payment-details {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        padding: 1rem 1.5rem 1.5rem 1.5rem;
+        border-top: 1px solid var(--kendo-color-border, #e5e7eb);
+        margin-top: 1rem;
+    }
+
+    .history-section {
+        background: white;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 8px 8px 0 0;
+    }
+
+    .history-tabs {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .history-tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        background: white;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.15s ease;
+    }
+
+        .history-tab:hover {
+            background: #e9ecef;
+        }
+
+        .history-tab.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: 600;
+        }
+
+    .grid-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-processed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-reversed {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .why-pmt-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        background: white;
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 4px;
+    }
+
+        .why-pmt-info .label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .why-pmt-info .value {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--kendo-color-border, #e5e7eb);
+    }
+
+    .badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-info {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    @@media (max-width: 1200px) {
+        .sales-auth-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .customers-panel {
+            border-right: none;
+            border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+            max-height: 300px;
+        }
+
+        .recap-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .payment-details {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .customer-header {
+            flex-direction: column;
+        }
+
+        .payment-details {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
