@@ -13,6 +13,7 @@
     @if (!Sidebar.IsCollapsed)
     {
         <div class="franchise-selector-wrapper">
+            <label class="franchise-label">Dealer</label>
             <div class="franchise-combo-container">
                 <TelerikComboBox TItem="FranchiseOption"
                                  TValue="string"
@@ -21,7 +22,7 @@
                                  ValueField="@nameof(FranchiseOption.DealerId)"
                                  Value="@SelectedDealerIdBacking"
                                  ValueChanged="@OnValueChanged"
-                                 Placeholder="Select dealer..."
+                                 Placeholder="Select franchise..."
                                  Filterable="true"
                                  FilterOperator="@StringFilterOperator.Contains"
                                  AllowCustom="true"
@@ -42,7 +43,9 @@
                             @onclick="ClearSelection"
                             title="Clear selection"
                             aria-label="Clear dealer selection">
-                        ×
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 3L3 11M3 3L11 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
                     </button>
                 }
             </div>
@@ -50,9 +53,11 @@
     }
     else
     {
-        <!-- Show a dealer icon when collapsed -->
-        <div class="collapsed-dealer-icon" title="Dealer selector (expand to use)">
-            <span>🏢</span>
+        <div class="collapsed-dealer-icon" title="Dealership selector (expand to use)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
         </div>
     }
 </div>
@@ -70,14 +75,11 @@
         SelectedDealerIdBacking = Url.Get("dealer");
         Url.Changed += HandleUrlChanged;
         Sidebar.StateChanged += OnSidebarStateChanged;
-
-        // Load franchises from service
         _franchises = FranchiseService.GetFranchises();
     }
 
     protected override void OnParametersSet()
     {
-        // Sync with URL parameter if present
         var dealerFromUrl = Url.Get("dealer");
         if (!string.Equals(SelectedDealerIdBacking, dealerFromUrl, StringComparison.Ordinal))
         {
@@ -128,11 +130,19 @@
 <style>
     .sidebar-header {
         display: flex;
-        align-items: center;
-        padding: 0.75rem;
+        flex-direction: column;
+        padding: 0.875rem;
         background: #ffffff;
-        border-bottom: 1px solid #e5e7eb;
-        min-height: 56px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .franchise-label {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #64748b;
+        margin-bottom: 0.5rem;
     }
 
     .franchise-selector-wrapper {
@@ -155,28 +165,27 @@
         transform: translateY(-50%);
         background: transparent;
         border: none;
-        color: #64748b;
-        font-size: 1.5rem;
-        line-height: 1;
+        color: #94a3b8;
         cursor: pointer;
-        padding: 0;
-        width: 20px;
-        height: 20px;
+        padding: 4px;
+        width: 24px;
+        height: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 50%;
-        transition: all 0.15s;
+        border-radius: 4px;
+        transition: all 0.15s ease;
         z-index: 10;
     }
 
         .franchise-clear-btn:hover {
             background: #f1f5f9;
-            color: #475569;
+            color: #64748b;
         }
 
         .franchise-clear-btn:active {
             background: #e2e8f0;
+            transform: translateY(-50%) scale(0.95);
         }
 
     .franchise-item {
@@ -188,7 +197,7 @@
 
     .franchise-id {
         font-weight: 600;
-        color: #0c5ea8;
+        color: #3b82f6;
         font-size: 0.875rem;
     }
 
@@ -198,7 +207,7 @@
     }
 
     .franchise-name {
-        color: #374151;
+        color: #475569;
         font-size: 0.875rem;
     }
 
@@ -207,8 +216,8 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        font-size: 1.25rem;
-        color: #6b7280;
+        color: #64748b;
+        padding: 0.25rem;
     }
 
     /* Telerik ComboBox customization for header */
@@ -219,16 +228,17 @@
 
     .sidebar-header .k-input {
         border-radius: 6px;
-        border-color: #d1d5db;
+        border-color: #e2e8f0;
+        transition: all 0.2s ease;
     }
 
         .sidebar-header .k-input:hover {
-            border-color: #9ca3af;
+            border-color: #cbd5e1;
         }
 
         .sidebar-header .k-input:focus-within {
-            border-color: #0c5ea8;
-            box-shadow: 0 0 0 1px #0c5ea8;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 1px #3b82f6;
         }
 
     .sidebar-collapsed .sidebar-header {
