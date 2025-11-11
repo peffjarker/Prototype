@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿// Components/Layout/Navigation/Sidebar/SidebarState.cs
+using System.Collections.ObjectModel;
 
 namespace Prototype.Components.Layout.Navigation.Sidebar;
 
@@ -18,11 +19,27 @@ public sealed class SidebarState : ISidebarState
 
     public bool HasSections => _sections.Count > 0;
     public bool IsVisible { get; private set; } = true;
+    public bool IsCollapsed { get; private set; } = false;
 
     public Func<SidebarItem, Task>? ItemSelectedHandler { get; set; }
     public event Action? StateChanged;
 
     public void NotifyStateChanged() => StateChanged?.Invoke();
+
+    public void ToggleCollapsed()
+    {
+        IsCollapsed = !IsCollapsed;
+        NotifyStateChanged();
+    }
+
+    public void SetCollapsed(bool collapsed)
+    {
+        if (IsCollapsed != collapsed)
+        {
+            IsCollapsed = collapsed;
+            NotifyStateChanged();
+        }
+    }
 
     /// <summary>
     /// Reset all sections and selections. Optionally hide sidebar.
@@ -31,7 +48,7 @@ public sealed class SidebarState : ISidebarState
     {
         _sections.Clear();
         _selectedBySection.Clear();
-        IsVisible = !hide ? IsVisible : false;
+        IsVisible = !hide;
         NotifyStateChanged();
     }
 

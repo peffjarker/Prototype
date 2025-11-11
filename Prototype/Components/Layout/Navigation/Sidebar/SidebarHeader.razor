@@ -1,0 +1,237 @@
+﻿@* Components/Layout/Navigation/Sidebar/SidebarHeader.razor *@
+@using Prototype.Components.Layout.Navigation.Sidebar
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using Services
+@using global::Services
+@implements IDisposable
+@inject ISidebarState Sidebar
+@inject IUrlState Url
+@inject IFranchiseService FranchiseService
+
+<div class="sidebar-header">
+    @if (!Sidebar.IsCollapsed)
+    {
+        <div class="franchise-selector-wrapper">
+            <div class="franchise-combo-container">
+                <TelerikComboBox TItem="FranchiseOption"
+                                 TValue="string"
+                                 Data="@FranchisesOrEmpty"
+                                 TextField="@nameof(FranchiseOption.Display)"
+                                 ValueField="@nameof(FranchiseOption.DealerId)"
+                                 Value="@SelectedDealerIdBacking"
+                                 ValueChanged="@OnValueChanged"
+                                 Placeholder="Select dealer..."
+                                 Filterable="true"
+                                 FilterOperator="@StringFilterOperator.Contains"
+                                 AllowCustom="true"
+                                 Class="franchise-combo-header">
+                    <ItemTemplate Context="franchise">
+                        <div class="franchise-item">
+                            <span class="franchise-id">@franchise.DealerId</span>
+                            <span class="franchise-dot">•</span>
+                            <span class="franchise-name">@franchise.FirstName @franchise.LastName</span>
+                        </div>
+                    </ItemTemplate>
+                </TelerikComboBox>
+
+                @if (!string.IsNullOrWhiteSpace(SelectedDealerIdBacking))
+                {
+                    <button type="button"
+                            class="franchise-clear-btn"
+                            @onclick="ClearSelection"
+                            title="Clear selection"
+                            aria-label="Clear dealer selection">
+                        ×
+                    </button>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Show a dealer icon when collapsed -->
+        <div class="collapsed-dealer-icon" title="Dealer selector (expand to use)">
+            <span>🏢</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string?> OnFranchiseChanged { get; set; }
+
+    private string? SelectedDealerIdBacking;
+    private IReadOnlyList<FranchiseOption> _franchises = Array.Empty<FranchiseOption>();
+
+    private IReadOnlyList<FranchiseOption> FranchisesOrEmpty => _franchises;
+
+    protected override void OnInitialized()
+    {
+        SelectedDealerIdBacking = Url.Get("dealer");
+        Url.Changed += HandleUrlChanged;
+        Sidebar.StateChanged += OnSidebarStateChanged;
+
+        // Load franchises from service
+        _franchises = FranchiseService.GetFranchises();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Sync with URL parameter if present
+        var dealerFromUrl = Url.Get("dealer");
+        if (!string.Equals(SelectedDealerIdBacking, dealerFromUrl, StringComparison.Ordinal))
+        {
+            SelectedDealerIdBacking = dealerFromUrl;
+        }
+    }
+
+    private void HandleUrlChanged()
+    {
+        var dealerFromUrl = Url.Get("dealer");
+        if (!string.Equals(SelectedDealerIdBacking, dealerFromUrl, StringComparison.Ordinal))
+        {
+            SelectedDealerIdBacking = dealerFromUrl;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OnSidebarStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnValueChanged(string? value)
+    {
+        var normalized = NormalizeValue(value);
+        SelectedDealerIdBacking = normalized;
+        Url.Set(("dealer", normalized));
+        await OnFranchiseChanged.InvokeAsync(normalized);
+    }
+
+    private async Task ClearSelection()
+    {
+        SelectedDealerIdBacking = null;
+        Url.Remove("dealer");
+        await OnFranchiseChanged.InvokeAsync(null);
+    }
+
+    private static string? NormalizeValue(string? s)
+        => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+    public void Dispose()
+    {
+        Url.Changed -= HandleUrlChanged;
+        Sidebar.StateChanged -= OnSidebarStateChanged;
+    }
+}
+
+<style>
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        min-height: 56px;
+    }
+
+    .franchise-selector-wrapper {
+        width: 100%;
+    }
+
+    .franchise-combo-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .franchise-combo-header {
+        width: 100%;
+    }
+
+    .franchise-clear-btn {
+        position: absolute;
+        right: 32px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: none;
+        color: #64748b;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: all 0.15s;
+        z-index: 10;
+    }
+
+        .franchise-clear-btn:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .franchise-clear-btn:active {
+            background: #e2e8f0;
+        }
+
+    .franchise-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.25rem 0;
+    }
+
+    .franchise-id {
+        font-weight: 600;
+        color: #0c5ea8;
+        font-size: 0.875rem;
+    }
+
+    .franchise-dot {
+        color: #cbd5e1;
+        font-weight: bold;
+    }
+
+    .franchise-name {
+        color: #374151;
+        font-size: 0.875rem;
+    }
+
+    .collapsed-dealer-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        font-size: 1.25rem;
+        color: #6b7280;
+    }
+
+    /* Telerik ComboBox customization for header */
+    .sidebar-header .k-input-inner {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .sidebar-header .k-input {
+        border-radius: 6px;
+        border-color: #d1d5db;
+    }
+
+        .sidebar-header .k-input:hover {
+            border-color: #9ca3af;
+        }
+
+        .sidebar-header .k-input:focus-within {
+            border-color: #0c5ea8;
+            box-shadow: 0 0 0 1px #0c5ea8;
+        }
+
+    .sidebar-collapsed .sidebar-header {
+        padding: 0.75rem 0.5rem;
+    }
+</style>

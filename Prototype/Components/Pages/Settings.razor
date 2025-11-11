@@ -1,0 +1,49 @@
+@* Pages/Settings.razor *@
+@page "/settings"
+@using Prototype.Components.Layout.Navigation.Sidebar
+@inject ISidebarState Sidebar
+
+<PageTitle>Settings</PageTitle>
+
+<h3>Settings</h3>
+
+<div class="settings-container">
+    <p>Application settings page - customize this as needed.</p>
+    
+    <div class="settings-section">
+        <h4>General Settings</h4>
+        <p>Add your application settings here.</p>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Hide sidebar on settings page if desired
+        // Sidebar.ResetAll(hide: true);
+        
+        // Or keep it visible with no sections
+        Sidebar.SetSections(Enumerable.Empty<SidebarSection>());
+    }
+}
+
+<style>
+    .settings-container {
+        max-width: 1200px;
+        padding: 2rem;
+    }
+
+    .settings-section {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+    }
+
+    .settings-section h4 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: #374151;
+    }
+</style>

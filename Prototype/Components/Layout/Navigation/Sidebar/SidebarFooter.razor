@@ -1,0 +1,153 @@
+@* Components/Layout/Navigation/Sidebar/SidebarFooter.razor *@
+@using Prototype.Components.Layout.Navigation.Sidebar
+@inject ISidebarState Sidebar
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<div class="sidebar-footer">
+    @if (!Sidebar.IsCollapsed)
+    {
+        <button class="settings-button" @onclick="NavigateToSettings" title="Settings">
+            <span class="settings-icon">⚙</span>
+            <span class="settings-text">Settings</span>
+        </button>
+    }
+    
+    <button class="collapse-toggle"
+            @onclick="HandleToggle"
+            title="@(Sidebar.IsCollapsed ? "Expand sidebar" : "Collapse sidebar")"
+            aria-label="@(Sidebar.IsCollapsed ? "Expand sidebar" : "Collapse sidebar")">
+        <span class="toggle-icon">@(Sidebar.IsCollapsed ? "▶" : "◀")</span>
+    </button>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCollapsedStateAsync();
+        }
+    }
+
+    private async Task HandleToggle()
+    {
+        Sidebar.ToggleCollapsed();
+        await SaveCollapsedStateAsync();
+    }
+
+    private void NavigateToSettings()
+    {
+        Nav.NavigateTo("/settings");
+    }
+
+    private async Task LoadCollapsedStateAsync()
+    {
+        try
+        {
+            var stored = await JS.InvokeAsync<string?>("localStorage.getItem", "ibn-sidebar-collapsed");
+            if (bool.TryParse(stored, out var isCollapsed))
+            {
+                Sidebar.SetCollapsed(isCollapsed);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading sidebar state: {ex.Message}");
+        }
+    }
+
+    private async Task SaveCollapsedStateAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-sidebar-collapsed", Sidebar.IsCollapsed.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving sidebar state: {ex.Message}");
+        }
+    }
+}
+
+<style>
+    .sidebar-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem;
+        background: #f9fafb;
+        border-top: 1px solid #e5e7eb;
+        min-height: 48px;
+        margin-top: auto;
+    }
+
+    .settings-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        flex: 1;
+        color: #374151;
+        font-size: 0.875rem;
+    }
+
+        .settings-button:hover {
+            background: #e5e7eb;
+        }
+
+        .settings-button:active {
+            background: #d1d5db;
+        }
+
+    .settings-icon {
+        font-size: 1.125rem;
+        line-height: 1;
+    }
+
+    .settings-text {
+        font-weight: 400;
+    }
+
+    .collapse-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        color: #6b7280;
+        min-width: 32px;
+    }
+
+        .collapse-toggle:hover {
+            background: #e5e7eb;
+        }
+
+        .collapse-toggle:active {
+            background: #d1d5db;
+        }
+
+    .toggle-icon {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    /* When collapsed, center the toggle button */
+    .sidebar-collapsed .sidebar-footer {
+        justify-content: center;
+        padding: 0.5rem;
+    }
+
+    .sidebar-collapsed .settings-button {
+        display: none;
+    }
+</style>

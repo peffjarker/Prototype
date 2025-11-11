@@ -1,0 +1,114 @@
+﻿@* Components/Layout/Navigation/Sidebar/SidebarToggle.razor *@
+@using Prototype.Components.Layout.Navigation.Sidebar
+@inject ISidebarState Sidebar
+@inject IJSRuntime JS
+
+<div class="sidebar-header">
+    <span class="sidebar-title">@(Sidebar.IsCollapsed ? "" : "Navigation")</span>
+    <button class="sidebar-toggle"
+            @onclick="HandleToggle"
+            title="@(Sidebar.IsCollapsed ? "Show sidebar" : "Hide sidebar")"
+            aria-label="@(Sidebar.IsCollapsed ? "Show sidebar" : "Hide sidebar")">
+        <span class="toggle-icon">@(Sidebar.IsCollapsed ? "☰" : "◀")</span>
+    </button>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCollapsedStateAsync();
+        }
+    }
+
+    private async Task HandleToggle()
+    {
+        Sidebar.ToggleCollapsed();
+        await SaveCollapsedStateAsync();
+    }
+
+    private async Task LoadCollapsedStateAsync()
+    {
+        try
+        {
+            var stored = await JS.InvokeAsync<string?>("localStorage.getItem", "ibn-sidebar-collapsed");
+            if (bool.TryParse(stored, out var isCollapsed))
+            {
+                Sidebar.SetCollapsed(isCollapsed);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading sidebar state: {ex.Message}");
+        }
+    }
+
+    private async Task SaveCollapsedStateAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-sidebar-collapsed", Sidebar.IsCollapsed.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving sidebar state: {ex.Message}");
+        }
+    }
+}
+
+<style>
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+        min-height: 52px;
+    }
+
+    .sidebar-title {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .sidebar-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+
+        .sidebar-toggle:hover {
+            background: #f3f4f6;
+        }
+
+        .sidebar-toggle:active {
+            background: #e5e7eb;
+        }
+
+    .toggle-icon {
+        font-size: 1.25rem;
+        color: #6b7280;
+        line-height: 1;
+    }
+
+    /* When collapsed, center the button */
+    .sidebar-collapsed .sidebar-header {
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .sidebar-collapsed .sidebar-title {
+        display: none;
+    }
+</style>

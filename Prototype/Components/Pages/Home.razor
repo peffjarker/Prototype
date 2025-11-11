@@ -8,27 +8,66 @@
 
 <PageTitle>Home - IBN Dealer Suite</PageTitle>
 
-<div class="layout-no-sidebar">
-    <main class="main-content home-page">
-        @if (FavoritePages.Any())
+<main class="main-content home-page">
+    @if (FavoritePages.Any())
+    {
+        <section class="favorites-section">
+            <div class="section-header">
+                <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                <h2>Favorites</h2>
+            </div>
+            <div class="page-grid">
+                @foreach (var Page in FavoritePages)
+                {
+                    <div class="page-card favorite" @onclick="@(() => NavigateToPage(Page.Url))">
+                        <div class="card-header">
+                            <div class="card-icon-wrapper">
+                                <TelerikSvgIcon Icon="@Page.IconValue" />
+                            </div>
+                            <button class="favorite-btn active"
+                                    @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
+                                    @onclick:stopPropagation="true"
+                                    title="Remove from favorites">
+                                <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                            </button>
+                        </div>
+                        <h3>@Page.Title</h3>
+                        <p class="card-description">@Page.Description</p>
+                        <div class="card-meta">
+                            <span class="badge">@Page.Category</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    <section class="modules-section">
+        <div class="section-header">
+            <TelerikSvgIcon Icon="@SvgIcon.Grid" />
+            <h2>All Modules</h2>
+        </div>
+
+        @foreach (var module in GetModules())
         {
-            <section class="favorites-section">
-                <div class="section-header">
-                    <TelerikSvgIcon Icon="@SvgIcon.Star" />
-                    <h2>Favorites</h2>
+            <div class="module-group">
+                <div class="module-title">
+                    <TelerikSvgIcon Icon="@module.IconValue" />
+                    <h3>@module.Name</h3>
                 </div>
                 <div class="page-grid">
-                    @foreach (var Page in FavoritePages)
+                    @foreach (var Page in module.Pages)
                     {
-                        <div class="page-card favorite" @onclick="@(() => NavigateToPage(Page.Url))">
+                        var isFav = IsFavorite(Page.Id);
+                        <div class="page-card" @onclick="@(() => NavigateToPage(Page.Url))">
                             <div class="card-header">
-                                <div class="card-icon-wrapper">
+                                <div class="card-icon-wrapper @(isFav ? "favorite" : "")">
                                     <TelerikSvgIcon Icon="@Page.IconValue" />
                                 </div>
-                                <button class="favorite-btn active"
+                                <button class="favorite-btn @(isFav ? "active" : "")"
                                         @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
                                         @onclick:stopPropagation="true"
-                                        title="Remove from favorites">
+                                        title="@(isFav ? "Remove from favorites" : "Add to favorites")">
                                     <TelerikSvgIcon Icon="@SvgIcon.Star" />
                                 </button>
                             </div>
@@ -40,51 +79,10 @@
                         </div>
                     }
                 </div>
-            </section>
-        }
-
-        <section class="modules-section">
-            <div class="section-header">
-                <TelerikSvgIcon Icon="@SvgIcon.Grid" />
-                <h2>All Modules</h2>
             </div>
-
-            @foreach (var module in GetModules())
-            {
-                <div class="module-group">
-                    <div class="module-title">
-                        <TelerikSvgIcon Icon="@module.IconValue" />
-                        <h3>@module.Name</h3>
-                    </div>
-                    <div class="page-grid">
-                        @foreach (var Page in module.Pages)
-                        {
-                            var isFav = IsFavorite(Page.Id);
-                            <div class="page-card" @onclick="@(() => NavigateToPage(Page.Url))">
-                                <div class="card-header">
-                                    <div class="card-icon-wrapper @(isFav ? "favorite" : "")">
-                                        <TelerikSvgIcon Icon="@Page.IconValue" />
-                                    </div>
-                                    <button class="favorite-btn @(isFav ? "active" : "")"
-                                            @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
-                                            @onclick:stopPropagation="true"
-                                            title="@(isFav ? "Remove from favorites" : "Add to favorites")">
-                                        <TelerikSvgIcon Icon="@SvgIcon.Star" />
-                                    </button>
-                                </div>
-                                <h3>@Page.Title</h3>
-                                <p class="card-description">@Page.Description</p>
-                                <div class="card-meta">
-                                    <span class="badge">@Page.Category</span>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-        </section>
-    </main>
-</div>
+        }
+    </section>
+</main>
 
 @code {
     private HashSet<string> FavoritePageIds = new();
@@ -362,29 +360,9 @@
 
 <style>
     .home-page {
-        max-width: 1400px;
         margin: 0 auto;
         padding: 2rem;
     }
-
-    .welcome-section {
-        text-align: center;
-        margin-bottom: 3rem;
-        padding: 2rem 0;
-    }
-
-        .welcome-section h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #0c5ea8;
-            margin: 0 0 0.5rem 0;
-        }
-
-        .welcome-section .subtitle {
-            font-size: 1.1rem;
-            color: #6c757d;
-            margin: 0;
-        }
 
     .section-header {
         display: flex;
@@ -408,7 +386,7 @@
 
     .favorites-section {
         margin-bottom: 3rem;
-        padding: 2rem;
+        padding: 1rem;
         background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
         border-radius: 12px;
         border: 1px solid #ffc107;
