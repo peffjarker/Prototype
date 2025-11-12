@@ -7,6 +7,7 @@
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Pages.POXfer.ItemsOnOrder
+@using Prototype.Components.Pages.POXfer.PO
 @using Prototype.Components.Pages.Product.Webcat
 @using Prototype.Components.Services
 @using Prototype.Components.Services.Reports
@@ -263,7 +264,7 @@
                     <Template>
                         @{
                             var line = (OpenPOLine)context;
-                            <button class="link-button" @onclick="() => SidePanelService.OpenItemPreview(line.Item)">
+                            <button class="link-button" @onclick="() => HandleItemClick(line.Item)" @onclick:stopPropagation="true">
                                 @line.Item
                             </button>
                         }
@@ -273,7 +274,7 @@
                     <Template>
                         @{
                             var line = (OpenPOLine)context;
-                            <button class="link-button" title="Open PO details" @onclick="() => OpenPODetails(line.PONumber)">
+                            <button class="link-button" title="Open PO details" @onclick="() => HandlePoClick(line.PONumber)" @onclick:stopPropagation="true">
                                 @line.PONumber
                             </button>
                         }
@@ -431,15 +432,24 @@
     </section>
 </div>
 
-<!-- Side Panel for Item Preview -->
+<!-- Side Panel for Item and PO Preview -->
 <SidePanel IsOpen="@SidePanelService.IsOpen"
            IsOpenChanged="@((value) => { if (!value) SidePanelService.Close(); })"
            Title="@GetSidePanelTitle()"
-           NavigateUrl="@GetWebcatUrl()"
-           OnNavigate="@NavigateToWebcat">
-    <WebcatItemPreviewPanel ItemNumber="@SidePanelService.CurrentItemNumber"
-                            Item="@SidePanelService.CurrentItem"
-                            ErrorMessage="@SidePanelService.ErrorMessage" />
+           NavigateUrl="@GetSidePanelNavigateUrl()"
+           OnNavigate="@NavigateFromSidePanel">
+    @if (SidePanelService.ContentType == Prototype.Components.Services.SidePanelContentType.Item)
+    {
+        <WebcatItemPreviewPanel ItemNumber="@SidePanelService.CurrentItemNumber"
+                                Item="@SidePanelService.CurrentItem"
+                                ErrorMessage="@SidePanelService.ErrorMessage" />
+    }
+    else if (SidePanelService.ContentType == Prototype.Components.Services.SidePanelContentType.PurchaseOrder)
+    {
+        <POPreviewPanel PoNumber="@SidePanelService.CurrentPoNumber"
+                        Po="@SidePanelService.CurrentPo"
+                        ErrorMessage="@SidePanelService.ErrorMessage" />
+    }
 </SidePanel>
 
 @code {
@@ -521,8 +531,12 @@
         AllRows.AddRange(ItemsOnOrderSeedData.GetItems());
         OpenLines.AddRange(ItemsOnOrderSeedData.GetPOLines());
 
-        // Subscribe to side panel changes
-        SidePanelService.OnChange += StateHasChanged;
+        // Subscribe to side panel changes - ADD LOGGING HERE
+        SidePanelService.OnChange += () =>
+        {
+            Console.WriteLine("=== SidePanelService.OnChange fired! ===");
+            StateHasChanged();
+        };
 
         // Call base AFTER setting up data
         base.OnInitialized();
@@ -595,8 +609,22 @@
 
     private void HandleItemClick(string item)
     {
-        // Open side panel instead of just selecting
+        // Open side panel for item preview
         SidePanelService.OpenItemPreview(item);
+    }
+
+    private void HandlePoClick(string poNumber)
+    {
+        Console.WriteLine($"Clicked PO: {poNumber}");
+        Console.WriteLine($"Service IsOpen before: {SidePanelService.IsOpen}");
+
+        // Open side panel for PO preview
+        SidePanelService.OpenPoPreview(poNumber);
+
+        Console.WriteLine($"Service IsOpen after: {SidePanelService.IsOpen}");
+        Console.WriteLine($"Service ContentType: {SidePanelService.ContentType}");
+        Console.WriteLine($"Service CurrentPo: {SidePanelService.CurrentPo?.PoNumber ?? "null"}");
+        Console.WriteLine($"Service ErrorMessage: {SidePanelService.ErrorMessage ?? "none"}");
     }
 
     private void RemoveItem(string item)
@@ -647,8 +675,6 @@
         catch { /* best effort */ }
     }
 
-    private void OpenPODetails(string poNumber) => Console.WriteLine($"Open PO details: {poNumber}");
-
     private async Task Print()
     {
         var report = new ItemsOnOrderReport
@@ -685,25 +711,35 @@
     // ============================================================
     private string GetSidePanelTitle()
     {
-        if (SidePanelService.CurrentItem != null)
+        return SidePanelService.ContentType switch
         {
-            return $"Item Details - {SidePanelService.CurrentItemNumber}";
-        }
-        return "Item Details";
+            Prototype.Components.Services.SidePanelContentType.Item when SidePanelService.CurrentItem != null 
+                => $"Item Details - {SidePanelService.CurrentItemNumber}",
+            Prototype.Components.Services.SidePanelContentType.Item 
+                => "Item Details",
+            Prototype.Components.Services.SidePanelContentType.PurchaseOrder when SidePanelService.CurrentPo != null 
+                => $"PO Details - {SidePanelService.CurrentPoNumber}",
+            Prototype.Components.Services.SidePanelContentType.PurchaseOrder 
+                => "PO Details",
+            _ => "Details"
+        };
     }
 
-    private string? GetWebcatUrl()
+    private string? GetSidePanelNavigateUrl()
     {
-        if (string.IsNullOrEmpty(SidePanelService.CurrentItemNumber))
+        return SidePanelService.ContentType switch
         {
-            return null;
-        }
-        return $"/product/webcat?item={Uri.EscapeDataString(SidePanelService.CurrentItemNumber)}";
+            Prototype.Components.Services.SidePanelContentType.Item when !string.IsNullOrEmpty(SidePanelService.CurrentItemNumber)
+                => $"/product/webcat?item={Uri.EscapeDataString(SidePanelService.CurrentItemNumber)}",
+            Prototype.Components.Services.SidePanelContentType.PurchaseOrder when !string.IsNullOrEmpty(SidePanelService.CurrentPoNumber)
+                => $"/po-transfer/purchase-orders?po={Uri.EscapeDataString(SidePanelService.CurrentPoNumber)}",
+            _ => null
+        };
     }
 
-    private void NavigateToWebcat()
+    private void NavigateFromSidePanel()
     {
-        var url = GetWebcatUrl();
+        var url = GetSidePanelNavigateUrl();
         if (!string.IsNullOrEmpty(url))
         {
             NavigationManager.NavigateTo(url);

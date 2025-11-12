@@ -1,0 +1,205 @@
+﻿@using Prototype.Components.Pages.POXfer.PO
+@using static Prototype.Components.Pages.POXfer.PO.PurchaseOrdersSeedData
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-warning">
+        <span class="k-icon k-i-warning"></span>
+        @ErrorMessage
+    </div>
+}
+else if (Po != null && !string.IsNullOrEmpty(Po.PoNumber))
+{
+    <div class="preview-panel">
+        <div class="preview-section">
+            <h5 class="preview-section-title">Purchase Order Information</h5>
+
+            <div class="preview-field">
+                <label>PO Number:</label>
+                <span class="preview-value"><strong>@Po.PoNumber</strong></span>
+            </div>
+
+            <div class="preview-field">
+                <label>PO Date:</label>
+                <span class="preview-value">@Po.PoDate.ToString("MM/dd/yyyy")</span>
+            </div>
+
+            <div class="preview-field">
+                <label>Status:</label>
+                <span class="preview-value">
+                    <span class="badge @GetStatusClass(Po.PoStatus)">@Po.PoStatus</span>
+                </span>
+            </div>
+
+            <div class="preview-field">
+                <label>Vendor:</label>
+                <span class="preview-value">@Po.VendorName</span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Po.SalesOrderNumber))
+            {
+                <div class="preview-field">
+                    <label>Sales Order:</label>
+                    <span class="preview-value">@Po.SalesOrderNumber</span>
+                </div>
+            }
+        </div>
+
+        <div class="preview-section">
+            <h5 class="preview-section-title">Financial Summary</h5>
+
+            <div class="preview-field">
+                <label>Total Cost:</label>
+                <span class="preview-value"><strong>@Po.TotalCost.ToString("C")</strong></span>
+            </div>
+
+            <div class="preview-field">
+                <label>Open Cost:</label>
+                <span class="preview-value">@Po.OpenCost.ToString("C")</span>
+            </div>
+        </div>
+
+        <div class="preview-section">
+            <h5 class="preview-section-title">Shipping Information</h5>
+
+            <div class="preview-field">
+                <label>Ship To:</label>
+                <span class="preview-value">@Po.ShipToName</span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Po.Attention))
+            {
+                <div class="preview-field">
+                    <label>Address:</label>
+                    <span class="preview-value">
+                        @Po.Attention
+                        <br />@Po.City, @Po.State @Po.Zip
+                    </span>
+                </div>
+            }
+
+            <div class="preview-field">
+                <label>Ship Method:</label>
+                <span class="preview-value">@Po.DefaultShipMethod</span>
+            </div>
+
+            @if (Po.LiftGateRequired)
+            {
+                <div class="preview-field">
+                    <span class="badge badge-warning">Lift Gate Required</span>
+                </div>
+            }
+        </div>
+
+        <div class="preview-section">
+            <h5 class="preview-section-title">Order Lines (@Po.Lines.Count)</h5>
+
+            <div class="preview-stats">
+                <div class="stat-item">
+                    <label>Total Ordered:</label>
+                    <span>@Po.Lines.Sum(l => l.Ordered)</span>
+                </div>
+                <div class="stat-item">
+                    <label>Total Received:</label>
+                    <span>@Po.Lines.Sum(l => l.Received)</span>
+                </div>
+                <div class="stat-item">
+                    <label>Total Open:</label>
+                    <span class="@(Po.Lines.Sum(l => l.Open) > 0 ? "text-primary" : "")">
+                        <strong>@Po.Lines.Sum(l => l.Open)</strong>
+                    </span>
+                </div>
+            </div>
+
+            @if (Po.Lines.Any())
+            {
+                <div class="preview-lines">
+                    @foreach (var line in Po.Lines.Take(5))
+                    {
+                        <div class="preview-line-item">
+                            <div class="line-item-header">
+                                <strong>@line.Item</strong>
+                                <span class="badge @GetLineStatusClass(line.Status)">@line.Status</span>
+                            </div>
+                            <div class="line-item-desc">@line.Description</div>
+                            <div class="line-item-details">
+                                <span>Ord: @line.Ordered</span>
+                                <span>Rcv: @line.Received</span>
+                                <span>Open: @line.Open</span>
+                                <span>@line.UnitCost.ToString("C")</span>
+                            </div>
+                        </div>
+                    }
+                    @if (Po.Lines.Count > 5)
+                    {
+                        <div class="preview-line-more">
+                            + @(Po.Lines.Count - 5) more lines...
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(Po.SpecialInstructions))
+        {
+            <div class="preview-section">
+                <h5 class="preview-section-title">Special Instructions</h5>
+                <div class="preview-instructions">
+                    @Po.SpecialInstructions
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Po.Comments))
+        {
+            <div class="preview-section">
+                <h5 class="preview-section-title">Comments</h5>
+                <div class="preview-instructions">
+                    @Po.Comments
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (!string.IsNullOrEmpty(PoNumber))
+{
+    <div class="preview-loading">
+        <span class="k-icon k-i-loading"></span>
+        Loading PO details...
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? PoNumber { get; set; }
+
+    [Parameter]
+    public PurchaseOrder? Po { get; set; }
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    private string GetStatusClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "pending" => "badge-warning",
+            "open" or "open – acknowledged" or "partial" => "badge-success",
+            "closed" => "badge-secondary",
+            "cancelled" => "badge-danger",
+            "issued – unacknowledged" => "badge-info",
+            _ => "badge-info"
+        };
+    }
+
+    private string GetLineStatusClass(string status)
+    {
+        return status.ToLower() switch
+        {
+            "open" => "badge-success",
+            "closed" => "badge-secondary",
+            "cancelled" => "badge-danger",
+            _ => "badge-info"
+        };
+    }
+}
