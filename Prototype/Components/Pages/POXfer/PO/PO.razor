@@ -3,6 +3,9 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Pages.POXfer.PO
+@using Prototype.Components.Pages.Product.Webcat
+@using Prototype.Components.Services
+@using Prototype.Components.SharedComponents.Sidepanel
 @using Prototype.Pages.POTransfer
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
@@ -10,7 +13,8 @@
 @using static Prototype.Pages.POTransfer.PurchaseOrdersParameters
 
 @inherits PageWithSidebarBase
-
+@inject SidePanelService SidePanelService
+@inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 
 <div class="wrap">
@@ -172,7 +176,16 @@
                 </GridExport>
                 <GridColumns>
                     <GridCheckboxColumn SelectAll="true" Width="60px" Locked="true" />
-                    <GridColumn Field="@nameof(PurchaseOrderLine.Item)" Title="Line Item" Width="140px" Locked="true" />
+                    <GridColumn Field="@nameof(PurchaseOrderLine.Item)" Title="Item" Width="140px" Locked="true">
+                        <Template>
+                            @{
+                                var row = (PurchaseOrderLine)context;
+                                <button class="link-button" @onclick="() => HandleItemClick(row.Item)" @onclick:stopPropagation="true">
+                                    @row.Item
+                                </button>
+                            }
+                        </Template>
+                    </GridColumn>
                     <GridColumn Field="@nameof(PurchaseOrderLine.Description)" Title="Description" Width="300px" />
                     <GridColumn Field="@nameof(PurchaseOrderLine.Comment)" Title="Comment" Width="200px" />
                     <GridColumn Field="@nameof(PurchaseOrderLine.Ordered)" Title="Ord" Width="90px" TextAlign="@ColumnTextAlign.Right">
@@ -275,6 +288,17 @@
         </footer>
     </section>
 </div>
+
+<!-- Side Panel for Item Preview -->
+<SidePanel IsOpen="@SidePanelService.IsOpen"
+           IsOpenChanged="@((value) => { if (!value) SidePanelService.Close(); })"
+           Title="@GetSidePanelTitle()"
+           NavigateUrl="@GetWebcatUrl()"
+           OnNavigate="@NavigateToWebcat">
+    <WebcatItemPreviewPanel ItemNumber="@SidePanelService.CurrentItemNumber"
+                            Item="@SidePanelService.CurrentItem"
+                            ErrorMessage="@SidePanelService.ErrorMessage" />
+</SidePanel>
 
 @code {
     // Centralized parameters
@@ -496,4 +520,40 @@
     // Helpers
     // ============================================================
     private static string BoolText(bool v) => v ? "Yes" : "No";
+
+    // ============================================================
+    // Side Panel Helpers
+    // ============================================================
+    private void HandleItemClick(string item)
+    {
+        // Open side panel instead of just selecting
+        SidePanelService.OpenItemPreview(item);
+    }
+
+    private string GetSidePanelTitle()
+    {
+        if (SidePanelService.CurrentItem != null)
+        {
+            return $"Item Details - {SidePanelService.CurrentItemNumber}";
+        }
+        return "Item Details";
+    }
+
+    private string? GetWebcatUrl()
+    {
+        if (string.IsNullOrEmpty(SidePanelService.CurrentItemNumber))
+        {
+            return null;
+        }
+        return $"/product/webcat?item={Uri.EscapeDataString(SidePanelService.CurrentItemNumber)}";
+    }
+
+    private void NavigateToWebcat()
+    {
+        var url = GetWebcatUrl();
+        if (!string.IsNullOrEmpty(url))
+        {
+            NavigationManager.NavigateTo(url);
+        }
+    }
 }
