@@ -1,0 +1,258 @@
+﻿/* appearance-utilities.css */
+/* Additional styles to support appearance customization */
+
+/* Reduce motion utilities */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+
+/* High contrast mode */
+.high-contrast {
+    --border: #000;
+    --border-strong: #000;
+    --text: #000;
+    --muted: #333;
+}
+
+    .high-contrast.dark-theme {
+        --border: #fff;
+        --border-strong: #fff;
+        --text: #fff;
+        --muted: #ccc;
+    }
+
+/* Grid lines toggle */
+.show-grid-lines .tbl tbody td {
+    border-bottom: 1px solid var(--border) !important;
+}
+
+.show-grid-lines .tbl tbody tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.show-grid-lines .card,
+.show-grid-lines .panel,
+.show-grid-lines .settings-section {
+    border: 1px solid var(--border) !important;
+}
+
+/* Hide grid lines when disabled */
+:not(.show-grid-lines) .tbl tbody td {
+    border-bottom: 1px solid transparent;
+}
+
+/* Font size scaling */
+body {
+    font-size: var(--base-font-size, 14px);
+    font-family: var(--base-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    line-height: var(--base-line-height, 1.5);
+}
+
+/* Scale headings proportionally */
+h1 {
+    font-size: calc(var(--base-font-size, 14px) * 2);
+}
+
+h2 {
+    font-size: calc(var(--base-font-size, 14px) * 1.75);
+}
+
+h3 {
+    font-size: calc(var(--base-font-size, 14px) * 1.5);
+}
+
+h4 {
+    font-size: calc(var(--base-font-size, 14px) * 1.25);
+}
+
+h5 {
+    font-size: calc(var(--base-font-size, 14px) * 1.1);
+}
+
+h6 {
+    font-size: var(--base-font-size, 14px);
+}
+
+/* Transition utilities using CSS variables */
+* {
+    transition-duration: var(--transition-duration, 150ms);
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn var(--animation-duration, 200ms) ease;
+}
+
+.slide-down {
+    animation: slideDown var(--animation-duration, 200ms) ease;
+}
+
+/* Dark theme specific overrides */
+[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+    [data-theme="dark"] .card,
+    [data-theme="dark"] .panel,
+    [data-theme="dark"] .settings-section {
+        background: var(--card-bg, #1f2937);
+        border-color: var(--border, #374151);
+    }
+
+    [data-theme="dark"] input,
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea {
+        background: #374151;
+        color: #f9fafb;
+        border-color: #4b5563;
+    }
+
+        [data-theme="dark"] input:read-only,
+        [data-theme="dark"] input[readonly] {
+            background: #1f2937;
+        }
+
+    [data-theme="dark"] .tbl thead th {
+        background: #1f2937;
+        color: #f9fafb;
+        border-bottom-color: #4b5563;
+    }
+
+    [data-theme="dark"] .tbl tbody td {
+        background: #111827;
+        color: #f9fafb;
+        border-bottom-color: #374151;
+    }
+
+    [data-theme="dark"] .tbl tbody tr:nth-child(even) td {
+        background: #1f2937;
+    }
+
+    [data-theme="dark"] .tbl tbody tr:hover td {
+        background: var(--row-hover, #374151);
+    }
+
+/* Accent color overrides for buttons */
+.btn.primary,
+.k-button-solid-primary {
+    background-color: var(--accent, #0c5ea8) !important;
+    border-color: var(--accent, #0c5ea8) !important;
+}
+
+    .btn.primary:hover,
+    .k-button-solid-primary:hover {
+        background-color: var(--accent-hover, #0a4d8a) !important;
+        border-color: var(--accent-hover, #0a4d8a) !important;
+    }
+
+/* Accent color for links */
+a,
+.link,
+.link-button {
+    color: var(--accent, #0c5ea8) !important;
+}
+
+/* Accent color for active states */
+.nav-item.is-active,
+.customer-item.selected,
+.item-row.selected,
+.theme-card.active {
+    background-color: var(--accent-weak, #e6f0fb) !important;
+    color: var(--accent, #0c5ea8) !important;
+    border-color: var(--accent, #0c5ea8) !important;
+}
+
+/* Accent color for focus states */
+input:focus,
+select:focus,
+textarea:focus,
+button:focus-visible {
+    border-color: var(--accent, #0c5ea8) !important;
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.25) !important;
+}
+
+/* Print styles */
+@media print {
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Accessibility: respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Accessibility: respect user's contrast preferences */
+@media (prefers-contrast: more) {
+    .high-contrast {
+        --border: #000;
+        --text: #000;
+    }
+
+    [data-theme="dark"].high-contrast {
+        --border: #fff;
+        --text: #fff;
+    }
+}
+
+/* Spacing density overrides */
+.card,
+.panel,
+.settings-section {
+    padding: calc(var(--kendo-spacing-4, 16px) * 1);
+}
+
+.section-header {
+    padding: calc(var(--kendo-spacing-3, 12px) * 1);
+}
+
+.form-field,
+.field {
+    margin-bottom: calc(var(--kendo-spacing-2, 8px) * 1);
+}
+
+/* Ensure proper contrast in high contrast mode */
+.high-contrast .status-badge,
+.high-contrast .badge {
+    border: 2px solid currentColor !important;
+}
+
+.high-contrast .btn {
+    border-width: 2px !important;
+}

@@ -1,6 +1,7 @@
 @page "/settings/appearance"
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
+@using System.Text.Json
 @inject IJSRuntime JS
 @inject NavigationManager Nav
 
@@ -419,19 +420,24 @@
     {
         try
         {
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-theme", selectedTheme);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-accent", selectedAccent);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-density", density);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-fontSize", fontSize);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-font", selectedFont);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animations", animations);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-reducedMotion", reducedMotion);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-highContrast", highContrast);
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-gridLines", showGridLines);
+            // Save as JSON strings (with quotes)
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-theme", System.Text.Json.JsonSerializer.Serialize(selectedTheme));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-accent", System.Text.Json.JsonSerializer.Serialize(selectedAccent));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-density", System.Text.Json.JsonSerializer.Serialize(density));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-fontSize", System.Text.Json.JsonSerializer.Serialize(fontSize));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-font", System.Text.Json.JsonSerializer.Serialize(selectedFont));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animations", System.Text.Json.JsonSerializer.Serialize(animations));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-reducedMotion", System.Text.Json.JsonSerializer.Serialize(reducedMotion));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-highContrast", System.Text.Json.JsonSerializer.Serialize(highContrast));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-gridLines", System.Text.Json.JsonSerializer.Serialize(showGridLines));
 
-            // Apply changes immediately (you would typically call a JS function to update CSS variables)
+            // Refresh the appearance immediately
+            await JS.InvokeVoidAsync("eval", "window.refreshAppearance?.()");
+
+            // Show success message (optional)
             await JS.InvokeVoidAsync("console.log", "Settings saved successfully");
 
+            // Navigate back
             Nav.NavigateTo("/settings");
         }
         catch (Exception ex)
@@ -479,25 +485,27 @@
         max-width: 1200px;
         margin: 0 auto;
         padding: 2rem;
+        background: var(--page-bg);
+        color: var(--text);
     }
 
     .page-header {
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
-        border-bottom: 2px solid var(--border, #e5e7eb);
+        border-bottom: 2px solid var(--border);
     }
 
     .header-content .title {
         margin: 0 0 0.5rem 0;
         font-size: 2rem;
         font-weight: 700;
-        color: var(--text, #111827);
+        color: var(--text);
     }
 
     .subtitle {
         margin: 0;
         font-size: 1rem;
-        color: var(--muted, #6b7280);
+        color: var(--muted);
     }
 
     .settings-container {
@@ -508,10 +516,10 @@
 
     /* Section Styling */
     .settings-section {
-        background: var(--card-bg, #fff);
-        border: 1px solid var(--border, #e5e7eb);
+        background: var(--card-bg);
+        border: 1px solid var(--border);
         border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         overflow: hidden;
     }
 
@@ -520,12 +528,12 @@
         align-items: flex-start;
         gap: 1rem;
         padding: 1.5rem;
-        background: #f8f9fa;
-        border-bottom: 1px solid var(--border, #e5e7eb);
+        background: var(--header-bg);
+        border-bottom: 1px solid var(--border);
     }
 
         .section-header .k-svg-icon {
-            color: var(--accent, #0c5ea8);
+            color: var(--accent);
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -534,13 +542,13 @@
         margin: 0 0 0.25rem 0;
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--text, #111827);
+        color: var(--text);
     }
 
     .section-description {
         margin: 0;
         font-size: 0.875rem;
-        color: var(--muted, #6b7280);
+        color: var(--muted);
     }
 
     .section-content {
@@ -556,24 +564,24 @@
 
     .theme-card {
         position: relative;
-        border: 2px solid var(--border, #e5e7eb);
+        border: 2px solid var(--border);
         border-radius: 12px;
         overflow: hidden;
         cursor: pointer;
         transition: all 0.2s ease;
-        background: white;
+        background: var(--card-bg);
     }
 
         .theme-card:hover {
-            border-color: var(--accent, #0c5ea8);
+            border-color: var(--accent);
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
 
         .theme-card.active {
-            border-color: var(--accent, #0c5ea8);
+            border-color: var(--accent);
             border-width: 3px;
-            box-shadow: 0 0 0 3px rgba(12, 94, 168, 0.1);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2);
         }
 
     .theme-preview {
@@ -653,20 +661,20 @@
 
     .theme-info {
         padding: 1rem 1.25rem;
-        background: white;
+        background: var(--card-bg);
     }
 
         .theme-info h3 {
             margin: 0 0 0.25rem 0;
             font-size: 1rem;
             font-weight: 600;
-            color: var(--text, #111827);
+            color: var(--text);
         }
 
         .theme-info p {
             margin: 0;
             font-size: 0.875rem;
-            color: var(--muted, #6b7280);
+            color: var(--muted);
         }
 
     .theme-check {
@@ -675,12 +683,12 @@
         right: 12px;
         width: 32px;
         height: 32px;
-        background: var(--accent, #0c5ea8);
+        background: var(--accent);
         color: white;
         border-radius: 50%;
         display: grid;
         place-items: center;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
     /* Color Grid */
@@ -700,23 +708,23 @@
         transition: all 0.2s ease;
         display: grid;
         place-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
         .color-swatch:hover {
             transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
         .color-swatch.active {
             border-color: white;
-            box-shadow: 0 0 0 3px var(--accent, #0c5ea8), 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 0 3px var(--accent), 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
     .check-icon {
         color: white;
         font-size: 24px;
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
     }
 
     /* Density Options */
@@ -729,22 +737,22 @@
     .density-option {
         display: block;
         padding: 1.25rem;
-        border: 2px solid var(--border, #e5e7eb);
+        border: 2px solid var(--border);
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s ease;
-        background: white;
+        background: var(--card-bg);
     }
 
         .density-option:hover {
-            border-color: var(--accent, #0c5ea8);
-            background: #f8f9fa;
+            border-color: var(--accent);
+            background: var(--hover-bg);
         }
 
         .density-option.active {
-            border-color: var(--accent, #0c5ea8);
-            background: rgba(12, 94, 168, 0.04);
-            box-shadow: 0 0 0 3px rgba(12, 94, 168, 0.1);
+            border-color: var(--accent);
+            background: rgba(var(--accent-rgb), 0.08);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
         }
 
         .density-option input[type="radio"] {
@@ -760,7 +768,7 @@
     }
 
         .option-content .k-svg-icon {
-            color: var(--accent, #0c5ea8);
+            color: var(--accent);
             font-size: 32px;
         }
 
@@ -768,13 +776,13 @@
         margin: 0 0 0.25rem 0;
         font-size: 1rem;
         font-weight: 600;
-        color: var(--text, #111827);
+        color: var(--text);
     }
 
     .option-info p {
         margin: 0;
         font-size: 0.875rem;
-        color: var(--muted, #6b7280);
+        color: var(--muted);
     }
 
     /* Typography Controls */
@@ -794,7 +802,7 @@
         .control-group > label {
             font-size: 0.875rem;
             font-weight: 600;
-            color: var(--text, #111827);
+            color: var(--text);
         }
 
     .slider-control {
@@ -805,7 +813,7 @@
 
     .slider-label {
         font-size: 0.875rem;
-        color: var(--muted, #6b7280);
+        color: var(--muted);
         font-weight: 600;
     }
 
@@ -822,7 +830,7 @@
         text-align: right;
         font-size: 0.875rem;
         font-weight: 600;
-        color: var(--accent, #0c5ea8);
+        color: var(--accent);
     }
 
     .font-dropdown {
@@ -831,14 +839,14 @@
 
     .typography-preview {
         padding: 1.5rem;
-        background: #f8f9fa;
-        border: 1px solid var(--border, #e5e7eb);
+        background: var(--hover-bg);
+        border: 1px solid var(--border);
         border-radius: 8px;
     }
 
         .typography-preview p {
             margin: 0;
-            color: var(--text, #111827);
+            color: var(--text);
         }
 
     /* Options List */
@@ -853,15 +861,16 @@
         align-items: center;
         justify-content: space-between;
         padding: 1rem;
-        border: 1px solid var(--border, #e5e7eb);
+        border: 1px solid var(--border);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s ease;
+        background: var(--card-bg);
     }
 
         .option-item:hover {
-            background: #f8f9fa;
-            border-color: var(--accent, #0c5ea8);
+            background: var(--hover-bg);
+            border-color: var(--accent);
         }
 
     .option-left {
@@ -875,13 +884,13 @@
         margin: 0 0 0.25rem 0;
         font-size: 0.9375rem;
         font-weight: 600;
-        color: var(--text, #111827);
+        color: var(--text);
     }
 
     .option-text p {
         margin: 0;
         font-size: 0.8125rem;
-        color: var(--muted, #6b7280);
+        color: var(--muted);
     }
 
     /* Settings Actions */
@@ -890,8 +899,8 @@
         align-items: center;
         justify-content: space-between;
         padding: 1.5rem;
-        background: #f8f9fa;
-        border: 1px solid var(--border, #e5e7eb);
+        background: var(--header-bg);
+        border: 1px solid var(--border);
         border-radius: 12px;
         gap: 1rem;
     }
@@ -906,9 +915,9 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.625rem 1.25rem;
-        border: 1px solid var(--border, #e5e7eb);
-        background: white;
-        color: var(--text, #111827);
+        border: 1px solid var(--border);
+        background: var(--card-bg);
+        color: var(--text);
         font-size: 0.875rem;
         font-weight: 600;
         border-radius: 8px;
@@ -917,23 +926,127 @@
     }
 
         .btn:hover {
-            background: #f3f4f6;
-            border-color: var(--border-strong, #d1d5db);
+            background: var(--hover-bg);
+            border-color: var(--border);
         }
 
         .btn.primary {
-            background: var(--accent, #0c5ea8);
+            background: var(--accent);
             color: white;
-            border-color: var(--accent, #0c5ea8);
+            border-color: var(--accent);
         }
 
             .btn.primary:hover {
-                filter: brightness(0.95);
+                background: var(--accent-hover);
+                border-color: var(--accent-hover);
             }
 
         .btn.outline {
             background: transparent;
+            color: var(--text);
         }
+
+            .btn.outline:hover {
+                background: var(--hover-bg);
+            }
+
+    /* Light Mode (Default) */
+    :root {
+        --page-bg: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --card-bg: #f9fafb;
+        --header-bg: #f3f4f6;
+        --hover-bg: #f3f4f6;
+        --accent: #0c5ea8;
+        --accent-hover: #0d6bb6;
+        --accent-rgb: 12, 94, 168;
+    }
+
+    /* Dark Mode */
+    @@media (prefers-color-scheme: dark) {
+        : root
+
+    {
+        --page-bg: #0f172a;
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+        --border: #2d3748;
+        --card-bg: #1a1f2e;
+        --header-bg: #151d2c;
+        --hover-bg: #1f2937;
+        --accent: #3b82f6;
+        --accent-hover: #1e40af;
+        --accent-rgb: 59, 130, 246;
+    }
+
+    .appearance-page {
+        background: var(--page-bg);
+        color: var(--text);
+    }
+
+    .settings-section {
+        background: var(--card-bg);
+        border-color: var(--border);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    .theme-card {
+        background: var(--card-bg);
+        border-color: var(--border);
+    }
+
+        .theme-card:hover {
+            background: var(--hover-bg);
+        }
+
+    .theme-info {
+        background: var(--header-bg);
+    }
+
+    .color-swatch {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+        .color-swatch:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+    .density-option {
+        background: var(--card-bg);
+        border-color: var(--border);
+    }
+
+        .density-option:hover {
+            background: var(--hover-bg);
+        }
+
+    .typography-preview {
+        background: var(--hover-bg);
+        border-color: var(--border);
+    }
+
+    .option-item {
+        background: var(--card-bg);
+        border-color: var(--border);
+    }
+
+        .option-item:hover {
+            background: var(--hover-bg);
+        }
+
+    .btn {
+        background: var(--card-bg);
+        color: var(--text);
+        border-color: var(--border);
+    }
+
+        .btn:hover {
+            background: var(--hover-bg);
+        }
+
+    }
 
     /* Responsive */
     @@media (max-width: 768px) {
@@ -965,4 +1078,5 @@
         justify-content: center;
     }
 
-    }</style>
+    }
+</style>

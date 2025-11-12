@@ -1,6 +1,4 @@
 ﻿/* ===== Receipt of Product – layout & meta grid ===== */
-
-
 /* Top meta grid */
 .rop-meta {
     padding: 12px;
@@ -36,7 +34,7 @@
     .rop-meta label {
         font-size: .85rem;
         font-weight: 600;
-        color: var(--text);
+        color: var(--text); /* ✅ Already using variable */
     }
 
     /* Inputs / selects within meta (unified height) */
@@ -45,22 +43,23 @@
         appearance: none;
         height: 36px;
         padding: 6px 10px;
-        border: 1px solid rgba(0,0,0,.14);
+        border: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.14) */
         border-radius: 10px;
-        background: #fff;
+        background: var(--card-bg); /* ✅ Changed from #fff */
+        color: var(--text); /* ✅ Added */
         font-size: .95rem;
         outline: none;
         transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
     }
 
         .rop-meta input[readonly] {
-            background: #f9fafb;
+            background: var(--hover-bg, #f9fafb); /* ✅ Changed from #f9fafb */
         }
 
         .rop-meta input:focus,
         .rop-meta select:focus {
-            border-color: #6aa5ff;
-            box-shadow: 0 0 0 3px rgba(26,115,232,.15);
+            border-color: var(--accent); /* ✅ Changed from #6aa5ff */
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), .15); /* ✅ Dynamic */
         }
 
     /* Checkbox */
@@ -76,16 +75,16 @@
 
 /* Tables (header tint just a bit different on this page) */
 .tbl.tbl-rop thead th {
-    background: #fbfcfe;
-    border-bottom: 1px solid rgba(0,0,0,.08);
+    background: var(--hover-bg, #fbfcfe); /* ✅ Changed from #fbfcfe */
+    border-bottom: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.08) */
 }
 
 .tbl.tbl-rop tbody td {
-    border-bottom: 1px solid rgba(0,0,0,.06);
+    border-bottom: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.06) */
 }
 
 .tbl.tbl-rop tbody tr:hover {
-    background: #fafbff;
+    background: var(--row-hover, #fafbff); /* ✅ Changed from #fafbff */
 }
 
 .tbl.tbl-rop .num {
