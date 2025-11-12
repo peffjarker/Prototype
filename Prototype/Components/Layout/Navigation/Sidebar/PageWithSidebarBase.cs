@@ -18,7 +18,6 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
     protected abstract string BasePath { get; }
     protected abstract IEnumerable<Facet> Facets();
-    protected virtual bool ShowFranchiseSelector => true;
     protected virtual IReadOnlyCollection<string> AlwaysPreservedKeys => new[] { "dealer" };
     protected virtual IReadOnlyCollection<string> SamePagePreservedKeys => Array.Empty<string>();
     protected virtual IReadOnlyCollection<string> SameModulePreservedKeys => Array.Empty<string>();
@@ -202,21 +201,18 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     protected void RebuildSidebar()
     {
         var currentPath = GetCurrentPathOnly(Nav);
+
+        Console.WriteLine($"=== RebuildSidebar for {BasePath} ===");
+        Console.WriteLine($"Current path: {currentPath}");
+        Console.WriteLine($"BasePath: {BasePath}");
+
         if (!currentPath.StartsWith(BasePath, StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("Path doesn't match BasePath, returning");
             return;
+        }
 
         var sections = new List<SidebarSection>();
-
-        if (ShowFranchiseSelector)
-        {
-            sections.Add(new SidebarSection
-            {
-                SectionKey = "franchise",
-                Title = "Franchise",
-                IsFranchiseSelector = true,
-                Items = new List<SidebarItem>()
-            });
-        }
 
         var facetSections = FacetSections.Build(Facets(), Scalars, MultiValues, BasePath, Url);
         sections.AddRange(facetSections);
@@ -225,6 +221,13 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
         if (Url.Has("dealer"))
             initialSelections["dealer"] = Url.Get("dealer");
+
+        Console.WriteLine("Initial selections for sidebar:");
+        foreach (var kvp in initialSelections)
+        {
+            Console.WriteLine($"  {kvp.Key} = {kvp.Value}");
+        }
+        Console.WriteLine("=================");
 
         Sidebar.SetSections(sections, initialSelections);
     }

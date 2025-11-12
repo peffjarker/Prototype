@@ -10,7 +10,6 @@ namespace Prototype.Pages.Product
     {
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
-        public string Option { get; set; } = "Webcat";
         public string Class { get; set; } = "All Items";
         public string? Category { get; set; }
         public string? Subcategory { get; set; }
@@ -26,7 +25,6 @@ namespace Prototype.Pages.Product
             return new WebcatParameters
             {
                 Dealer = url.Get("dealer"),
-                Option = url.Get("option") ?? "Webcat",
                 Class = url.Get("class") ?? "All Items",
                 Category = url.Get("category"),
                 Subcategory = url.Get("subcategory"),
@@ -43,7 +41,6 @@ namespace Prototype.Pages.Product
             IReadOnlyDictionary<string, string?> scalars)
         {
             scalars.TryGetValue("dealer", out var dealer);
-            scalars.TryGetValue("option", out var option);
             scalars.TryGetValue("class", out var itemClass);
             scalars.TryGetValue("category", out var category);
             scalars.TryGetValue("subcategory", out var subcategory);
@@ -56,7 +53,6 @@ namespace Prototype.Pages.Product
             return new WebcatParameters
             {
                 Dealer = dealer,
-                Option = !string.IsNullOrWhiteSpace(option) ? option! : "Webcat",
                 Class = !string.IsNullOrWhiteSpace(itemClass) ? itemClass! : "All Items",
                 Category = category,
                 Subcategory = subcategory,
@@ -74,7 +70,7 @@ namespace Prototype.Pages.Product
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = Option,
+                ["option"] = "Webcat",  // Hard-coded for Webcat page - derived from page, not URL
                 ["class"] = Class,
                 ["category"] = !string.IsNullOrEmpty(Category) ? Category : null,
                 ["subcategory"] = !string.IsNullOrEmpty(Subcategory) ? Subcategory : null,
@@ -110,6 +106,5 @@ namespace Prototype.Pages.Product
                 SelectedItem = this.SelectedItem
             };
         }
-
     }
 }

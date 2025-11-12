@@ -277,9 +277,6 @@
 </div>
 
 @code {
-    // Enable franchise selector in sidebar
-    protected override bool ShowFranchiseSelector => true;
-
     // Centralized parameters
     private PurchaseOrdersParameters Params = new();
 
@@ -302,7 +299,6 @@
         var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
             ["dealer"] = rawParams.Dealer,
-            ["option"] = rawParams.Option,
             ["status"] = PurchaseOrdersParameters.StatusToString(rawParams.Status)
         };
 

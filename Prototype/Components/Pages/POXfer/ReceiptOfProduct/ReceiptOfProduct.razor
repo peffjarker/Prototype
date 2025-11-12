@@ -7,9 +7,11 @@
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Pages.POXfer.ReceiptOfProduct
+@using Prototype.Pages.POTransfer
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 @using static Prototype.Components.Pages.POXfer.ReceiptOfProduct.ReceiptOfProductSeedData
+@using static Prototype.Pages.POTransfer.ReceiptOfProductParameters
 
 @inherits PageWithSidebarBase
 
@@ -227,24 +229,18 @@
 </div>
 
 @code {
-    // Enable franchise selector in sidebar
-    protected override bool ShowFranchiseSelector => true;
+    // ============================================================
+    // Centralized parameters - single source of truth
+    // ============================================================
+    private ReceiptOfProductParameters Params = new();
 
     // ============================================================
     // Page contract & URL bindings
     // ============================================================
     protected override string BasePath => "/po-transfer/receipt-of-product";
-
-    // MultiKey name for grid selections
     protected override string MultiKeyName => "asnlines";
 
-    // ===== URL-bound state (singletons) =====
-    private ReceiptStatus Status = ReceiptStatus.Open;
-    private string Class = "All";
-    private string? SelectedAsnId;
-    private string? DealerId;
-
-    // Grid selection tracking
+    // Grid selection tracking (not in params because it's synced from grid component)
     private readonly HashSet<string> SelectedLineItems = new(StringComparer.OrdinalIgnoreCase);
     private IEnumerable<AsnLine> _selectedLinesCollection = new List<AsnLine>();
     private IEnumerable<AsnLine> SelectedLinesCollection
@@ -260,21 +256,22 @@
     // Data
     private List<AsnSummary> AsnList = new();
 
+    // Derived collections based on Params
     private List<AsnSummary> DisplayedAsns =>
-        Class == "All" ? AsnList : AsnList.Where(a => a.Class == Class).ToList();
+        Params.Class == "All" ? AsnList : AsnList.Where(a => a.Class == Params.Class).ToList();
 
     private List<AsnSummary> FilteredAsns =>
-        (Status == ReceiptStatus.All ? DisplayedAsns : DisplayedAsns.Where(a => a.Status == Status))
+        (Params.Status == ReceiptStatusKind.All ? DisplayedAsns : DisplayedAsns.Where(a => a.Status == Params.Status))
         .OrderByDescending(a => a.ShipDate)
         .ToList();
 
     // Derived header fields
-    private string SelectedAsnDisplay => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Display ?? "";
-    private decimal SelectedAsnTotal => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.Total ?? 0m;
-    private string SelectedAsnShipFrom => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipFrom ?? "";
-    private DateTime? SelectedAsnShipDate => FilteredAsns.FirstOrDefault(a => a.AsnId == SelectedAsnId)?.ShipDate;
+    private string SelectedAsnDisplay => FilteredAsns.FirstOrDefault(a => a.AsnId == Params.SelectedAsn)?.Display ?? "";
+    private decimal SelectedAsnTotal => FilteredAsns.FirstOrDefault(a => a.AsnId == Params.SelectedAsn)?.Total ?? 0m;
+    private string SelectedAsnShipFrom => FilteredAsns.FirstOrDefault(a => a.AsnId == Params.SelectedAsn)?.ShipFrom ?? "";
+    private DateTime? SelectedAsnShipDate => FilteredAsns.FirstOrDefault(a => a.AsnId == Params.SelectedAsn)?.ShipDate;
 
-    // Top-row local/editable
+    // Top-row local/editable state (not in URL)
     private bool PrintNeedsOnly;
     private decimal ReceivedAmount;
     private string TrackingNumber = "";
@@ -290,22 +287,12 @@
     private bool CanReceive => TotalReceiveQty > 0;
 
     // ====== PageWithSidebarBase contract ======
-    protected override IReadOnlyDictionary<string, string?> Scalars =>
-        new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["dealer"] = DealerId,
-            ["option"] = "Receipt of Product",
-            ["status"] = Status.ToString(),
-            ["class"] = Class,
-            ["asn"] = SelectedAsnId
-        };
-
-    // Expose selected line items as MultiValues
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
     protected override IReadOnlyCollection<string> MultiValues => SelectedLineItems;
 
     protected override void ReadFromUrl()
     {
-        // Read raw values from URL - DON'T include asn here
+        // Step 1: Read raw values from URL (excluding ASN for now)
         var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
             ["dealer"] = Url.Get("dealer"),
@@ -314,33 +301,30 @@
             ["class"] = Url.Get("class")
         };
 
-        // Validate dependencies for facet-level filters only
+        // Step 2: Validate facet dependencies
         var validated = ValidateFacetDependencies(rawScalars);
 
-        // Apply validated values
-        DealerId = validated.TryGetValue("dealer", out var d) ? d : null;
+        // Step 3: Create params from validated values (without ASN yet)
+        Params = ReceiptOfProductParameters.FromScalars(validated);
 
-        var statusVal = validated.TryGetValue("status", out var s) ? s : null;
-        Status = (!string.IsNullOrWhiteSpace(statusVal) && Enum.TryParse<ReceiptStatus>(statusVal, true, out var parsedStatus))
-            ? parsedStatus
-            : ReceiptStatus.Open;
-
-        Class = validated.TryGetValue("class", out var c) ? c ?? "All" : "All";
-
-        // NOW read the asn parameter directly from URL (after Status is set)
+        // Step 4: Now that Status is set, we can filter ASNs and validate the ASN parameter
         var urlAsn = Url.Get("asn");
+        var availableAsns = FilteredAsns;
 
-        // NOW FilteredAsns will use the correct Status value
-        var list = FilteredAsns;
-        if (string.IsNullOrWhiteSpace(urlAsn) || !list.Any(x => x.AsnId.Equals(urlAsn, StringComparison.OrdinalIgnoreCase)))
-            SelectedAsnId = list.FirstOrDefault()?.AsnId;
+        if (string.IsNullOrWhiteSpace(urlAsn) || !availableAsns.Any(x => x.AsnId.Equals(urlAsn, StringComparison.OrdinalIgnoreCase)))
+        {
+            Params.SelectedAsn = availableAsns.FirstOrDefault()?.AsnId;
+        }
         else
-            SelectedAsnId = urlAsn;
+        {
+            Params.SelectedAsn = urlAsn;
+        }
 
-        LoadHeaderFor(SelectedAsnId);
-        LoadLinesFor(SelectedAsnId);
+        // Step 5: Load data for the selected ASN
+        LoadHeaderFor(Params.SelectedAsn);
+        LoadLinesFor(Params.SelectedAsn);
 
-        // Read selected lines from URL
+        // Step 6: Restore grid selection from URL
         SelectedLineItems.Clear();
         var lineItems = Url.GetMulti(MultiKeyName);
         foreach (var item in lineItems)
@@ -348,11 +332,12 @@
             SelectedLineItems.Add(item);
         }
 
-        // Restore grid selection
-        _selectedLinesCollection = CurrentLines.Where(l => SelectedLineItems.Contains(l.Item)).ToList();
+        _selectedLinesCollection = CurrentLines
+            .Where(l => SelectedLineItems.Contains(l.Item))
+            .ToList();
 
-        // NEW: Ensure URL reflects current selection
-        if (SelectedAsnId != urlAsn)
+        // Step 7: Ensure URL reflects current selection (replace mode to avoid history spam)
+        if (Params.SelectedAsn != urlAsn)
         {
             NavigateWithPageState(replace: true);
         }
@@ -365,17 +350,17 @@
             Title: "Option",
             Options: () => new[]
             {
-            new FacetOption("Items On Order", "Items On Order",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
-                    new Dictionary<string, string?> { ["status"] = "All" }))),
+                new FacetOption("Items On Order", "Items On Order",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
 
-            new FacetOption("Purchase Orders", "Purchase Orders",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
-                    new Dictionary<string, string?> { ["status"] = "All" }))),
+                new FacetOption("Purchase Orders", "Purchase Orders",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
 
-            new FacetOption("Receipt of Product", "Receipt of Product",
-                Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
-                    new Dictionary<string, string?> { ["status"] = "All" })))
+                new FacetOption("Receipt of Product", "Receipt of Product",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                        new Dictionary<string, string?> { ["status"] = "All" })))
             }
         );
 
@@ -386,9 +371,9 @@
             IsValidForParent: (parentVal) => string.Equals(parentVal, "Receipt of Product", StringComparison.OrdinalIgnoreCase),
             Options: () => new[]
             {
-            new FacetOption("All", "All"),
-            new FacetOption("Open", "Open"),
-            new FacetOption("Closed", "Closed")
+                new FacetOption("All", "All"),
+                new FacetOption("Open", "Open"),
+                new FacetOption("Closed", "Closed")
             }
         );
 
@@ -413,26 +398,26 @@
             .OrderByDescending(a => a.ShipDate)
             .ToList();
 
-        // Important: base wires Nav/Sidebar and builds initial sections from current URL
+        // Base wires Nav/Sidebar and builds initial sections from current URL
         base.OnInitialized();
     }
 
     // ===== Data loaders =====
     private void LoadHeaderFor(string? asnId)
     {
-        // defaults
+        // Defaults
         PrintNeedsOnly = false;
         ReceivedAmount = 0m;
         TrackingNumber = "";
         SelectedCarrier = "UPS";
 
-        var a = AsnList.FirstOrDefault(x => x.AsnId == asnId);
-        if (a is null) return;
+        var asn = AsnList.FirstOrDefault(x => x.AsnId == asnId);
+        if (asn is null) return;
 
-        PrintNeedsOnly = a.PrintNeedsOnly;
-        ReceivedAmount = a.ReceivedAmount;
-        TrackingNumber = a.TrackingNumber ?? "";
-        SelectedCarrier = string.IsNullOrWhiteSpace(a.Carrier) ? "UPS" : a.Carrier;
+        PrintNeedsOnly = asn.PrintNeedsOnly;
+        ReceivedAmount = asn.ReceivedAmount;
+        TrackingNumber = asn.TrackingNumber ?? "";
+        SelectedCarrier = string.IsNullOrWhiteSpace(asn.Carrier) ? "UPS" : asn.Carrier;
     }
 
     private void LoadLinesFor(string? asnId)
@@ -441,7 +426,6 @@
 
         if (string.IsNullOrWhiteSpace(asnId)) return;
 
-        // Load lines from seed data
         CurrentLines.AddRange(ReceiptOfProductSeedData.GetAsnLines(asnId));
 
         // Only clear selection if not restoring from URL
@@ -476,13 +460,10 @@
     {
         var line = (AsnLine)args.Item;
 
-        // Find and update the line in the list
         var existingLine = CurrentLines.FirstOrDefault(l => l.Item == line.Item);
         if (existingLine != null)
         {
             existingLine.ReceiveQty = line.ReceiveQty;
-
-            // Recalculate received amount
             ReceivedAmount = CurrentLines.Sum(l => l.ReceiveQty * l.UnitCost);
         }
 
@@ -531,10 +512,6 @@
         await JS.InvokeVoidAsync("console.log", $"Total amount: {ReceivedAmount:C}");
 
         // TODO: Implement actual receiving logic
-        // After successful receive:
-        // - Update line statuses
-        // - Clear receive quantities
-        // - Reload data
     }
 
     private async Task TrackPackageAsync()

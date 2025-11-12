@@ -9,7 +9,6 @@ namespace Prototype.Pages.Product
     {
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
-        public string Option { get; set; } = "View/Change Prices";
         public string Class { get; set; } = "All Items";
         public string? SelectedItem { get; set; }
 
@@ -19,7 +18,6 @@ namespace Prototype.Pages.Product
             return new PricesParameters
             {
                 Dealer = url.Get("dealer"),
-                Option = url.Get("option") ?? "View/Change Prices",
                 Class = url.Get("class") ?? "All Items",
                 SelectedItem = url.Get("item")
             };
@@ -30,14 +28,12 @@ namespace Prototype.Pages.Product
             IReadOnlyDictionary<string, string?> scalars)
         {
             scalars.TryGetValue("dealer", out var dealer);
-            scalars.TryGetValue("option", out var option);
             scalars.TryGetValue("class", out var itemClass);
             scalars.TryGetValue("item", out var item);
 
             return new PricesParameters
             {
                 Dealer = dealer,
-                Option = !string.IsNullOrWhiteSpace(option) ? option! : "View/Change Prices",
                 Class = !string.IsNullOrWhiteSpace(itemClass) ? itemClass! : "All Items",
                 SelectedItem = item
             };
@@ -49,7 +45,7 @@ namespace Prototype.Pages.Product
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = Option,
+                ["option"] = "View/Change Prices",  // Hard-coded - derived from page, not URL
                 ["class"] = Class,
                 ["item"] = SelectedItem
             };

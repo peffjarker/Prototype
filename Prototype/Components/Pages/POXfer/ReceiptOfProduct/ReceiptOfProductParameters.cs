@@ -10,7 +10,6 @@ namespace Prototype.Pages.POTransfer
     {
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
-        public string Option { get; set; } = "Receipt of Product";
         public ReceiptStatusKind Status { get; set; } = ReceiptStatusKind.Open;
         public string Class { get; set; } = "All";
         public string? SelectedAsn { get; set; }
@@ -24,7 +23,6 @@ namespace Prototype.Pages.POTransfer
             return new ReceiptOfProductParameters
             {
                 Dealer = url.Get("dealer"),
-                Option = url.Get("option") ?? "Receipt of Product",
                 Status = ParseStatus(url.Get("status")),
                 Class = url.Get("class") ?? "All",
                 SelectedAsn = url.Get("asn"),
@@ -41,7 +39,6 @@ namespace Prototype.Pages.POTransfer
             IReadOnlyCollection<string>? multiValues = null)
         {
             scalars.TryGetValue("dealer", out var dealer);
-            scalars.TryGetValue("option", out var option);
             scalars.TryGetValue("status", out var statusRaw);
             scalars.TryGetValue("class", out var itemClass);
             scalars.TryGetValue("asn", out var asn);
@@ -55,7 +52,6 @@ namespace Prototype.Pages.POTransfer
             return new ReceiptOfProductParameters
             {
                 Dealer = dealer,
-                Option = !string.IsNullOrWhiteSpace(option) ? option! : "Receipt of Product",
                 Status = ParseStatus(statusRaw),
                 Class = !string.IsNullOrWhiteSpace(itemClass) ? itemClass! : "All",
                 SelectedAsn = asn,
@@ -69,7 +65,7 @@ namespace Prototype.Pages.POTransfer
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = Option,
+                ["option"] = "Receipt of Product",  // Hard-coded - derived from page, not URL
                 ["status"] = StatusToString(Status),
                 ["class"] = Class,
                 ["asn"] = SelectedAsn

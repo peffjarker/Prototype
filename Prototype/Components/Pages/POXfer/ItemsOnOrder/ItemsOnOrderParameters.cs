@@ -7,7 +7,6 @@ namespace Prototype.Pages.POTransfer
     {
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
-        public string Option { get; set; } = "Items On Order";
         public StatusKind Status { get; set; } = StatusKind.All;
 
         // === URL-backed multi (comma-separated) ===
@@ -19,7 +18,6 @@ namespace Prototype.Pages.POTransfer
             return new ItemsOnOrderParameters
             {
                 Dealer = url.Get("dealer"),
-                Option = url.Get("option") ?? "Items On Order",
                 Status = ParseStatus(url.Get("status")),
                 SelectedItems = url.GetMulti("items")
                     .Where(v => !string.IsNullOrWhiteSpace(v))
@@ -34,7 +32,6 @@ namespace Prototype.Pages.POTransfer
             IReadOnlyCollection<string>? multiValues = null)
         {
             scalars.TryGetValue("dealer", out var dealer);
-            scalars.TryGetValue("option", out var option);
             scalars.TryGetValue("status", out var statusRaw);
 
             var selectedItems = multiValues?
@@ -46,7 +43,6 @@ namespace Prototype.Pages.POTransfer
             return new ItemsOnOrderParameters
             {
                 Dealer = dealer,
-                Option = !string.IsNullOrWhiteSpace(option) ? option! : "Items On Order",
                 Status = ParseStatus(statusRaw),
                 SelectedItems = selectedItems
             };
@@ -58,7 +54,7 @@ namespace Prototype.Pages.POTransfer
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = Option,
+                ["option"] = "Items On Order",  // Hard-coded - derived from page, not URL
                 ["status"] = StatusToString(Status)
             };
         }
@@ -69,7 +65,6 @@ namespace Prototype.Pages.POTransfer
         private static StatusKind ParseStatus(string? s)
         {
             if (string.IsNullOrWhiteSpace(s)) return StatusKind.All;
-
             return s switch
             {
                 "Backorders" => StatusKind.Backorders,

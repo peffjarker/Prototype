@@ -91,10 +91,54 @@
 
     private void OnMenuLinkClick(string hrefBase)
     {
-        // BuildHref automatically preserves current query parameters
-        var href = Url.BuildHref(hrefBase);
+        Console.WriteLine($"=== NavMenu Click ===");
+        Console.WriteLine($"Target href: {hrefBase}");
+        Console.WriteLine($"Current path: {currentPath}");
+
+        // Extract the target module from the href
+        var targetModule = GetModuleFromPath(hrefBase);
+        var currentModule = GetModuleFromPath("/" + currentPath?.TrimStart('/'));
+
+        Console.WriteLine($"Current module: {currentModule}");
+        Console.WriteLine($"Target module: {targetModule}");
+
+        // Build href with appropriate parameter preservation
+        string href;
+        if (targetModule != currentModule)
+        {
+            Console.WriteLine("Cross-module navigation detected");
+            // Cross-module navigation - only preserve dealer parameter
+            var preserved = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+            if (Url.Has("dealer"))
+            {
+                preserved["dealer"] = Url.Get("dealer");
+                Console.WriteLine($"Preserving dealer: {Url.Get("dealer")}");
+            }
+            href = Url.BuildHref(hrefBase, preserved, preserveCurrentState: false);
+        }
+        else
+        {
+            Console.WriteLine("Same-module navigation");
+            // Same-module navigation - preserve current state
+            href = Url.BuildHref(hrefBase);
+        }
+
+        Console.WriteLine($"Final href: {href}");
+        Console.WriteLine($"==================");
+
         drawerOpen = false;
         Nav.NavigateTo(href);
+    }
+
+    private static string GetModuleFromPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return "";
+
+        // Remove query string first
+        var pathOnly = path.Split('?')[0];
+
+        var segments = pathOnly.TrimStart('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length > 0 ? segments[0].ToLowerInvariant() : "";
     }
 
     // ===== Menu State =====

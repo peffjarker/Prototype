@@ -10,7 +10,6 @@ namespace Prototype.Pages.POTransfer
     {
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
-        public string Option { get; set; } = "Purchase Orders";
         public PoStatusKind Status { get; set; } = PoStatusKind.All;
         public string? PoNumber { get; set; }
 
@@ -23,7 +22,6 @@ namespace Prototype.Pages.POTransfer
             return new PurchaseOrdersParameters
             {
                 Dealer = url.Get("dealer"),
-                Option = url.Get("option") ?? "Purchase Orders",
                 Status = ParseStatus(url.Get("status")),
                 PoNumber = url.Get("po"),
                 SelectedLines = url.GetMulti("lines")
@@ -39,7 +37,6 @@ namespace Prototype.Pages.POTransfer
             IReadOnlyCollection<string>? multiValues = null)
         {
             scalars.TryGetValue("dealer", out var dealer);
-            scalars.TryGetValue("option", out var option);
             scalars.TryGetValue("status", out var statusRaw);
             scalars.TryGetValue("po", out var po);
 
@@ -52,7 +49,6 @@ namespace Prototype.Pages.POTransfer
             return new PurchaseOrdersParameters
             {
                 Dealer = dealer,
-                Option = !string.IsNullOrWhiteSpace(option) ? option! : "Purchase Orders",
                 Status = ParseStatus(statusRaw),
                 PoNumber = po,
                 SelectedLines = selectedLines
@@ -65,7 +61,7 @@ namespace Prototype.Pages.POTransfer
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = Option,
+                ["option"] = "Purchase Orders",  // Hard-coded - derived from page, not URL
                 ["status"] = StatusToString(Status),
                 ["po"] = PoNumber
                 // NOTE: SelectedLines is NOT included here - it's handled via MultiValues

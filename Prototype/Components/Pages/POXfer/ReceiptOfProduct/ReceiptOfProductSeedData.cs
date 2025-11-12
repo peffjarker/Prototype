@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Prototype.Pages.POTransfer;
+using static Prototype.Pages.POTransfer.ReceiptOfProductParameters;
 
 namespace Prototype.Components.Pages.POXfer.ReceiptOfProduct;
 
@@ -11,56 +13,56 @@ public static class ReceiptOfProductSeedData
         return new List<AsnSummary>
         {
             // CQT Stock ASNs
-            new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 365.44m, ReceiptStatus.Open, "CQT Stock",
+            new AsnSummary("0044501566", new DateTime(2025, 8, 22), "1DC", 365.44m, ReceiptStatusKind.Open, "CQT Stock",
                 PrintNeedsOnly: false, ReceivedAmount: 0m, TrackingNumber: "1Z4824G30934141682", Carrier: "UPS"),
 
-            new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m, ReceiptStatus.Open, "CQT Stock",
+            new AsnSummary("0044453050", new DateTime(2025, 8, 15), "1DC", 92.10m, ReceiptStatusKind.Open, "CQT Stock",
                 PrintNeedsOnly: false, ReceivedAmount: 0m, TrackingNumber: "1Z9999W99999999999", Carrier: "UPS"),
 
-            new AsnSummary("0044249540", new DateTime(2025, 8, 13), "1DC", 410.00m, ReceiptStatus.Closed, "CQT Stock",
+            new AsnSummary("0044249540", new DateTime(2025, 8, 13), "1DC", 410.00m, ReceiptStatusKind.Closed, "CQT Stock",
                 PrintNeedsOnly: true, ReceivedAmount: 410.00m, TrackingNumber: "1Z5555E55555555555", Carrier: "UPS"),
 
-            new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m, ReceiptStatus.Closed, "CQT Stock",
+            new AsnSummary("0044341783", new DateTime(2025, 8, 4), "1DC", 76.25m, ReceiptStatusKind.Closed, "CQT Stock",
                 PrintNeedsOnly: false, ReceivedAmount: 76.25m, TrackingNumber: null, Carrier: "UPS"),
 
-            new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m, ReceiptStatus.Open, "CQT Stock",
+            new AsnSummary("0044350891", new DateTime(2025, 7, 30), "1DC", 129.99m, ReceiptStatusKind.Open, "CQT Stock",
                 PrintNeedsOnly: true, ReceivedAmount: 0m, TrackingNumber: "1Z7777A77777777777", Carrier: "UPS"),
 
-            new AsnSummary("0044512345", new DateTime(2025, 8, 28), "1DC", 1245.50m, ReceiptStatus.Open, "CQT Stock",
+            new AsnSummary("0044512345", new DateTime(2025, 8, 28), "1DC", 1245.50m, ReceiptStatusKind.Open, "CQT Stock",
                 PrintNeedsOnly: false, ReceivedAmount: 0m, TrackingNumber: "1Z8888B88888888888", Carrier: "UPS"),
 
-            new AsnSummary("0044523456", new DateTime(2025, 8, 25), "1DC", 567.89m, ReceiptStatus.Open, "CQT Stock",
+            new AsnSummary("0044523456", new DateTime(2025, 8, 25), "1DC", 567.89m, ReceiptStatusKind.Open, "CQT Stock",
                 PrintNeedsOnly: true, ReceivedAmount: 234.50m, TrackingNumber: "794615901234", Carrier: "FedEx"),
 
-            new AsnSummary("0044534567", new DateTime(2025, 8, 20), "1DC", 234.75m, ReceiptStatus.Closed, "CQT Stock",
+            new AsnSummary("0044534567", new DateTime(2025, 8, 20), "1DC", 234.75m, ReceiptStatusKind.Closed, "CQT Stock",
                 PrintNeedsOnly: false, ReceivedAmount: 234.75m, TrackingNumber: "9405511899560123456789", Carrier: "USPS"),
 
-            new AsnSummary("0044545678", new DateTime(2025, 8, 10), "1DC", 892.30m, ReceiptStatus.Open, "CQT Stock",
+            new AsnSummary("0044545678", new DateTime(2025, 8, 10), "1DC", 892.30m, ReceiptStatusKind.Open, "CQT Stock",
                 PrintNeedsOnly: true, ReceivedAmount: 0m, TrackingNumber: "1Z1111C11111111111", Carrier: "UPS"),
 
-            new AsnSummary("0044556789", new DateTime(2025, 8, 5), "1DC", 345.60m, ReceiptStatus.Closed, "CQT Stock",
+            new AsnSummary("0044556789", new DateTime(2025, 8, 5), "1DC", 345.60m, ReceiptStatusKind.Closed, "CQT Stock",
                 PrintNeedsOnly: false, ReceivedAmount: 345.60m, TrackingNumber: "794615902345", Carrier: "FedEx"),
             
             // Local Only ASNs (LPN-ASN- prefix)
-            new AsnSummary("LPN-ASN-7001", new DateTime(2025, 8, 27), "Local Supplier", 456.75m, ReceiptStatus.Open, "Local Only",
+            new AsnSummary("LPN-ASN-7001", new DateTime(2025, 8, 27), "Local Supplier", 456.75m, ReceiptStatusKind.Open, "Local Only",
                 PrintNeedsOnly: false, ReceivedAmount: 0m, TrackingNumber: "LOCAL-TRK-001", Carrier: "Other"),
 
-            new AsnSummary("LPN-ASN-7002", new DateTime(2025, 8, 23), "Local Parts", 189.99m, ReceiptStatus.Open, "Local Only",
+            new AsnSummary("LPN-ASN-7002", new DateTime(2025, 8, 23), "Local Parts", 189.99m, ReceiptStatusKind.Open, "Local Only",
                 PrintNeedsOnly: true, ReceivedAmount: 0m, TrackingNumber: null, Carrier: "Other"),
 
-            new AsnSummary("LPN-ASN-7003", new DateTime(2025, 8, 18), "Local Distributor", 678.50m, ReceiptStatus.Closed, "Local Only",
+            new AsnSummary("LPN-ASN-7003", new DateTime(2025, 8, 18), "Local Distributor", 678.50m, ReceiptStatusKind.Closed, "Local Only",
                 PrintNeedsOnly: false, ReceivedAmount: 678.50m, TrackingNumber: "LOCAL-TRK-002", Carrier: "Other"),
 
-            new AsnSummary("LPN-ASN-7004", new DateTime(2025, 8, 12), "Local Supplier", 234.00m, ReceiptStatus.Open, "Local Only",
+            new AsnSummary("LPN-ASN-7004", new DateTime(2025, 8, 12), "Local Supplier", 234.00m, ReceiptStatusKind.Open, "Local Only",
                 PrintNeedsOnly: true, ReceivedAmount: 156.00m, TrackingNumber: "LOCAL-TRK-003", Carrier: "Other"),
 
-            new AsnSummary("LPN-ASN-7005", new DateTime(2025, 8, 8), "Local Parts", 567.25m, ReceiptStatus.Closed, "Local Only",
+            new AsnSummary("LPN-ASN-7005", new DateTime(2025, 8, 8), "Local Parts", 567.25m, ReceiptStatusKind.Closed, "Local Only",
                 PrintNeedsOnly: false, ReceivedAmount: 567.25m, TrackingNumber: null, Carrier: "Other"),
 
-            new AsnSummary("LPN-ASN-7006", new DateTime(2025, 8, 2), "Local Distributor", 890.40m, ReceiptStatus.Open, "Local Only",
+            new AsnSummary("LPN-ASN-7006", new DateTime(2025, 8, 2), "Local Distributor", 890.40m, ReceiptStatusKind.Open, "Local Only",
                 PrintNeedsOnly: true, ReceivedAmount: 0m, TrackingNumber: "LOCAL-TRK-004", Carrier: "Other"),
 
-            new AsnSummary("LPN-ASN-7007", new DateTime(2025, 7, 28), "Local Supplier", 123.50m, ReceiptStatus.Closed, "Local Only",
+            new AsnSummary("LPN-ASN-7007", new DateTime(2025, 7, 28), "Local Supplier", 123.50m, ReceiptStatusKind.Closed, "Local Only",
                 PrintNeedsOnly: false, ReceivedAmount: 123.50m, TrackingNumber: "LOCAL-TRK-005", Carrier: "Other")
         };
     }
@@ -831,14 +833,15 @@ public static class ReceiptOfProductSeedData
         return lines;
     }
 
-    public enum ReceiptStatus { All, Open, Closed }
+    // REMOVED: public enum ReceiptStatus { All, Open, Closed }
+    // Now using ReceiptOfProductParameters.ReceiptStatusKind instead
 
     public sealed record AsnSummary(
         string AsnId,
         DateTime ShipDate,
         string ShipFrom,
         decimal Total,
-        ReceiptStatus Status,
+        ReceiptStatusKind Status,  // Changed from ReceiptStatus to ReceiptStatusKind
         string Class,
         bool PrintNeedsOnly = false,
         decimal ReceivedAmount = 0m,
