@@ -1,0 +1,581 @@
+﻿@* Pages/Notifications.razor *@
+@page "/notifications"
+@using System.Linq
+@using System.Collections.Generic
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+
+<PageTitle>Notifications - IBN Dealer Suite</PageTitle>
+
+<div class="notifications-page">
+    <div class="notifications-page-header">
+        <div class="header-content">
+            <h1>Notifications</h1>
+            <p class="header-subtitle">Stay updated with your latest activities and alerts</p>
+        </div>
+        <div class="header-actions">
+            <TelerikDropDownButton Icon="@SvgIcon.Filter"
+                                   Class="filter-btn"
+                                   FillMode="ButtonFillMode.Outline">
+                <DropDownButtonContent>
+                    <span>@_currentFilter</span>
+                </DropDownButtonContent>
+                <DropDownButtonItems>
+                    <DropDownButtonItem OnClick="@(() => FilterNotifications("All"))">All</DropDownButtonItem>
+                    <DropDownButtonItem OnClick="@(() => FilterNotifications("Unread"))">Unread</DropDownButtonItem>
+                    <DropDownButtonItem OnClick="@(() => FilterNotifications("Orders"))">Orders</DropDownButtonItem>
+                    <DropDownButtonItem OnClick="@(() => FilterNotifications("Inventory"))">Inventory</DropDownButtonItem>
+                    <DropDownButtonItem OnClick="@(() => FilterNotifications("Payments"))">Payments</DropDownButtonItem>
+                </DropDownButtonItems>
+            </TelerikDropDownButton>
+
+            @if (_filteredNotifications.Any(n => !n.IsRead))
+            {
+                <TelerikButton Icon="@SvgIcon.CheckCircle"
+                               OnClick="MarkAllAsRead"
+                               FillMode="ButtonFillMode.Outline"
+                               Class="mark-all-btn">
+                    Mark all as read
+                </TelerikButton>
+            }
+        </div>
+    </div>
+
+    <div class="notifications-container">
+        @if (_filteredNotifications.Any())
+        {
+            @foreach (var group in _groupedNotifications)
+            {
+                <div class="notification-group">
+                    <div class="notification-group-header">
+                        <h2>@group.Key</h2>
+                        <span class="group-count">@group.Value.Count</span>
+                    </div>
+
+                    <div class="notification-cards">
+                        @foreach (var notification in group.Value)
+                        {
+                            <div class="notification-card @(notification.IsRead ? "read" : "unread")"
+                                 @onclick="@(() => HandleNotificationClick(notification))">
+                                <div class="notification-card-icon @notification.Type.ToLower()">
+                                    <TelerikSvgIcon Icon="@notification.Icon" />
+                                </div>
+
+                                <div class="notification-card-content">
+                                    <div class="notification-card-header">
+                                        <h3 class="notification-card-title">@notification.Title</h3>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <span class="unread-indicator"></span>
+                                        }
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(notification.Description))
+                                    {
+                                        <p class="notification-card-description">@notification.Description</p>
+                                    }
+
+                                    <div class="notification-card-meta">
+                                        <span class="notification-time">
+                                            <TelerikSvgIcon Icon="@SvgIcon.Clock" />
+                                            @notification.TimeAgo
+                                        </span>
+                                        <span class="notification-category">@notification.Type</span>
+                                    </div>
+                                </div>
+
+                                <div class="notification-card-actions">
+                                    <button type="button"
+                                            class="notification-action-btn"
+                                            @onclick="@(() => DeleteNotification(notification))"
+                                            @onclick:stopPropagation="true"
+                                            title="Delete">
+                                        <TelerikSvgIcon Icon="@SvgIcon.Trash" />
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="notifications-empty-state">
+                <div class="empty-state-icon">
+                    <TelerikSvgIcon Icon="@SvgIcon.Bell" />
+                </div>
+                <h2>No notifications</h2>
+                <p>@GetEmptyStateMessage()</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<NotificationItem> _allNotifications = new();
+    private List<NotificationItem> _filteredNotifications = new();
+    private Dictionary<string, List<NotificationItem>> _groupedNotifications = new();
+    private string _currentFilter = "All";
+
+    protected override void OnInitialized()
+    {
+        LoadNotifications();
+        ApplyFilter();
+    }
+
+    private void LoadNotifications()
+    {
+        _allNotifications = new List<NotificationItem>
+        {
+            // Today
+            new() { Id = 1, Title = "New PO #45231 received", Description = "Purchase order from Acme Corp has been received and is ready for processing.", TimeAgo = "5 minutes ago", Icon = SvgIcon.Cart, Type = "Orders", IsRead = false, NavigationUrl = "/po-transfer/purchase-orders", Timestamp = DateTime.Now.AddMinutes(-5) },
+            new() { Id = 2, Title = "Invoice #12456 paid", Description = "Payment of $2,450.00 has been received for invoice #12456.", TimeAgo = "1 hour ago", Icon = SvgIcon.CheckCircle, Type = "Payments", IsRead = false, NavigationUrl = "/invoices/12456", Timestamp = DateTime.Now.AddHours(-1) },
+            new() { Id = 3, Title = "Low inventory alert: 5 items", Description = "The following items are below minimum stock levels and need reordering.", TimeAgo = "2 hours ago", Icon = SvgIcon.ExclamationCircle, Type = "Inventory", IsRead = false, NavigationUrl = "/product/inventory", Timestamp = DateTime.Now.AddHours(-2) },
+            new() { Id = 4, Title = "Tech credit approved", Description = "Technical credit request #TC-8923 has been approved for $350.00.", TimeAgo = "3 hours ago", Icon = SvgIcon.Dollar, Type = "Payments", IsRead = true, NavigationUrl = "/techcredit/8923", Timestamp = DateTime.Now.AddHours(-3) },
+
+            // Yesterday
+            new() { Id = 5, Title = "Order #ORD-4512 shipped", Description = "Your order has been shipped and will arrive in 2-3 business days.", TimeAgo = "Yesterday", Icon = SvgIcon.Truck, Type = "Orders", IsRead = true, NavigationUrl = "/orders/4512", Timestamp = DateTime.Now.AddDays(-1) },
+            new() { Id = 6, Title = "New product catalog available", Description = "The Winter 2024 product catalog is now available for download.", TimeAgo = "Yesterday", Icon = SvgIcon.File, Type = "System", IsRead = true, NavigationUrl = "/product/catalog", Timestamp = DateTime.Now.AddDays(-1).AddHours(-2) },
+            new() { Id = 7, Title = "Inventory adjustment required", Description = "Discrepancy found in warehouse location B-12. Please verify counts.", TimeAgo = "Yesterday", Icon = SvgIcon.ExclamationCircle, Type = "Inventory", IsRead = false, NavigationUrl = "/product/inventory", Timestamp = DateTime.Now.AddDays(-1).AddHours(-5) },
+
+            // This Week
+            new() { Id = 8, Title = "Monthly sales report ready", Description = "Your October sales report is ready for review.", TimeAgo = "2 days ago", Icon = SvgIcon.ChartLineMarkers, Type = "System", IsRead = true, NavigationUrl = "/analytics", Timestamp = DateTime.Now.AddDays(-2) },
+            new() { Id = 9, Title = "Customer payment received", Description = "Payment of $1,250.00 received from customer #C-4421.", TimeAgo = "3 days ago", Icon = SvgIcon.CheckCircle, Type = "Payments", IsRead = true, NavigationUrl = "/payments", Timestamp = DateTime.Now.AddDays(-3) },
+            new() { Id = 10, Title = "System maintenance scheduled", Description = "Scheduled maintenance on Nov 15 from 2:00 AM - 4:00 AM EST.", TimeAgo = "4 days ago", Icon = SvgIcon.Gear, Type = "System", IsRead = true, NavigationUrl = "/system", Timestamp = DateTime.Now.AddDays(-4) },
+        };
+    }
+
+    private void ApplyFilter()
+    {
+        _filteredNotifications = _currentFilter switch
+        {
+            "Unread" => _allNotifications.Where(n => !n.IsRead).ToList(),
+            "Orders" => _allNotifications.Where(n => n.Type == "Orders").ToList(),
+            "Inventory" => _allNotifications.Where(n => n.Type == "Inventory").ToList(),
+            "Payments" => _allNotifications.Where(n => n.Type == "Payments").ToList(),
+            _ => _allNotifications.ToList()
+        };
+
+        GroupNotifications();
+    }
+
+    private void GroupNotifications()
+    {
+        _groupedNotifications = _filteredNotifications
+            .GroupBy(n => GetTimeGrouping(n.Timestamp))
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(n => n.Timestamp).ToList());
+    }
+
+    private string GetTimeGrouping(DateTime timestamp)
+    {
+        var now = DateTime.Now;
+        var diff = now - timestamp;
+
+        if (diff.TotalHours < 24) return "Today";
+        if (diff.TotalDays < 2) return "Yesterday";
+        if (diff.TotalDays < 7) return "This Week";
+        if (diff.TotalDays < 30) return "This Month";
+        return "Older";
+    }
+
+    private void FilterNotifications(string filter)
+    {
+        _currentFilter = filter;
+        ApplyFilter();
+    }
+
+    private void MarkAllAsRead()
+    {
+        foreach (var notification in _filteredNotifications)
+        {
+            notification.IsRead = true;
+        }
+        StateHasChanged();
+    }
+
+    private void HandleNotificationClick(NotificationItem notification)
+    {
+        notification.IsRead = true;
+        if (!string.IsNullOrEmpty(notification.NavigationUrl))
+        {
+            // Navigate to the notification's URL
+            // Nav.NavigateTo(notification.NavigationUrl);
+        }
+        StateHasChanged();
+    }
+
+    private void DeleteNotification(NotificationItem notification)
+    {
+        _allNotifications.Remove(notification);
+        ApplyFilter();
+        StateHasChanged();
+    }
+
+    private string GetEmptyStateMessage()
+    {
+        return _currentFilter switch
+        {
+            "Unread" => "You're all caught up! No unread notifications.",
+            "Orders" => "No order notifications to display.",
+            "Inventory" => "No inventory notifications to display.",
+            "Payments" => "No payment notifications to display.",
+            _ => "You don't have any notifications yet."
+        };
+    }
+
+    public class NotificationItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string TimeAgo { get; set; } = "";
+        public ISvgIcon Icon { get; set; } = SvgIcon.Bell;
+        public string Type { get; set; } = "System";
+        public bool IsRead { get; set; }
+        public string? NavigationUrl { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+}
+
+<style>
+    /* Notifications Page Styles */
+    .notifications-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 24px;
+    }
+
+    .notifications-page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 32px;
+        gap: 24px;
+    }
+
+    .header-content h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .header-subtitle {
+        margin: 0;
+        font-size: 15px;
+        color: var(--text-muted);
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+    .filter-btn,
+    .mark-all-btn {
+        white-space: nowrap;
+    }
+
+    /* Notification Groups */
+    .notification-group {
+        margin-bottom: 32px;
+    }
+
+    .notification-group-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+        .notification-group-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+    .group-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 22px;
+        padding: 0 8px;
+        background: var(--hover-bg);
+        color: var(--text-muted);
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 12px;
+    }
+
+    /* Notification Cards */
+    .notification-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .notification-card {
+        display: flex;
+        gap: 16px;
+        padding: 20px;
+        background: var(--surface);
+        border: 1px solid var(--nav-border);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+        .notification-card:hover {
+            border-color: var(--text-muted);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .notification-card.unread {
+            background: var(--active-bg);
+            border-left: 3px solid var(--accent);
+        }
+
+    .notification-card-icon {
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        flex-shrink: 0;
+    }
+
+        .notification-card-icon.orders {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .notification-card-icon.payments {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .notification-card-icon.inventory {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .notification-card-icon.system {
+            background: #e9d5ff;
+            color: #9333ea;
+        }
+
+    @@media (prefers-color-scheme: dark) {
+        .notification-card-icon.orders {
+            background: rgba(37, 99, 235, 0.15);
+            color: #60a5fa;
+        }
+
+        .notification-card-icon.payments {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .notification-card-icon.inventory {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+        }
+
+        .notification-card-icon.system {
+            background: rgba(147, 51, 234, 0.15);
+            color: #c084fc;
+        }
+    }
+
+    .notification-card-icon .k-svg-icon {
+        font-size: 24px;
+    }
+
+    .notification-card-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .notification-card-title {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .unread-indicator {
+        width: 8px;
+        height: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 6px;
+    }
+
+    .notification-card-description {
+        margin: 0 0 12px;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text-secondary);
+    }
+
+    .notification-card-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 13px;
+    }
+
+    .notification-time {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-muted);
+    }
+
+        .notification-time .k-svg-icon {
+            font-size: 14px;
+        }
+
+    .notification-category {
+        display: inline-flex;
+        padding: 4px 10px;
+        background: var(--hover-bg);
+        color: var(--text-secondary);
+        font-weight: 500;
+        border-radius: 6px;
+    }
+
+    .notification-card-actions {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .notification-card:hover .notification-card-actions {
+        opacity: 1;
+    }
+
+    .notification-action-btn {
+        width: 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: 6px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+        .notification-action-btn:hover {
+            background: var(--hover-bg);
+            color: var(--danger);
+        }
+
+        .notification-action-btn .k-svg-icon {
+            font-size: 18px;
+        }
+
+    /* Empty State */
+    .notifications-empty-state {
+        text-align: center;
+        padding: 80px 24px;
+    }
+
+    .empty-state-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 24px;
+        display: grid;
+        place-items: center;
+        background: var(--hover-bg);
+        border-radius: 50%;
+        color: var(--text-muted);
+    }
+
+        .empty-state-icon .k-svg-icon {
+            font-size: 40px;
+            opacity: 0.4;
+        }
+
+    .notifications-empty-state h2 {
+        margin: 0 0 8px;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .notifications-empty-state p {
+        margin: 0;
+        font-size: 15px;
+        color: var(--text-muted);
+    }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .notifications-page {
+            padding: 24px 16px;
+        }
+
+        .notifications-page-header {
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .header-actions {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn,
+        .mark-all-btn {
+            flex: 1;
+        }
+
+        .notification-card {
+            padding: 16px;
+        }
+
+        .notification-card-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+            .notification-card-icon .k-svg-icon {
+                font-size: 20px;
+            }
+
+        .notification-card-title {
+            font-size: 15px;
+        }
+
+        .notification-card-description {
+            font-size: 13px;
+        }
+
+        .notification-card-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+    }
+</style>
