@@ -15,49 +15,137 @@
 @inject IUrlState Url
 
 <TelerikAppBar Position="AppBarPosition.Top" Class="appbar">
-    <AppBarSection Class="left">
+    <AppBarSection Class="appbar-left">
         <a href="@Url.BuildHref("/")" class="brand" aria-label="Home">
-            <img style="width: 40px;" src="Cornwell_Tools_logo.png" alt="IBN Logo" class="brand-logo" />
+            <img class="brand-logo" src="Cornwell_Tools_logo.png" alt="IBN Logo" />
             <div class="brand-stack">
                 <span class="brand-text">IBN</span>
                 <span class="brand-sub">Dealer Suite</span>
             </div>
         </a>
+
+        <div class="nav-divider" role="presentation"></div>
+
+        <nav class="primary-nav" aria-label="Primary">
+            @foreach (var item in PrimaryMenuItems)
+            {
+                <button type="button"
+                        class="nav-item @GetActiveClass(item.Href)"
+                        @onclick="@(() => OnMenuLinkClick(item.Href))"
+                        title="@item.Text">
+                    <TelerikSvgIcon Icon="@item.Icon" />
+                    <span class="nav-label">@item.Text</span>
+                </button>
+            }
+        </nav>
     </AppBarSection>
 
-    <AppBarSection Class="center">
+    <AppBarSection Class="appbar-center">
         <GlobalSearch />
     </AppBarSection>
 
-    <AppBarSection Class="right">
-        <div class="desktop-menu">
-            <TelerikMenu TItem="MenuLink"
-                         Data="@MenuItems"
-                         Orientation="MenuOrientation.Horizontal"
-                         Class="main-menu">
-                <ItemTemplate Context="item">
-                    @* Use UrlState.BuildHref to preserve current query parameters *@
-                    <a href="@Url.BuildHref(item.Href)"
-                       class="k-link"
-                       @onclick="@(e => OnMenuLinkClick(item.Href))"
-                       @onclick:preventDefault="true">
-                        <TelerikSvgIcon Icon="@item.Icon" />
-                        <span style="margin-left:.4rem">@item.Text</span>
-                    </a>
-                </ItemTemplate>
-            </TelerikMenu>
+    <AppBarSection Class="appbar-right">
+        <div class="quick-actions" aria-label="Quick actions">
+            <button type="button" class="action-btn" title="Help & Documentation" @onclick="NavigateToHelp">
+                <TelerikSvgIcon Icon="@SvgIcon.QuestionCircle" />
+            </button>
+
+            <button type="button"
+                    class="action-btn notification-btn"
+                    title="Notifications"
+                    @onclick="ToggleNotifications"
+                    @onclick:stopPropagation="true">
+                <TelerikSvgIcon Icon="@SvgIcon.Bell" />
+                @if (_unreadCount > 0)
+                {
+                    <span class="notification-badge">@(_unreadCount > 9 ? "9+" : _unreadCount.ToString())</span>
+                }
+            </button>
+
+            <button type="button" class="action-btn" title="Settings" @onclick="NavigateToSettings">
+                <TelerikSvgIcon Icon="@SvgIcon.Gear" />
+            </button>
         </div>
 
-        <TelerikButton Class="hamburger"
+        <div class="nav-divider" role="presentation"></div>
+
+        <TelerikDropDownButton Class="user-menu" ShowArrowButton="false">
+            <DropDownButtonContent>
+                <div class="user-menu-trigger" title="Account">
+                    <div class="user-avatar large">
+                        <span>JD</span>
+                    </div>
+                </div>
+            </DropDownButtonContent>
+            <DropDownButtonItems>
+                <DropDownButtonItem OnClick="@(() => NavigateToProfile())">
+                    <TelerikSvgIcon Icon="@SvgIcon.User" />
+                    <span>My Profile</span>
+                </DropDownButtonItem>
+                <DropDownButtonItem OnClick="@(() => NavigateToDealership())">
+                    <TelerikSvgIcon Icon="@SvgIcon.File" />
+                    <span>My Dealership</span>
+                </DropDownButtonItem>
+                <DropDownButtonItem OnClick="@(() => NavigateToAnalytics())">
+                    <TelerikSvgIcon Icon="@SvgIcon.ChartLineMarkers" />
+                    <span>Analytics</span>
+                </DropDownButtonItem>
+                <DropDownButtonItem OnClick="@(() => NavigateToAppearance())">
+                    <TelerikSvgIcon Icon="@SvgIcon.Palette" />
+                    <span>Appearance</span>
+                </DropDownButtonItem>
+                <DropDownButtonItem OnClick="@(() => NavigateToSecurity())">
+                    <TelerikSvgIcon Icon="@SvgIcon.Lock" />
+                    <span>Security</span>
+                </DropDownButtonItem>
+            </DropDownButtonItems>
+        </TelerikDropDownButton>
+
+        <TelerikButton Class="mobile-menu-btn"
                        Icon="@SvgIcon.Menu"
                        Title="Open menu"
-                       FillMode="ButtonFillMode.Outline"
-                       Rounded="Rounded.Large"
+                       FillMode="ButtonFillMode.Flat"
                        OnClick="@ToggleDrawer" />
     </AppBarSection>
 </TelerikAppBar>
 
-<!-- Mobile Drawer -->
+@if (_showNotifications)
+{
+    <div class="notifications-overlay" @onclick="CloseNotifications"></div>
+    <div class="notifications-popover" role="dialog" aria-label="Notifications">
+        <div class="notifications-header">
+            <h3>Notifications</h3>
+            <button type="button" class="mark-read-btn" @onclick="MarkAllAsRead">Mark all read</button>
+        </div>
+        <div class="notifications-list">
+            @if (_notifications.Any())
+            {
+                @foreach (var notification in _notifications)
+                {
+                    <div class="notification-item @(notification.IsRead ? "" : "unread")"
+                         @onclick="@(() => HandleNotificationClick(notification))">
+                        <TelerikSvgIcon Icon="@notification.Icon" Class="@($"notification-icon {notification.IconClass}")" />
+                        <div class="notification-content">
+                            <p class="notification-title">@notification.Title</p>
+                            <span class="notification-time">@notification.TimeAgo</span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="notifications-empty">
+                    <TelerikSvgIcon Icon="@SvgIcon.Bell" />
+                    <p>No new notifications</p>
+                </div>
+            }
+        </div>
+        <div class="notifications-footer">
+            <a href="@Url.BuildHref("/notifications")" @onclick="CloseNotifications">View all notifications</a>
+        </div>
+    </div>
+}
+
 <TelerikDrawer TItem="object"
                @bind-Expanded="drawerOpen"
                Mode="DrawerMode.Overlay"
@@ -65,101 +153,107 @@
                Class="mobile-drawer">
     <Template>
         <div class="drawer-header">
-            <div class="logo small">
-                <TelerikSvgIcon Icon="@SvgIcon.Globe" />
+            <a href="@Url.BuildHref("/")" class="drawer-brand">
+                <img class="drawer-logo" src="Cornwell_Tools_logo.png" alt="IBN Logo" />
+                <div class="brand-stack">
+                    <span class="brand-text">IBN</span>
+                    <span class="brand-sub">Dealer Suite</span>
+                </div>
+            </a>
+            <button type="button" class="drawer-close" @onclick="@(() => drawerOpen = false)">
+                <TelerikSvgIcon Icon="@SvgIcon.X" />
+            </button>
+        </div>
+
+        <div class="drawer-user">
+            <div class="user-avatar">
+                <span>JD</span>
             </div>
-            <div class="brand-stack">
-                <span class="brand-text">IBN</span>
-                <span class="brand-sub">Dealer Suite</span>
+            <div class="user-info">
+                <div class="user-name">John Doe</div>
+                <div class="user-role">Administrator</div>
             </div>
         </div>
 
-        <!-- Mobile Search -->
         <div class="drawer-search">
             <GlobalSearch />
         </div>
 
-        <div class="k-drawer-items">
-            @foreach (var item in MenuItems)
+        <div class="drawer-nav">
+            <div class="drawer-section-title">Navigation</div>
+            @foreach (var item in PrimaryMenuItems)
             {
-                <div class="k-drawer-item">
-                    <div class="k-drawer-item-body @GetActiveClass(item.Href)" @onclick="@(() => OnMenuLinkClick(item.Href))">
-                        <TelerikSvgIcon Icon="@item.Icon" />
-                        <span style="margin-left:.65rem">@item.Text</span>
-                    </div>
+                <div class="drawer-item @GetActiveClass(item.Href)"
+                     @onclick="@(() => OnMobileMenuClick(item.Href))">
+                    <TelerikSvgIcon Icon="@item.Icon" />
+                    <span>@item.Text</span>
                 </div>
             }
         </div>
-    </Template>
 
+        <div class="drawer-nav">
+            <div class="drawer-section-title">Quick Actions</div>
+            <div class="drawer-item" @onclick="@(() => OnMobileMenuClick("/help"))">
+                <TelerikSvgIcon Icon="@SvgIcon.QuestionCircle" />
+                <span>Help & Documentation</span>
+            </div>
+            <div class="drawer-item" @onclick="@(() => OnMobileMenuClick("/notifications"))">
+                <TelerikSvgIcon Icon="@SvgIcon.Bell" />
+                <span>Notifications</span>
+                @if (_unreadCount > 0)
+                {
+                    <span class="drawer-badge">@_unreadCount</span>
+                }
+            </div>
+            <div class="drawer-item" @onclick="@(() => OnMobileMenuClick("/settings"))">
+                <TelerikSvgIcon Icon="@SvgIcon.Gear" />
+                <span>Settings</span>
+            </div>
+        </div>
+
+        <div class="drawer-nav">
+            <div class="drawer-section-title">Account</div>
+            <div class="drawer-item" @onclick="@(() => OnMobileMenuClick("/profile"))">
+                <TelerikSvgIcon Icon="@SvgIcon.User" />
+                <span>My Profile</span>
+            </div>
+            <div class="drawer-item" @onclick="@(() => OnMobileMenuClick("/dealership"))">
+                <TelerikSvgIcon Icon="@SvgIcon.File" />
+                <span>My Dealership</span>
+            </div>
+            <div class="drawer-item" @onclick="@(() => OnMobileMenuClick("/analytics"))">
+                <TelerikSvgIcon Icon="@SvgIcon.ChartLineMarkers" />
+                <span>Analytics</span>
+            </div>
+            <div class="drawer-item sign-out" @onclick="SignOut">
+                <TelerikSvgIcon Icon="@SvgIcon.Logout" />
+                <span>Sign Out</span>
+            </div>
+        </div>
+    </Template>
     <DrawerContent />
 </TelerikDrawer>
 
 @code
 {
-    // ===== Navigation (using UrlState) =====
-
-    private void OnMenuLinkClick(string hrefBase)
-    {
-        Console.WriteLine($"=== NavMenu Click ===");
-        Console.WriteLine($"Target href: {hrefBase}");
-        Console.WriteLine($"Current path: {currentPath}");
-
-        // Extract the target module from the href
-        var targetModule = GetModuleFromPath(hrefBase);
-        var currentModule = GetModuleFromPath("/" + currentPath?.TrimStart('/'));
-
-        Console.WriteLine($"Current module: {currentModule}");
-        Console.WriteLine($"Target module: {targetModule}");
-
-        // Build href with appropriate parameter preservation
-        string href;
-        if (targetModule != currentModule)
-        {
-            Console.WriteLine("Cross-module navigation detected");
-            // Cross-module navigation - only preserve dealer parameter
-            var preserved = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-            if (Url.Has("dealer"))
-            {
-                preserved["dealer"] = Url.Get("dealer");
-                Console.WriteLine($"Preserving dealer: {Url.Get("dealer")}");
-            }
-            href = Url.BuildHref(hrefBase, preserved, preserveCurrentState: false);
-        }
-        else
-        {
-            Console.WriteLine("Same-module navigation");
-            // Same-module navigation - preserve current state
-            href = Url.BuildHref(hrefBase);
-        }
-
-        Console.WriteLine($"Final href: {href}");
-        Console.WriteLine($"==================");
-
-        drawerOpen = false;
-        Nav.NavigateTo(href);
-    }
-
-    private static string GetModuleFromPath(string path)
-    {
-        if (string.IsNullOrWhiteSpace(path)) return "";
-
-        // Remove query string first
-        var pathOnly = path.Split('?')[0];
-
-        var segments = pathOnly.TrimStart('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
-        return segments.Length > 0 ? segments[0].ToLowerInvariant() : "";
-    }
-
-    // ===== Menu State =====
-
-    private bool drawerOpen;
+    private bool drawerOpen = false;
+    private bool _showNotifications = false;
+    private int _unreadCount = 3;
     private string? currentPath;
+    private List<NotificationItem> _notifications = new();
+
+    private readonly List<MenuLink> PrimaryMenuItems =
+    [
+        new("PO Transfer", "/po-transfer/items-on-order?status=All", SvgIcon.ArrowsSwap),
+        new("Product", "/product/webcat?class=All Items", SvgIcon.Table),
+        new("Tech Credit", "/techcredit/customerinformation?option=Information&status=All", SvgIcon.Dollar)
+    ];
 
     protected override void OnInitialized()
     {
         currentPath = Nav.ToBaseRelativePath(Nav.Uri);
         Url.Changed += OnUrlChanged;
+        LoadNotifications();
     }
 
     private void OnUrlChanged()
@@ -168,7 +262,47 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
-    private void ToggleDrawer() => drawerOpen = !drawerOpen;
+    public void Dispose()
+    {
+        Url.Changed -= OnUrlChanged;
+    }
+
+    private void OnMenuLinkClick(string hrefBase)
+    {
+        var targetModule = GetModuleFromPath(hrefBase);
+        var currentModule = GetModuleFromPath("/" + currentPath?.TrimStart('/'));
+
+        string href;
+        if (targetModule != currentModule)
+        {
+            var preserved = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+            if (Url.Has("dealer"))
+            {
+                preserved["dealer"] = Url.Get("dealer");
+            }
+            href = Url.BuildHref(hrefBase, preserved, preserveCurrentState: false);
+        }
+        else
+        {
+            href = Url.BuildHref(hrefBase);
+        }
+
+        Nav.NavigateTo(href);
+    }
+
+    private void OnMobileMenuClick(string href)
+    {
+        drawerOpen = false;
+        OnMenuLinkClick(href);
+    }
+
+    private static string GetModuleFromPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return "";
+        var pathOnly = path.Split('?')[0];
+        var segments = pathOnly.TrimStart('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length > 0 ? segments[0].ToLowerInvariant() : "";
+    }
 
     private string GetActiveClass(string href)
         => IsActive(href) ? "is-active" : string.Empty;
@@ -181,225 +315,787 @@
                || (href != "/" && rel.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase));
     }
 
-    private readonly List<MenuLink> MenuItems =
-    [
-        new("Home",          "/",                                       SvgIcon.Home),
-        new("PO / Transfer", "/po-transfer/items-on-order?status=All", SvgIcon.ArrowsSwap),
-        new("Product", "/product/webcat?class=All Items", SvgIcon.ArrowsSwap),
-        new("Tech Credit",   "/techcredit/customerinformation?option=Information&status=All", SvgIcon.Dollar),
-        new("Help",          "/help",                                   SvgIcon.Gear)
-    ];
+    private void ToggleDrawer() => drawerOpen = !drawerOpen;
 
-    public sealed class MenuLink
+    private void ToggleNotifications() => _showNotifications = !_showNotifications;
+
+    private void CloseNotifications() => _showNotifications = false;
+
+    private void MarkAllAsRead()
     {
-        public string Text { get; }
-        public string Href { get; }
-        public ISvgIcon Icon { get; }
-        public MenuLink(string text, string href, ISvgIcon icon)
-        { Text = text; Href = href; Icon = icon; }
+        foreach (var n in _notifications) n.IsRead = true;
+        _unreadCount = 0;
+        StateHasChanged();
     }
 
-    public void Dispose() => Url.Changed -= OnUrlChanged;
+    private void HandleNotificationClick(NotificationItem notification)
+    {
+        notification.IsRead = true;
+        _unreadCount = _notifications.Count(n => !n.IsRead);
+
+        if (!string.IsNullOrEmpty(notification.NavigationUrl))
+        {
+            Nav.NavigateTo(notification.NavigationUrl);
+            _showNotifications = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private void NavigateToHelp() => Nav.NavigateTo(Url.BuildHref("/help"));
+    private void NavigateToSettings() => Nav.NavigateTo(Url.BuildHref("/settings"));
+    private void NavigateToProfile() => Nav.NavigateTo(Url.BuildHref("/profile"));
+    private void NavigateToDealership() => Nav.NavigateTo(Url.BuildHref("/dealership"));
+    private void NavigateToAnalytics() => Nav.NavigateTo(Url.BuildHref("/analytics"));
+    private void NavigateToAppearance() => Nav.NavigateTo(Url.BuildHref("/settings/appearance"));
+    private void NavigateToSecurity() => Nav.NavigateTo(Url.BuildHref("/settings/security"));
+
+    private void SignOut() => Nav.NavigateTo("/auth/signout", forceLoad: true);
+
+    private void LoadNotifications()
+    {
+        _notifications = new List<NotificationItem>
+        {
+            new NotificationItem { Id = 1, Title = "New PO #45231 received", TimeAgo = "5 minutes ago", Icon = SvgIcon.Cart,            IsRead = false, NavigationUrl = "/po-transfer/purchase-orders" },
+            new NotificationItem { Id = 2, Title = "Invoice #12456 paid",   TimeAgo = "1 hour ago",    Icon = SvgIcon.CheckCircle,     IsRead = false, NavigationUrl = "/invoices/12456" },
+            new NotificationItem { Id = 3, Title = "Low inventory alert: 5 items", TimeAgo = "2 hours ago", Icon = SvgIcon.ExclamationCircle, IsRead = false, NavigationUrl = "/product/inventory" }
+        };
+
+        _unreadCount = _notifications.Count(n => !n.IsRead);
+    }
+
+    public sealed class MenuLink(string text, string href, ISvgIcon icon)
+    {
+        public string Text { get; } = text;
+        public string Href { get; } = href;
+        public ISvgIcon Icon { get; } = icon;
+    }
+
+    public class NotificationItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public string TimeAgo { get; set; } = "";
+        public ISvgIcon Icon { get; set; } = SvgIcon.Bell;
+        public string IconClass { get; set; } = "";
+        public bool IsRead { get; set; }
+        public string? NavigationUrl { get; set; }
+    }
 }
+
 <style>
+    /* wwwroot/css/navmenu.css */
+    /* --- Design tokens (light) --- */
+    :root {
+        --nav-bg: #ffffff;
+        --nav-border: #e5e7eb;
+        --nav-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        --text-muted: #6b7280;
+        --text: #111827;
+        --text-secondary: #4b5563;
+        --brand: #1e40af;
+        --brand-hover: #1e3a8a;
+        --hover-bg: #f3f4f6;
+        --active-bg: #eff6ff;
+        --active-text: #1e40af;
+        --accent: #3b82f6;
+        --danger: #dc2626;
+        --surface: #ffffff;
+        --overlay: rgba(0, 0, 0, 0.4);
+        --border-radius: 6px;
+    }
+
+    /* --- Design tokens (dark) --- */
+    @@media (prefers-color-scheme: dark) {
+        : root
+
+    {
+        --nav-bg: #111827;
+        --nav-border: #1f2937;
+        --nav-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --text-muted: #9ca3af;
+        --text: #f9fafb;
+        --text-secondary: #d1d5db;
+        --brand: #60a5fa;
+        --brand-hover: #93c5fd;
+        --hover-bg: #1f2937;
+        --active-bg: #1e3a8a;
+        --active-text: #93c5fd;
+        --accent: #3b82f6;
+        --danger: #ef4444;
+        --surface: #1f2937;
+        --overlay: rgba(0, 0, 0, 0.7);
+    }
+
+    }
+
+    /* --- App bar --- */
     .appbar {
         position: sticky;
         top: 0;
-        z-index: 4000; /* Keep this lower than search results */
-        backdrop-filter: saturate(1.05) blur(8px);
-        background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 88%, transparent);
-        border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent);
-        overflow: visible !important;
+        z-index: 5000;
+        height: 64px;
+        background: var(--nav-bg);
+        border-bottom: 1px solid var(--nav-border);
+        box-shadow: var(--nav-shadow);
     }
 
-        /* Add this to ensure all sections allow overflow */
-        .appbar .left,
-        .appbar .right,
-        .appbar .center {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            overflow: visible !important;
-            position: static; /* Avoid creating new stacking contexts */
-        }
-
-    /* Ensure the Telerik AppBar doesn't clip */
-    .k-appbar {
-        overflow: visible !important;
+    /* sections */
+    .appbar-left,
+    .appbar-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-inline: 20px;
     }
 
-    .k-appbar-section {
-        overflow: visible !important;
+    .appbar-center {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: center;
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 0 20px;
     }
 
+    /* --- Brand --- */
     .brand {
         display: flex;
         align-items: center;
-        gap: .65rem;
+        gap: 12px;
         text-decoration: none;
-        color: inherit;
+        color: var(--text);
+        margin-right: 8px;
     }
 
-    .logo {
-        width: 38px;
-        height: 38px;
-        border-radius: 12px;
-        display: grid;
-        place-items: center;
-        border: 1px solid var(--kendo-color-border, #e5e7eb);
-        background: linear-gradient(180deg, color-mix(in oklab, var(--kendo-color-surface, #fff) 92%, transparent), transparent);
-        box-shadow: 0 4px 14px rgba(2,6,23,.06) inset;
-    }
-
-        .logo.small {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
+        .brand:hover {
+            opacity: 0.9;
         }
+
+    .brand-logo {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
 
     .brand-stack {
         display: flex;
         flex-direction: column;
-        line-height: 1.05;
+        gap: 2px;
     }
 
     .brand-text {
-        font-size: 1.1rem;
-        font-weight: 800;
-        letter-spacing: .2px;
-        color: #0c5ea8;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: var(--text);
+        line-height: 1;
     }
 
     .brand-sub {
-        font-size: .72rem;
-        opacity: .65;
-        color: #0c5ea8;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-muted);
+        line-height: 1;
     }
 
-    .quick-menu {
-        min-width: 240px;
-        padding: 8px;
-        background: var(--kendo-color-surface, #fff);
-        border: 1px solid var(--kendo-color-border, #e5e7eb);
-        border-radius: 14px;
-        box-shadow: 0 18px 40px rgba(2,6,23,.15);
+    /* --- Divider --- */
+    .nav-divider {
+        width: 1px;
+        height: 32px;
+        background: var(--nav-border);
+        margin-inline: 4px;
     }
 
-        .quick-menu a {
-            display: flex;
-            align-items: center;
-            gap: .55rem;
-            padding: 10px 12px;
-            border-radius: 10px;
-            text-decoration: none;
-            color: var(--kendo-color-on-surface, #111827);
-        }
-
-            .quick-menu a:hover {
-                background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
-            }
-
-    .search {
+    /* --- Primary navigation --- */
+    .primary-nav {
         display: flex;
         align-items: center;
-        gap: .5rem;
-        border: 1px solid var(--kendo-color-border, #e5e7eb);
-        border-radius: 999px;
-        padding: .35rem .75rem;
-        min-width: 360px;
-        background: var(--kendo-color-surface, #fff);
+        gap: 4px;
     }
 
-        .search input {
-            border: none;
-            outline: none;
-            background: transparent;
-            width: 100%;
-            font: inherit;
-            padding: .05rem 0;
-        }
-
-    .desktop-menu {
-        display: flex;
-    }
-
-    .main-menu .k-link {
+    .nav-item {
         display: inline-flex;
         align-items: center;
-        gap: .35rem;
-        padding: .45rem .7rem;
-        border-radius: 10px;
-        transition: background .15s ease;
+        gap: 8px;
+        padding: 9px 14px;
+        border: 0;
+        border-radius: var(--border-radius);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 500;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        position: relative;
+        white-space: nowrap;
     }
 
-        .main-menu .k-link:hover {
-            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+        .nav-item:hover {
+            background: var(--hover-bg);
+            color: var(--text);
         }
 
-    .hamburger {
+        .nav-item.is-active {
+            background: var(--active-bg);
+            color: var(--active-text);
+            font-weight: 600;
+        }
+
+        .nav-item .k-svg-icon {
+            font-size: 18px;
+        }
+
+    /* label visibility */
+    .nav-label {
+        display: inline-block;
+    }
+
+    /* --- Quick actions --- */
+    .quick-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .action-btn {
+        position: relative;
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: var(--border-radius);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+        .action-btn:hover {
+            background: var(--hover-bg);
+            color: var(--text);
+        }
+
+        .action-btn .k-svg-icon {
+            font-size: 20px;
+        }
+
+    .notification-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--danger);
+        color: #fff;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        border: 2px solid var(--nav-bg);
+    }
+
+    /* --- User menu --- */
+    .user-menu {
+        background: transparent !important;
+        border: 1px solid var(--nav-border) !important;
+        border-radius: 8px !important;
+        padding: 0 !important;
+        transition: all 0.15s ease !important;
+    }
+
+        .user-menu:hover {
+            background: var(--hover-bg) !important;
+            border-color: var(--text-muted) !important;
+        }
+
+    .user-menu-trigger {
+        display: flex;
+        align-items: center;
+        padding: 4px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 600;
+        font-size: 13px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    }
+
+        .user-avatar.large {
+            width: 40px;
+            height: 40px;
+            font-size: 14px;
+        }
+
+    .k-dropdownbutton-item {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 10px 14px !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+        color: var(--text) !important;
+    }
+
+        .k-dropdownbutton-item:hover {
+            background: var(--hover-bg) !important;
+        }
+
+        .k-dropdownbutton-item .k-svg-icon {
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+    /* --- Notifications --- */
+    .notifications-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 5000;
+        background: var(--overlay);
+        animation: fadeIn 0.2s ease;
+    }
+
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+    }
+
+    .notifications-popover {
+        position: fixed;
+        top: 72px;
+        right: 24px;
+        width: 400px;
+        max-height: 560px;
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--nav-border);
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
+        z-index: 5001;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideDown 0.2s ease;
+    }
+
+    @@keyframes slideDown {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    .notifications-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--nav-border);
+    }
+
+        .notifications-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+    .mark-read-btn {
+        background: none;
+        border: 0;
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.15s ease;
+    }
+
+        .mark-read-btn:hover {
+            background: var(--hover-bg);
+        }
+
+    .notifications-list {
+        flex: 1;
+        overflow: auto;
+    }
+
+    .notification-item {
+        display: flex;
+        gap: 12px;
+        padding: 14px 18px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        border-left: 2px solid transparent;
+    }
+
+        .notification-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .notification-item.unread {
+            background: var(--active-bg);
+            border-left-color: var(--accent);
+        }
+
+        .notification-item + .notification-item {
+            border-top: 1px solid var(--nav-border);
+        }
+
+    .notification-icon {
+        width: 36px;
+        height: 36px;
+        padding: 8px;
+        border-radius: 8px;
+        background: var(--hover-bg);
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+
+        .notification-icon.success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .notification-icon.warning {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+    @@media (prefers-color-scheme: dark) {
+        .notification-icon.success
+
+    {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+    }
+
+    .notification-icon.warning {
+        background: rgba(251, 146, 60, 0.15);
+        color: #fb923c;
+    }
+
+    }
+
+    .notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-title {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--text);
+    }
+
+    .notification-time {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .notifications-empty {
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+
+        .notifications-empty .k-svg-icon {
+            font-size: 48px;
+            opacity: 0.2;
+            margin-bottom: 12px;
+        }
+
+        .notifications-empty p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+    .notifications-footer {
+        padding: 12px 18px;
+        border-top: 1px solid var(--nav-border);
+        text-align: center;
+    }
+
+        .notifications-footer a {
+            color: var(--accent);
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.15s ease;
+        }
+
+            .notifications-footer a:hover {
+                opacity: 0.8;
+            }
+
+    /* --- Mobile drawer --- */
+    .mobile-menu-btn {
         display: none;
     }
 
     .mobile-drawer .k-drawer-wrapper {
-        background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 94%, transparent);
-        backdrop-filter: saturate(1.05) blur(6px);
+        background: var(--surface);
+        z-index: 6000;
+        border-right: 1px solid var(--nav-border);
     }
-
-    .mobile-drawer .k-drawer-item-body {
-        padding: .75rem .85rem;
-        border-radius: 10px;
-        margin: .15rem .35rem;
-    }
-
-        .mobile-drawer .k-drawer-item-body:hover {
-            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
-        }
 
     .drawer-header {
         display: flex;
         align-items: center;
-        gap: .6rem;
-        padding: .9rem .75rem;
-        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+        justify-content: space-between;
+        padding: 16px;
+        border-bottom: 1px solid var(--nav-border);
     }
 
-    .drawer-footer {
+    .drawer-brand {
         display: flex;
-        gap: .6rem;
-        padding: .75rem .6rem;
-        border-top: 1px solid var(--kendo-color-border, #e5e7eb);
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: var(--text);
     }
 
-        .drawer-footer a {
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-            text-decoration: none;
-            padding: .5rem .6rem;
-            border-radius: 10px;
+    .drawer-logo {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+
+    .drawer-close {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        border: 0;
+        border-radius: var(--border-radius);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+        .drawer-close:hover {
+            background: var(--hover-bg);
+            color: var(--text);
         }
 
-            .drawer-footer a:hover {
-                background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+    .drawer-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: var(--hover-bg);
+        border-bottom: 1px solid var(--nav-border);
+    }
+
+    .user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 2px;
+    }
+
+    .user-role {
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
+    .drawer-search {
+        padding: 16px;
+        border-bottom: 1px solid var(--nav-border);
+    }
+
+    .drawer-nav {
+        padding: 12px;
+    }
+
+        .drawer-nav + .drawer-nav {
+            border-top: 1px solid var(--nav-border);
+        }
+
+    .drawer-section-title {
+        padding: 8px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+
+    .drawer-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: var(--border-radius);
+        color: var(--text-secondary);
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        position: relative;
+    }
+
+        .drawer-item:hover {
+            background: var(--hover-bg);
+            color: var(--text);
+        }
+
+        .drawer-item.is-active {
+            background: var(--active-bg);
+            color: var(--active-text);
+            font-weight: 600;
+        }
+
+        .drawer-item .k-svg-icon {
+            font-size: 20px;
+        }
+
+        .drawer-item.sign-out {
+            color: var(--danger);
+        }
+
+            .drawer-item.sign-out:hover {
+                background: rgba(220, 38, 38, 0.1);
             }
 
-    .hide-on-mobile {
-        display: flex;
+    .drawer-badge {
+        margin-left: auto;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        background: var(--danger);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
     }
 
-    .main-menu ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
+    /* --- Responsiveness --- */
+    @@media (max-width: 1024px) {
+        .nav-label
+
+    {
+        display: none;
     }
 
-    .main-menu .k-menu-horizontal > .k-menu-item {
+    .appbar-center {
+        max-width: 480px;
+    }
+
+    .appbar-left,
+    .appbar-right {
+        padding-inline: 16px;
+    }
+
+    }
+
+    @@media (max-width: 768px) {
+        .appbar
+
+    {
+        height: 56px;
+    }
+
+    .appbar-left {
+        flex: 1;
+    }
+
+    .appbar-center {
+        display: none;
+    }
+
+    .primary-nav,
+    .quick-actions,
+    .nav-divider:not(:first-child),
+    .user-menu {
+        display: none;
+    }
+
+    .mobile-menu-btn {
         display: inline-flex;
     }
 
-    .main-menu .k-menu-item > .k-link {
-        display: inline-flex;
-        align-items: center;
-        gap: .35rem;
+    .notifications-popover {
+        right: 12px;
+        width: calc(100vw - 24px);
+        max-width: 400px;
+        top: 64px;
+    }
+
+    .brand-text {
+        font-size: 15px;
+    }
+
+    .brand-sub {
+        font-size: 10px;
+    }
+
+    }
+
+    /* --- Scrollbars --- */
+    .notifications-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .notifications-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .notifications-list::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 3px;
+    }
+
+        .notifications-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+    @@media (prefers-color-scheme: dark) {
+        .notifications-list::-webkit-scrollbar-thumb
+
+    {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .notifications-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
     }
 </style>
