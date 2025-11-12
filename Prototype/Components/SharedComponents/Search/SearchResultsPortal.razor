@@ -1,0 +1,271 @@
+﻿@using Prototype.Components.Services.Search
+@using Telerik.Blazor
+@inject IJSRuntime JS
+
+@if (IsVisible && Results != null)
+{
+    <div class="global-search-results-portal"
+         @ref="_resultsElement"
+         @onclick:stopPropagation="true"
+         style="@GetPositionStyle()">
+        @if (Results.TotalCount == 0)
+        {
+            <div class="global-search-no-results">
+                <TelerikSvgIcon Icon="@SvgIcon.Search" />
+                <p>No results found for "@SearchText"</p>
+            </div>
+        }
+        else
+        {
+            <div class="global-search-results-header">
+                <span>@Results.TotalCount result@(Results.TotalCount == 1 ? "" : "s")</span>
+                @if (Results.SearchDuration.TotalMilliseconds > 0)
+                {
+                    <span class="global-search-time">@($"{Results.SearchDuration.TotalMilliseconds:F0}ms")</span>
+                }
+            </div>
+
+            @foreach (var group in Results.Groups)
+            {
+                <div class="global-search-group">
+                    <div class="global-search-group-header">@group.Label</div>
+                    @foreach (var result in group.Results)
+                    {
+                        var index = GetResultIndex(result);
+                        var isSelected = index == SelectedIndex;
+                        <div class="global-search-result-item @(isSelected ? "selected" : "")"
+                             @onclick="async () => await OnResultClick.InvokeAsync(result)"
+                             @onmouseenter="async () => await OnResultHover.InvokeAsync(index)">
+                            <div class="global-search-result-content">
+                                <div class="global-search-result-title">
+                                    <span class="global-search-result-id">@result.Title</span>
+                                    @if (!string.IsNullOrEmpty(result.Badge))
+                                    {
+                                        <span class="global-search-result-badge">@result.Badge</span>
+                                    }
+                                </div>
+                                <div class="global-search-result-subtitle">@result.Subtitle</div>
+                                @if (!string.IsNullOrEmpty(result.Description))
+                                {
+                                    <div class="global-search-result-description">@result.Description</div>
+                                }
+                            </div>
+                            @if (result.Price.HasValue)
+                            {
+                                <div class="global-search-result-price">@result.Price.Value.ToString("C")</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public SearchResponse? Results { get; set; }
+    [Parameter] public string SearchText { get; set; } = "";
+    [Parameter] public int SelectedIndex { get; set; }
+    [Parameter] public ElementReference AnchorElement { get; set; }
+    [Parameter] public EventCallback<SearchResult> OnResultClick { get; set; }
+    [Parameter] public EventCallback<int> OnResultHover { get; set; }
+
+    private ElementReference _resultsElement;
+    private string _positionStyle = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsVisible)
+        {
+            await UpdatePosition();
+        }
+    }
+
+    private async Task UpdatePosition()
+    {
+        try
+        {
+            var position = await JS.InvokeAsync<PositionResult>("globalSearch.getPosition", AnchorElement);
+            _positionStyle = $"top: {position.Top}px; left: {position.Left}px; width: {position.Width}px;";
+            StateHasChanged();
+        }
+        catch { /* Element not ready */ }
+    }
+
+    private string GetPositionStyle() => _positionStyle;
+
+    private int GetResultIndex(SearchResult result)
+    {
+        if (Results == null) return -1;
+
+        var index = 0;
+        foreach (var group in Results.Groups)
+        {
+            foreach (var r in group.Results)
+            {
+                if (r.Id == result.Id && r.Type == result.Type)
+                    return index;
+                index++;
+            }
+        }
+        return -1;
+    }
+
+    public class PositionResult
+    {
+        public double Top { get; set; }
+        public double Left { get; set; }
+        public double Width { get; set; }
+    }
+}
+
+<style>
+    .global-search-results-portal {
+        position: fixed;
+        background: var(--kendo-color-surface, #fff);
+        border: 1px solid var(--kendo-color-border, #e5e7eb);
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+        max-height: 480px;
+        overflow-y: scroll;
+        z-index: 99999;
+        min-width: 500px;
+    }
+
+    .global-search-results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+        font-size: 0.875rem;
+        color: var(--kendo-color-on-surface-alt, #6b7280);
+        background: color-mix(in oklab, var(--kendo-color-surface, #fff) 98%, transparent);
+    }
+
+    .global-search-time {
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+    .global-search-no-results {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--kendo-color-on-surface-alt, #6b7280);
+    }
+
+        .global-search-no-results .k-svg-icon {
+            font-size: 3rem;
+            opacity: 0.2;
+            margin-bottom: 1rem;
+        }
+
+        .global-search-no-results p {
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+    .global-search-group {
+        padding: 0.5rem 0;
+    }
+
+        .global-search-group:not(:last-child) {
+            border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 50%, transparent);
+        }
+
+    .global-search-group-header {
+        padding: 0.5rem 1rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--kendo-color-on-surface-alt, #9ca3af);
+    }
+
+    .global-search-result-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.625rem 1rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+        gap: 1rem;
+    }
+
+        .global-search-result-item:hover,
+        .global-search-result-item.selected {
+            background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 6%, transparent);
+        }
+
+    .global-search-result-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .global-search-result-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .global-search-result-id {
+        font-weight: 600;
+        color: var(--kendo-color-on-surface, #111827);
+        font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+        font-size: 0.875rem;
+    }
+
+    .global-search-result-badge {
+        display: inline-block;
+        padding: 0.125rem 0.5rem;
+        background: color-mix(in oklab, var(--kendo-color-info, #3b82f6) 12%, transparent);
+        color: var(--kendo-color-info, #3b82f6);
+        border-radius: 999px;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        line-height: 1.2;
+    }
+
+    .global-search-result-subtitle {
+        font-size: 0.8125rem;
+        color: var(--kendo-color-on-surface, #111827);
+        margin-bottom: 0.125rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .global-search-result-description {
+        font-size: 0.75rem;
+        color: var(--kendo-color-on-surface-alt, #6b7280);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .global-search-result-price {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--kendo-color-success, #10b981);
+        white-space: nowrap;
+    }
+
+    .global-search-results-portal::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .global-search-results-portal::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .global-search-results-portal::-webkit-scrollbar-thumb {
+        background: color-mix(in oklab, var(--kendo-color-on-surface, #111827) 15%, transparent);
+        border-radius: 3px;
+    }
+
+        .global-search-results-portal::-webkit-scrollbar-thumb:hover {
+            background: color-mix(in oklab, var(--kendo-color-on-surface, #111827) 25%, transparent);
+        }
+</style>

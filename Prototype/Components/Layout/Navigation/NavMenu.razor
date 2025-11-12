@@ -5,6 +5,7 @@
 @using System.Threading.Tasks
 @using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Web
+@using Prototype.Components.SharedComponents.Search
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 @using Services
@@ -22,6 +23,10 @@
                 <span class="brand-sub">Dealer Suite</span>
             </div>
         </a>
+    </AppBarSection>
+
+    <AppBarSection Class="center">
+        <GlobalSearch />
     </AppBarSection>
 
     <AppBarSection Class="right">
@@ -67,6 +72,11 @@
                 <span class="brand-text">IBN</span>
                 <span class="brand-sub">Dealer Suite</span>
             </div>
+        </div>
+
+        <!-- Mobile Search -->
+        <div class="drawer-search">
+            <GlobalSearch />
         </div>
 
         <div class="k-drawer-items">
@@ -191,22 +201,36 @@
 
     public void Dispose() => Url.Changed -= OnUrlChanged;
 }
-
 <style>
     .appbar {
         position: sticky;
         top: 0;
-        z-index: 4000;
+        z-index: 4000; /* Keep this lower than search results */
         backdrop-filter: saturate(1.05) blur(8px);
         background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 88%, transparent);
         border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent);
+        overflow: visible !important;
     }
 
-        .appbar .left, .appbar .right, .appbar .center {
+        /* Add this to ensure all sections allow overflow */
+        .appbar .left,
+        .appbar .right,
+        .appbar .center {
             display: flex;
             align-items: center;
-            gap: .8rem;
+            gap: 0.8rem;
+            overflow: visible !important;
+            position: static; /* Avoid creating new stacking contexts */
         }
+
+    /* Ensure the Telerik AppBar doesn't clip */
+    .k-appbar {
+        overflow: visible !important;
+    }
+
+    .k-appbar-section {
+        overflow: visible !important;
+    }
 
     .brand {
         display: flex;

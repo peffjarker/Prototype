@@ -1,0 +1,133 @@
+﻿.appbar {
+    position: sticky;
+    top: 0;
+    z-index: 5000;
+    backdrop-filter: saturate(1.05) blur(8px);
+    background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 88%, transparent);
+    border-bottom: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent);
+    overflow: visible;
+}
+
+    .appbar .left,
+    .appbar .right,
+    .appbar .center {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .appbar .center {
+        flex: 1;
+        justify-content: center;
+        max-width: 550px;
+        margin: 0 auto;
+    }
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--kendo-color-border, #e5e7eb);
+    background: linear-gradient(180deg, color-mix(in oklab, var(--kendo-color-surface, #fff) 92%, transparent), transparent);
+    box-shadow: 0 4px 14px rgba(2, 6, 23, .06) inset;
+}
+
+    .logo.small {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+    }
+
+.brand-stack {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+}
+
+.brand-text {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: .2px;
+    color: #0c5ea8;
+}
+
+.brand-sub {
+    font-size: .72rem;
+    opacity: .65;
+    color: #0c5ea8;
+}
+
+.desktop-menu {
+    display: flex;
+}
+
+.main-menu ::deep .k-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+}
+
+    .main-menu ::deep .k-link:hover {
+        background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, white);
+    }
+
+.hamburger {
+    display: none;
+}
+
+.mobile-drawer ::deep .k-drawer-wrapper {
+    background: color-mix(in oklab, var(--kendo-color-surface, #ffffff) 94%, transparent);
+    backdrop-filter: saturate(1.05) blur(6px);
+    z-index: 6000;
+}
+
+.mobile-drawer ::deep .k-drawer-item-body {
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    margin: 0.15rem 0.35rem;
+}
+
+    .mobile-drawer ::deep .k-drawer-item-body:hover {
+        background: color-mix(in oklab, var(--kendo-color-primary, #2563eb) 12%, white);
+    }
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 0.75rem;
+    border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+}
+
+.drawer-search {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .appbar .center {
+        display: none;
+    }
+
+    .desktop-menu {
+        display: none;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+}

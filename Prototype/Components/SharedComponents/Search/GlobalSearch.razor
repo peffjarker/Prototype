@@ -1,0 +1,341 @@
+﻿@using System.Timers
+@using Prototype.Components.Services.Search
+@using Telerik.Blazor.Components
+@using Telerik.Blazor
+@implements IDisposable
+@inject ISearchService SearchService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="global-search-container">
+    <div class="global-search-input-wrapper">
+        <TelerikSvgIcon Icon="@SvgIcon.Search" Class="global-search-icon" />
+        <input type="text"
+               class="global-search-input"
+               placeholder="Search items, POs..."
+               @bind-value="_searchText"
+               @bind-value:event="oninput"
+               @onfocus="OnSearchFocus"
+               @onblur="OnSearchBlur"
+               @onkeydown="OnKeyDown"
+               @ref="_searchInput" />
+        @if (!string.IsNullOrWhiteSpace(_searchText))
+        {
+            <button class="global-search-clear" @onclick="ClearSearch" @onclick:stopPropagation="true" title="Clear search">
+                <TelerikSvgIcon Icon="@SvgIcon.X" />
+            </button>
+        }
+        else
+        {
+            <kbd class="global-search-kbd">Ctrl+K</kbd>
+        }
+        @if (_isSearching)
+        {
+            <div class="global-search-spinner">
+                <TelerikLoader Size="@ThemeConstants.Loader.Size.Small" />
+            </div>
+        }
+    </div>
+</div>
+
+<SearchResultsPortal IsVisible="_showResults"
+                     Results="_searchResults"
+                     SearchText="_searchText"
+                     SelectedIndex="_selectedIndex"
+                     AnchorElement="_searchInput"
+                     OnResultClick="NavigateToResult"
+                     OnResultHover="HandleResultHover" />
+
+@code {
+    private ElementReference _searchInput;
+    private string _searchTextValue = "";
+    private SearchResponse? _searchResults;
+    private bool _showResults;
+    private bool _isSearching;
+    private System.Timers.Timer? _debounceTimer;
+    private int _selectedIndex = -1;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("globalSearch.init", _searchInput);
+        }
+    }
+
+    private string _searchText
+    {
+        get => _searchTextValue;
+        set
+        {
+            if (_searchTextValue != value)
+            {
+                _searchTextValue = value;
+                OnSearchTextChanged();
+            }
+        }
+    }
+
+    private async void OnSearchTextChanged()
+    {
+        _debounceTimer?.Stop();
+        _debounceTimer?.Dispose();
+
+        if (string.IsNullOrWhiteSpace(_searchText))
+        {
+            _searchResults = null;
+            _showResults = false;
+            _selectedIndex = -1;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        _isSearching = true;
+        await InvokeAsync(StateHasChanged);
+
+        _debounceTimer = new System.Timers.Timer(300);
+        _debounceTimer.Elapsed += async (sender, e) =>
+        {
+            await PerformSearch();
+        };
+        _debounceTimer.AutoReset = false;
+        _debounceTimer.Start();
+    }
+
+    private async Task PerformSearch()
+    {
+        try
+        {
+            _searchResults = await SearchService.SearchAsync(_searchText, maxResultsPerProvider: 5);
+            _showResults = true;
+            _selectedIndex = _searchResults.TotalCount > 0 ? 0 : -1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Search error: {ex.Message}");
+            _searchResults = null;
+        }
+        finally
+        {
+            _isSearching = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void OnSearchFocus()
+    {
+        if (_searchResults != null && !string.IsNullOrWhiteSpace(_searchText))
+        {
+            _showResults = true;
+        }
+    }
+
+    private void OnSearchBlur()
+    {
+        Task.Delay(200).ContinueWith(_ =>
+        {
+            _showResults = false;
+            InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (!_showResults || _searchResults == null || _searchResults.TotalCount == 0)
+            return;
+
+        var totalResults = _searchResults.TotalCount;
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                _selectedIndex = (_selectedIndex + 1) % totalResults;
+                await InvokeAsync(StateHasChanged);
+                break;
+
+            case "ArrowUp":
+                _selectedIndex = (_selectedIndex - 1 + totalResults) % totalResults;
+                await InvokeAsync(StateHasChanged);
+                break;
+
+            case "Enter":
+                if (_selectedIndex >= 0)
+                {
+                    var result = GetResultByIndex(_selectedIndex);
+                    if (result != null)
+                    {
+                        await NavigateToResult(result);
+                    }
+                }
+                break;
+
+            case "Escape":
+                ClearSearch();
+                break;
+        }
+    }
+
+    private void ClearSearch()
+    {
+        _searchText = "";
+        _searchResults = null;
+        _showResults = false;
+        _selectedIndex = -1;
+    }
+
+    private Task NavigateToResult(SearchResult result)
+    {
+        _showResults = false;
+        ClearSearch();
+        Nav.NavigateTo(result.NavigateUrl);
+        return Task.CompletedTask;
+    }
+
+    private Task HandleResultHover(int index)
+    {
+        _selectedIndex = index;
+        return Task.CompletedTask;
+    }
+
+    private SearchResult? GetResultByIndex(int index)
+    {
+        if (_searchResults == null || index < 0) return null;
+
+        var currentIndex = 0;
+        foreach (var group in _searchResults.Groups)
+        {
+            foreach (var result in group.Results)
+            {
+                if (currentIndex == index)
+                    return result;
+                currentIndex++;
+            }
+        }
+        return null;
+    }
+
+    public void Dispose()
+    {
+        _debounceTimer?.Dispose();
+    }
+}
+
+<script>
+    window.globalSearch = window.globalSearch || {};
+
+    window.globalSearch.init = function (inputElement) {
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                if (inputElement) {
+                    inputElement.focus();
+                }
+            }
+        });
+    };
+
+    window.globalSearch.getPosition = function (inputElement) {
+        if (!inputElement) return { top: 0, left: 0, width: 500 };
+
+        var rect = inputElement.getBoundingClientRect();
+        return {
+            top: rect.bottom + 8,
+            left: rect.left,
+            width: Math.max(rect.width, 500)
+        };
+    };
+</script>
+
+<style>
+    .global-search-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .global-search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--kendo-color-surface, #fff);
+        border: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 60%, transparent);
+        border-radius: 8px;
+        padding: 0.4rem 0.65rem;
+        transition: all 0.2s ease;
+        height: 38px;
+    }
+
+        .global-search-input-wrapper:hover {
+            border-color: var(--kendo-color-border, #e5e7eb);
+        }
+
+        .global-search-input-wrapper:focus-within {
+            border-color: var(--kendo-color-primary, #2563eb);
+            box-shadow: 0 0 0 3px color-mix(in oklab, var(--kendo-color-primary, #2563eb) 10%, transparent);
+        }
+
+            .global-search-input-wrapper:focus-within .global-search-kbd {
+                display: none;
+            }
+
+    .global-search-icon {
+        color: var(--kendo-color-on-surface-alt, #9ca3af);
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+
+    .global-search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.875rem;
+        color: var(--kendo-color-on-surface, #111827);
+        padding: 0;
+        min-width: 0;
+    }
+
+        .global-search-input::placeholder {
+            color: var(--kendo-color-on-surface-alt, #9ca3af);
+        }
+
+    .global-search-kbd {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: color-mix(in oklab, var(--kendo-color-on-surface, #111827) 5%, transparent);
+        border: 1px solid color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 80%, transparent);
+        border-radius: 4px;
+        padding: 0.125rem 0.375rem;
+        font-size: 0.75rem;
+        font-family: monospace;
+        color: var(--kendo-color-on-surface-alt, #6b7280);
+        line-height: 1;
+        margin-left: 0.5rem;
+    }
+
+    .global-search-clear {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: none;
+        border: none;
+        padding: 0.25rem;
+        cursor: pointer;
+        color: var(--kendo-color-on-surface-alt, #6b7280);
+        border-radius: 4px;
+        margin-left: 0.25rem;
+    }
+
+        .global-search-clear:hover {
+            background: color-mix(in oklab, var(--kendo-color-on-surface, #111827) 8%, transparent);
+            color: var(--kendo-color-on-surface, #111827);
+        }
+
+    .global-search-spinner {
+        margin-left: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+</style>

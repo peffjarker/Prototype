@@ -2,6 +2,7 @@ using Prototype.Components;
 using Prototype.Components.Layout.Navigation.Sidebar;
 using Prototype.Components.Services;
 using Prototype.Components.Services.Reports;
+using Prototype.Components.Services.Search;
 using Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,7 @@ builder.Services.AddScoped<ISidebarState, SidebarState>();
 builder.Services.AddScoped<IItemsOnOrderPdfService, ItemsOnOrderPdfService>();
 builder.Services.AddScoped<IUrlState, UrlState>();
 builder.Services.AddSingleton<IFranchiseService, FranchiseService>();
+builder.Services.AddSearchServices();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
