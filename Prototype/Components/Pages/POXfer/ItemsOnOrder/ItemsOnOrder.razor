@@ -7,8 +7,11 @@
 @using Prototype.Components.Layout.Navigation
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Pages.POXfer.ItemsOnOrder
+@using Prototype.Components.Pages.Product.Webcat
 @using Prototype.Components.Services
 @using Prototype.Components.Services.Reports
+@using Prototype.Components.SharedComponents
+@using Prototype.Components.SharedComponents.Sidepanel
 @using Prototype.Pages.POTransfer
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
@@ -20,6 +23,8 @@
 
 @inject IJSRuntime JS
 @inject IItemsOnOrderPdfService ReportService
+@inject NavigationManager NavigationManager
+@inject SidePanelService SidePanelService
 
 <div class="wrap">
     <header class="header">
@@ -254,7 +259,16 @@
                 <GridCsvExport FileName="open-po-lines" AllPages="true" />
             </GridExport>
             <GridColumns>
-                <GridColumn Field="@nameof(OpenPOLine.Item)" Title="Item" Width="140px" Locked="true" />
+                <GridColumn Field="@nameof(OpenPOLine.Item)" Title="Item" Width="140px" Locked="true">
+                    <Template>
+                        @{
+                            var line = (OpenPOLine)context;
+                            <button class="link-button" @onclick="() => SidePanelService.OpenItemPreview(line.Item)">
+                                @line.Item
+                            </button>
+                        }
+                    </Template>
+                </GridColumn>
                 <GridColumn Field="@nameof(OpenPOLine.PONumber)" Title="PO#" Width="160px">
                     <Template>
                         @{
@@ -417,6 +431,17 @@
     </section>
 </div>
 
+<!-- Side Panel for Item Preview -->
+<SidePanel IsOpen="@SidePanelService.IsOpen"
+           IsOpenChanged="@((value) => { if (!value) SidePanelService.Close(); })"
+           Title="@GetSidePanelTitle()"
+           NavigateUrl="@GetWebcatUrl()"
+           OnNavigate="@NavigateToWebcat">
+    <WebcatItemPreviewPanel ItemNumber="@SidePanelService.CurrentItemNumber"
+                            Item="@SidePanelService.CurrentItem"
+                            ErrorMessage="@SidePanelService.ErrorMessage" />
+</SidePanel>
+
 @code {
     // Centralized parameters
     private ItemsOnOrderParameters Params = new();
@@ -496,11 +521,19 @@
         AllRows.AddRange(ItemsOnOrderSeedData.GetItems());
         OpenLines.AddRange(ItemsOnOrderSeedData.GetPOLines());
 
+        // Subscribe to side panel changes
+        SidePanelService.OnChange += StateHasChanged;
+
         // Call base AFTER setting up data
         base.OnInitialized();
 
         // Initialize selected items from URL AFTER base.OnInitialized()
         _selectedItemsCollection = FilteredRows.Where(r => Params.SelectedItems.Contains(r.Item)).ToList();
+    }
+
+    public void Dispose()
+    {
+        SidePanelService.OnChange -= StateHasChanged;
     }
 
     // ============================================================
@@ -562,20 +595,8 @@
 
     private void HandleItemClick(string item)
     {
-        if (Params.SelectedItems.Contains(item))
-        {
-            Params.SelectedItems.Remove(item);
-        }
-        else
-        {
-            Params.SelectedItems.Add(item);
-        }
-
-        // Update the grid selection
-        _selectedItemsCollection = FilteredRows.Where(r => Params.SelectedItems.Contains(r.Item)).ToList();
-
-        NavigateWithPageState();
-        StateHasChanged();
+        // Open side panel instead of just selecting
+        SidePanelService.OpenItemPreview(item);
     }
 
     private void RemoveItem(string item)
@@ -657,6 +678,36 @@
         var pdfBytes = await ReportService.GenerateAsync(report);
         var fileName = $"ItemsOnOrder_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
         await JS.InvokeVoidAsync("files.save", fileName, Convert.ToBase64String(pdfBytes));
+    }
+
+    // ============================================================
+    // Side Panel Helpers
+    // ============================================================
+    private string GetSidePanelTitle()
+    {
+        if (SidePanelService.CurrentItem != null)
+        {
+            return $"Item Details - {SidePanelService.CurrentItemNumber}";
+        }
+        return "Item Details";
+    }
+
+    private string? GetWebcatUrl()
+    {
+        if (string.IsNullOrEmpty(SidePanelService.CurrentItemNumber))
+        {
+            return null;
+        }
+        return $"/product/webcat?item={Uri.EscapeDataString(SidePanelService.CurrentItemNumber)}";
+    }
+
+    private void NavigateToWebcat()
+    {
+        var url = GetWebcatUrl();
+        if (!string.IsNullOrEmpty(url))
+        {
+            NavigationManager.NavigateTo(url);
+        }
     }
 
     // ============================================================

@@ -1,0 +1,61 @@
+@using Microsoft.AspNetCore.Components
+
+<div class="side-panel-overlay @(IsOpen ? "open" : "")" @onclick="Close"></div>
+
+<div class="side-panel @(IsOpen ? "open" : "")">
+    <div class="side-panel-header">
+        <h3 class="side-panel-title">@Title</h3>
+        <button class="side-panel-close" @onclick="Close" aria-label="Close panel">
+            <span class="k-icon k-i-x"></span>
+        </button>
+    </div>
+    
+    <div class="side-panel-content">
+        @if (IsOpen)
+        {
+            @ChildContent
+        }
+    </div>
+    
+    @if (!string.IsNullOrEmpty(NavigateUrl))
+    {
+        <div class="side-panel-footer">
+            <button class="btn btn-primary" @onclick="NavigateToFullPage">
+                <span class="k-icon k-i-hyperlink-open-sm"></span>
+                View Full Details
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsOpenChanged { get; set; }
+
+    [Parameter]
+    public string Title { get; set; } = "Details";
+
+    [Parameter]
+    public string? NavigateUrl { get; set; }
+
+    [Parameter]
+    public EventCallback OnNavigate { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private async Task Close()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private async Task NavigateToFullPage()
+    {
+        await OnNavigate.InvokeAsync();
+        await Close();
+    }
+}

@@ -1,0 +1,161 @@
+@using Prototype.Components.Pages.Product.Webcat
+@using static Prototype.Components.Pages.Product.Webcat.WebcatSeedData
+
+<div class="webcat-preview">
+    @if (Item != null)
+    {
+        <!-- Item Header -->
+        <div class="preview-section">
+            <div class="item-number">@Item.Item</div>
+            <div class="item-description">@Item.Description</div>
+        </div>
+
+        <!-- Status & Pricing -->
+        <div class="preview-section">
+            <div class="preview-row">
+                <label>Status:</label>
+                <span class="status-badge @GetStatusClass()">@Item.Status</span>
+            </div>
+            <div class="preview-row">
+                <label>List Price:</label>
+                <span class="price-value">@Item.ListPrice.ToString("C")</span>
+            </div>
+            @if (Item.Discount != "None")
+            {
+                <div class="preview-row">
+                    <label>Discount:</label>
+                    <span class="discount-value">@Item.Discount</span>
+                </div>
+            }
+        </div>
+
+        <!-- Inventory Summary -->
+        <div class="preview-section">
+            <h4 class="section-title">Inventory Summary</h4>
+            <div class="inventory-grid">
+                <div class="inventory-item">
+                    <label>On Hand</label>
+                    <span class="inventory-value on-hand">@Item.OnHand</span>
+                </div>
+                <div class="inventory-item">
+                    <label>Pending</label>
+                    <span class="inventory-value">@Item.Pending</span>
+                </div>
+                <div class="inventory-item">
+                    <label>On Order</label>
+                    <span class="inventory-value">@Item.OnOrder</span>
+                </div>
+                <div class="inventory-item">
+                    <label>Alloc</label>
+                    <span class="inventory-value">@Item.Alloc</span>
+                </div>
+                <div class="inventory-item">
+                    <label>BKO</label>
+                    <span class="inventory-value @(Item.BKO > 0 ? "bko" : "")">@Item.BKO</span>
+                </div>
+                <div class="inventory-item">
+                    <label>In Transit</label>
+                    <span class="inventory-value @(Item.InTransit > 0 ? "in-transit" : "")">@Item.InTransit</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Item Details -->
+        <div class="preview-section">
+            <h4 class="section-title">Details</h4>
+            <div class="detail-list">
+                @if (!string.IsNullOrEmpty(Item.Category))
+                {
+                    <div class="detail-item">
+                        <label>Category:</label>
+                        <span>@Item.Category</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Item.Subcategory))
+                {
+                    <div class="detail-item">
+                        <label>Subcategory:</label>
+                        <span>@Item.Subcategory</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Item.Brand))
+                {
+                    <div class="detail-item">
+                        <label>Brand:</label>
+                        <span>@Item.Brand</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Item.ShipFrom))
+                {
+                    <div class="detail-item">
+                        <label>Ship From:</label>
+                        <span>@Item.ShipFrom</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Item.Class))
+                {
+                    <div class="detail-item">
+                        <label>Class:</label>
+                        <span>@Item.Class</span>
+                    </div>
+                }
+                @if (Item.IsDropShip)
+                {
+                    <div class="detail-item">
+                        <label>Drop Ship:</label>
+                        <span class="badge badge-info">Yes</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Catalog Text Preview -->
+        @if (!string.IsNullOrEmpty(Item.CatalogText))
+        {
+            <div class="preview-section">
+                <h4 class="section-title">Description</h4>
+                <div class="catalog-text">
+                    @Item.CatalogText
+                </div>
+            </div>
+        }
+    }
+    else if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="preview-error">
+            <span class="k-icon k-i-warning"></span>
+            <p>@ErrorMessage</p>
+        </div>
+    }
+    else
+    {
+        <div class="preview-loading">
+            <div class="spinner"></div>
+            <p>Loading item details...</p>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? ItemNumber { get; set; }
+
+    [Parameter]
+    public WebcatItem? Item { get; set; }
+
+    [Parameter]
+    public string? ErrorMessage { get; set; }
+
+    private string GetStatusClass()
+    {
+        if (Item == null) return "";
+        
+        return Item.Status.ToLower() switch
+        {
+            "active" => "status-active",
+            "discontinued" => "status-discontinued",
+            "obsolete" => "status-obsolete",
+            _ => "status-default"
+        };
+    }
+}
