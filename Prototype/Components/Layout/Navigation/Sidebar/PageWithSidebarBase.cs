@@ -33,29 +33,69 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     private EventHandler<LocationChangedEventArgs>? _locationChangedHandler;
     private CancellationTokenSource? _rebuildCts;
     private bool _isNavigating;
+    private bool _isDisposed;
+    private bool _isInitialized;
+    private string? _myBasePath; // Cached to detect changes
+    private string? _lastProcessedPath;
+    private readonly string _pageTypeName; // For logging
+
+    protected PageWithSidebarBase()
+    {
+        _pageTypeName = GetType().Name;
+    }
 
     protected override void OnInitialized()
     {
+        _myBasePath = BasePath; // Cache it
+
+        Console.WriteLine($"┌─ [{_pageTypeName}] OnInitialized");
+        Console.WriteLine($"│  BasePath: {_myBasePath}");
+        Console.WriteLine($"│  Current URI: {Nav.Uri}");
+
         _itemSelectedHandler = HandleSidebarItemSelected;
         _sidebarStateChangedHandler = () => InvokeAsync(StateHasChanged);
-        _locationChangedHandler = (_, __) => { _ = HandleLocationChangedAsync(); };
+        _locationChangedHandler = HandleLocationChanged;
 
         Sidebar.ItemSelectedHandler = _itemSelectedHandler;
         Sidebar.StateChanged += _sidebarStateChangedHandler!;
         Nav.LocationChanged += _locationChangedHandler;
 
-        ReadFromUrl();
-        RebuildSidebar();
+        // CRITICAL: Only rebuild if we're actually on this page
+        var currentPath = GetCurrentPathOnly(Nav);
+        if (IsPathMatch(currentPath, _myBasePath))
+        {
+            Console.WriteLine($"│  ✓ Path matches, initializing sidebar");
+            ReadFromUrl();
+            RebuildSidebar();
+            _lastProcessedPath = currentPath;
+        }
+        else
+        {
+            Console.WriteLine($"│  ✗ Path doesn't match, skipping initialization");
+            Console.WriteLine($"│    Current: {currentPath}");
+            Console.WriteLine($"│    Expected: {_myBasePath}");
+        }
+
+        _isInitialized = true;
+        Console.WriteLine($"└─ [{_pageTypeName}] Initialized");
     }
 
     public virtual void Dispose()
     {
+        if (_isDisposed) return;
+
+        Console.WriteLine($"🗑️  [{_pageTypeName}] Disposing");
+        _isDisposed = true;
+
         _rebuildCts?.Cancel();
         _rebuildCts?.Dispose();
+
         if (_sidebarStateChangedHandler is not null)
             Sidebar.StateChanged -= _sidebarStateChangedHandler;
+
         if (ReferenceEquals(Sidebar.ItemSelectedHandler, _itemSelectedHandler))
             Sidebar.ItemSelectedHandler = null;
+
         if (_locationChangedHandler is not null)
             Nav.LocationChanged -= _locationChangedHandler;
     }
@@ -144,6 +184,10 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
     private async Task HandleSidebarItemSelected(SidebarItem item)
     {
+        if (_isDisposed) return;
+
+        Console.WriteLine($"🖱️  [{_pageTypeName}] Sidebar item clicked: {item.Text}");
+
         if (item.Key?.StartsWith("franchise:") == true)
         {
             var dealerId = item.Key.Substring("franchise:".Length);
@@ -163,14 +207,35 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         if (!string.IsNullOrWhiteSpace(item.Url))
         {
             _isNavigating = true;
+            Console.WriteLine($"  → Navigating to: {item.Url}");
             Nav.NavigateTo(item.Url);
         }
 
         await Task.CompletedTask;
     }
 
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        Console.WriteLine($"🔔 [{_pageTypeName}] LocationChanged event received");
+        Console.WriteLine($"   New location: {e.Location}");
+        _ = HandleLocationChangedAsync();
+    }
+
     private async Task HandleLocationChangedAsync()
     {
+        if (_isDisposed)
+        {
+            Console.WriteLine($"   ⏭️  [{_pageTypeName}] Already disposed, ignoring");
+            return;
+        }
+
+        if (!_isInitialized)
+        {
+            Console.WriteLine($"   ⏭️  [{_pageTypeName}] Not initialized yet, ignoring");
+            return;
+        }
+
+        // Cancel any pending rebuild
         _rebuildCts?.Cancel();
         _rebuildCts?.Dispose();
         _rebuildCts = new CancellationTokenSource();
@@ -178,39 +243,88 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
         try
         {
+            var currentPath = GetCurrentPathOnly(Nav);
+
+            Console.WriteLine($"   📍 [{_pageTypeName}] Checking path ownership");
+            Console.WriteLine($"      Current path: {currentPath}");
+            Console.WriteLine($"      My BasePath:  {_myBasePath}");
+
+            // CRITICAL CHECK: Is this page responsible for the current path?
+            if (!IsPathMatch(currentPath, _myBasePath!))
+            {
+                Console.WriteLine($"   ⏭️  [{_pageTypeName}] Not my path, ignoring");
+                return;
+            }
+
+            // DUPLICATE CHECK: Already processed this path?
+            if (_lastProcessedPath == currentPath && !_isNavigating)
+            {
+                Console.WriteLine($"   ⏭️  [{_pageTypeName}] Already processed this path, ignoring");
+                return;
+            }
+
+            // Small delay for debouncing - only if not programmatic navigation
             if (!_isNavigating)
-                await Task.Delay(25, token);
+            {
+                Console.WriteLine($"   ⏳ [{_pageTypeName}] Debouncing (15ms)...");
+                await Task.Delay(15, token);
+            }
 
             _isNavigating = false;
 
-            if (token.IsCancellationRequested) return;
+            if (token.IsCancellationRequested)
+            {
+                Console.WriteLine($"   ❌ [{_pageTypeName}] Cancelled during debounce");
+                return;
+            }
 
             await InvokeAsync(() =>
             {
-                if (!token.IsCancellationRequested)
+                if (!token.IsCancellationRequested && !_isDisposed)
                 {
+                    Console.WriteLine($"   ✅ [{_pageTypeName}] Processing location change");
+
                     ReadFromUrl();
                     RebuildSidebar();
                     StateHasChanged();
+
+                    _lastProcessedPath = currentPath;
                 }
             });
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"   ❌ [{_pageTypeName}] Operation cancelled");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"   ❌ [{_pageTypeName}] Error: {ex.Message}");
+        }
     }
 
     protected void RebuildSidebar()
     {
-        var currentPath = GetCurrentPathOnly(Nav);
-
-        Console.WriteLine($"=== RebuildSidebar for {BasePath} ===");
-        Console.WriteLine($"Current path: {currentPath}");
-        Console.WriteLine($"BasePath: {BasePath}");
-
-        if (!currentPath.StartsWith(BasePath, StringComparison.OrdinalIgnoreCase))
+        if (_isDisposed)
         {
-            Console.WriteLine("Path doesn't match BasePath, returning");
+            Console.WriteLine($"⏭️  [{_pageTypeName}] RebuildSidebar called but disposed");
             return;
         }
+
+        var currentPath = GetCurrentPathOnly(Nav);
+
+        Console.WriteLine($"🔨 [{_pageTypeName}] RebuildSidebar");
+        Console.WriteLine($"   Current path: {currentPath}");
+        Console.WriteLine($"   BasePath:     {_myBasePath}");
+
+        // Double-check path ownership (defensive)
+        if (!IsPathMatch(currentPath, _myBasePath!))
+        {
+            Console.WriteLine($"   ⚠️  Path mismatch in RebuildSidebar! This shouldn't happen!");
+            Console.WriteLine($"   ⏭️  Aborting rebuild");
+            return;
+        }
+
+        Console.WriteLine($"   ✓ Building sidebar sections...");
 
         var sections = new List<SidebarSection>();
 
@@ -222,14 +336,46 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         if (Url.Has("dealer"))
             initialSelections["dealer"] = Url.Get("dealer");
 
-        Console.WriteLine("Initial selections for sidebar:");
+        Console.WriteLine($"   Initial selections:");
         foreach (var kvp in initialSelections)
         {
-            Console.WriteLine($"  {kvp.Key} = {kvp.Value}");
+            Console.WriteLine($"     • {kvp.Key} = {kvp.Value}");
         }
-        Console.WriteLine("=================");
 
         Sidebar.SetSections(sections, initialSelections);
+        Console.WriteLine($"   ✅ Sidebar rebuilt successfully");
+    }
+
+    /// <summary>
+    /// Check if the current path matches this page's base path.
+    /// Handles both exact matches and proper prefix matches.
+    /// </summary>
+    private static bool IsPathMatch(string currentPath, string basePath)
+    {
+        if (string.IsNullOrEmpty(currentPath) || string.IsNullOrEmpty(basePath))
+            return false;
+
+        // Normalize paths
+        var current = currentPath.TrimStart('/').ToLowerInvariant();
+        var baseNormalized = basePath.TrimStart('/').ToLowerInvariant();
+
+        // Exact match
+        if (current == baseNormalized)
+            return true;
+
+        // Prefix match - but only if followed by a slash or end of string
+        if (current.StartsWith(baseNormalized))
+        {
+            // Make sure we're not matching partial segments
+            // e.g., "/techcredit" should match "/techcredit/customers" but not "/techcreditxxx"
+            if (current.Length == baseNormalized.Length)
+                return true;
+
+            if (current.Length > baseNormalized.Length && current[baseNormalized.Length] == '/')
+                return true;
+        }
+
+        return false;
     }
 
     private static string GetCurrentPathOnly(NavigationManager nav)

@@ -56,10 +56,10 @@ namespace Services
             var pathOnly = cut >= 0 ? baseHref[..cut] : baseHref;
             pathOnly = pathOnly.StartsWith("/") ? pathOnly : "/" + pathOnly.TrimStart('/');
 
-            // Detect cross-module nav (root segment change)
-            var baseRoot = pathOnly.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-            var currentRoot = _nav.Uri.Split('/', StringSplitOptions.RemoveEmptyEntries).Skip(3).FirstOrDefault(); // skip scheme://host/
-            var crossModule = !string.Equals(baseRoot, currentRoot, StringComparison.OrdinalIgnoreCase);
+            // FIXED: Detect cross-module nav (root segment change)
+            var targetRoot = GetRootSegment(pathOnly);
+            var currentRoot = GetRootSegment(GetCurrentPathOnly(_nav));
+            var crossModule = !string.Equals(targetRoot, currentRoot, StringComparison.OrdinalIgnoreCase);
 
             var merged = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
@@ -101,7 +101,6 @@ namespace Services
             var qs = BuildQuery(merged);
             return string.IsNullOrEmpty(qs) ? pathOnly : $"{pathOnly}?{qs}";
         }
-
 
         public void Set(params (string key, string? value)[] overrides)
         {
@@ -216,8 +215,8 @@ namespace Services
         {
             try
             {
-                await Task.Yield();
-                token.ThrowIfCancellationRequested();
+                // FIXED: Removed Task.Yield() - was causing unnecessary delay
+                await Task.Delay(10, token); // Small delay for debouncing
 
                 Dictionary<string, string?> query;
                 string? pathOverride;
@@ -268,6 +267,20 @@ namespace Services
         }
 
         // ===== Utilities =====
+
+        /// <summary>
+        /// FIXED: Extract the root segment (first path component) from a path.
+        /// E.g., "/techcredit/customers" => "techcredit"
+        /// </summary>
+        private static string GetRootSegment(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || path == "/")
+                return string.Empty;
+
+            var trimmed = path.TrimStart('/');
+            var firstSlash = trimmed.IndexOf('/');
+            return firstSlash >= 0 ? trimmed[..firstSlash] : trimmed;
+        }
 
         private static Dictionary<string, string?> ReadQuerySnapshot(NavigationManager nav)
         {

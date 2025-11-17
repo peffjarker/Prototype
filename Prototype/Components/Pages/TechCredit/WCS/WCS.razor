@@ -1,11 +1,10 @@
 @page "/techcredit/wcs"
+@inherits PageWithSidebarBase
 @using Prototype.Pages.Collections
 @using Prototype.Components.Pages.Collections.TechCredit
 @using Services
 @using global::Services
 @using static Prototype.Components.Pages.Collections.TechCredit.WCSSeedData
-@inject IUrlState UrlState
-@inject NavigationManager Navigation
 
 <PageTitle>TechCredit Borrowers</PageTitle>
 
@@ -123,36 +122,83 @@
 </div>
 
 @code {
-    private WCSParameters _params = new();
+    // ===== Required by PageWithSidebarBase =====
+
+    protected override string BasePath => "/techcredit/wcs";
+
+    protected override IEnumerable<Facet> Facets()
+    {
+        return new[]
+        {
+            new Facet(
+                Key: "option",
+                Title: "Option",
+                Options: () => new[]
+                {
+                    new FacetOption("Customer Information", "Customer Information", Href: AppendPreserved("/techcredit/customerinformation")),
+                    new FacetOption("Credit Application", "Credit Application", Href: AppendPreserved("/techcredit/creditapplication")),
+                    new FacetOption("Sales Authorizations", "Sales Authorizations", Href: AppendPreserved("/techcredit/salesauthorizations")),
+                    new FacetOption("WCS", "WCS", Href: AppendPreserved("/techcredit/wcs")),
+                    new FacetOption("Payments", "Payments", Href: AppendPreserved("/techcredit/payments"))
+                }
+            ),
+            new Facet(
+                Key: "status",
+                Title: "Customer Status",
+                Options: () => new[]
+                {
+                    new FacetOption("All", "All"),
+                    new FacetOption("TC Borrowers", "TC Borrowers"),
+                    new FacetOption("TC Past Due", "TC Past Due")
+                }
+            )
+        };
+    }
+
+    private string _filterStatus = "All";
+
+    protected override IReadOnlyDictionary<string, string?> Scalars => new Dictionary<string, string?>
+    {
+        ["status"] = _filterStatus
+    };
+
+    protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
+
+    protected override void ReadFromUrl()
+    {
+        _filterStatus = Url.Get("status") ?? "All";
+    }
+
+    // ===== Page Data =====
+
     private List<BorrowerRecord> _borrowers = new();
     private IEnumerable<BorrowerRecord> _selectedBorrowers = new List<BorrowerRecord>();
-    
+
     private decimal _totalBalance = 580605.92m;
     private decimal _totalAmtDue = 3347.62m;
     private decimal _totalPastDue = 1470.11m;
 
     protected override async Task OnInitializedAsync()
     {
-        _params = WCSParameters.FromUrl(UrlState);
+        await base.OnInitializedAsync(); // This handles sidebar setup
         await LoadBorrowersAsync();
     }
 
     private async Task LoadBorrowersAsync()
     {
-        // Load borrowers from seed data or repository
         _borrowers = WCSSeedData.GetBorrowers();
-        
+
         // Apply filters based on parameters
-        if (!string.IsNullOrEmpty(_params.FilterStatus))
+        if (!string.IsNullOrEmpty(_filterStatus) && _filterStatus != "All")
         {
-            _borrowers = _params.FilterStatus switch
+            _borrowers = _filterStatus switch
             {
-                "PastDue" => _borrowers.Where(b => b.AmtPastDue > 0).ToList(),
-                "Current" => _borrowers.Where(b => b.AmtPastDue == 0).ToList(),
+                "TC Past Due" => _borrowers.Where(b => b.AmtPastDue > 0).ToList(),
+                "TC Borrowers" => _borrowers.Where(b => b.AmtPastDue == 0).ToList(),
                 _ => _borrowers
             };
         }
-        
+
         await Task.CompletedTask;
     }
 
@@ -168,6 +214,6 @@
 
     private void OnExitWCS()
     {
-        Navigation.NavigateTo("/");
+        Nav.NavigateTo("/");
     }
 }
