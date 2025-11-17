@@ -1,0 +1,34 @@
+/* Shared styles for TechCredit customer list panel */
+
+.customers-panel {
+    border-right: 1px solid var(--kendo-color-border, #e5e7eb);
+    background: #f8f9fa;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+.customer-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-item {
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
+    transition: background 0.15s ease;
+    font-size: 0.875rem;
+}
+
+    .customer-item:hover {
+        background: #e9ecef;
+    }
+
+    .customer-item.selected {
+        background: #007bff;
+        color: white;
+        font-weight: 600;
+    }

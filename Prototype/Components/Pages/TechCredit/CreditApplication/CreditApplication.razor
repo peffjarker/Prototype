@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Pages.Collections.CreditApplication
+@using Prototype.Components.SharedComponents
 @using Prototype.Pages.Collections
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
@@ -18,18 +19,13 @@
     </header>
 
     <section class="card credit-app-layout">
-        <div class="customers-panel">
-            <!-- Customer List -->
-            <div class="customer-list">
-                @foreach (var customer in FilteredCustomers)
-                {
-                    <button class="customer-item @(customer.BorrowerId == Params.SelectedCustomer ? "selected" : "")"
-                            @onclick="() => SelectCustomer(customer.BorrowerId)">
-                        @customer.CustomerName
-                    </button>
-                }
-            </div>
-        </div>
+        <!-- Use shared customer list component -->
+        <TechCreditCustomerList TCustomer="CreditApp"
+                                Customers="@FilteredCustomers"
+                                SelectedCustomerId="@Params.SelectedCustomer"
+                                GetCustomerId="@(c => c.BorrowerId)"
+                                GetCustomerName="@(c => c.CustomerName)"
+                                OnCustomerSelected="@SelectCustomer" />
 
         <div class="detail-panel">
             @if (SelectedApplication != null)
@@ -465,4 +461,3 @@
         };
     }
 }
-

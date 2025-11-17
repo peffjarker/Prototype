@@ -1,0 +1,56 @@
+@* Shared component for displaying filterable customer list in TechCredit pages *@
+
+@typeparam TCustomer where TCustomer : class
+
+<div class="customers-panel">
+    <div class="customer-list">
+        @foreach (var customer in Customers)
+        {
+            <button class="customer-item @(GetCustomerId(customer) == SelectedCustomerId ? "selected" : "")"
+                    @onclick="() => OnCustomerSelected.InvokeAsync(GetCustomerId(customer))">
+                @GetCustomerName(customer)
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// List of customers to display
+    /// </summary>
+    [Parameter]
+    public IEnumerable<TCustomer> Customers { get; set; } = Enumerable.Empty<TCustomer>();
+
+    /// <summary>
+    /// Currently selected customer ID
+    /// </summary>
+    [Parameter]
+    public string? SelectedCustomerId { get; set; }
+
+    /// <summary>
+    /// Function to extract customer ID from customer object
+    /// </summary>
+    [Parameter]
+    public Func<TCustomer, string> GetCustomerId { get; set; } = null!;
+
+    /// <summary>
+    /// Function to extract display name from customer object
+    /// </summary>
+    [Parameter]
+    public Func<TCustomer, string> GetCustomerName { get; set; } = null!;
+
+    /// <summary>
+    /// Event callback when a customer is selected
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnCustomerSelected { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (GetCustomerId == null)
+            throw new ArgumentNullException(nameof(GetCustomerId), "GetCustomerId parameter is required");
+        
+        if (GetCustomerName == null)
+            throw new ArgumentNullException(nameof(GetCustomerName), "GetCustomerName parameter is required");
+    }
+}

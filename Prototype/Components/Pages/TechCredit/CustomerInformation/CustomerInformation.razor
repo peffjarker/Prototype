@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar
 @using Prototype.Components.Pages.Collections.TechCredit
+@using Prototype.Components.SharedComponents
 @using Prototype.Pages.Collections
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
@@ -18,18 +19,13 @@
     </header>
 
     <section class="card techcredit-layout">
-        <div class="customers-panel">
-            <!-- Customer List -->
-            <div class="customer-list">
-                @foreach (var customer in FilteredCustomers)
-                {
-                    <button class="customer-item @(customer.CustomerId == Params.SelectedCustomer ? "selected" : "")"
-                            @onclick="() => SelectCustomer(customer.CustomerId)">
-                        @customer.Name
-                    </button>
-                }
-            </div>
-        </div>
+        <!-- Use shared customer list component -->
+        <TechCreditCustomerList TCustomer="CustomerInfo"
+                                Customers="@FilteredCustomers"
+                                SelectedCustomerId="@Params.SelectedCustomer"
+                                GetCustomerId="@(c => c.CustomerId)"
+                                GetCustomerName="@(c => c.Name)"
+                                OnCustomerSelected="@SelectCustomer" />
 
         <div class="detail-panel">
             @if (SelectedCustomerObject != null)
