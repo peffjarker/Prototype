@@ -5,7 +5,7 @@
 @if (SidePanelService.CurrentPayment != null)
 {
     var payment = SidePanelService.CurrentPayment;
-    
+
     @if (SidePanelService.PaymentMode == PaymentSidePanelMode.Details)
     {
         <!-- Payment Details View -->
@@ -90,7 +90,7 @@
                             <div class="detail-item">
                                 <label>Last Contact</label>
                                 <div class="detail-value">
-                                    @payment.LastContactDate?.ToString("MM/dd/yyyy")<br/>
+                                    @payment.LastContactDate?.ToString("MM/dd/yyyy")<br />
                                     <small>@payment.LastContactMethod - @payment.LastContactResult</small>
                                 </div>
                             </div>
@@ -137,7 +137,7 @@
                 <FormItems>
                     <FormItem Field="@nameof(PaymentFormModel.PaymentDate)" LabelText="Payment Date">
                         <Template>
-                            <TelerikDatePicker @bind-Value="@_paymentModel.PaymentDate" 
+                            <TelerikDatePicker @bind-Value="@_paymentModel.PaymentDate"
                                                Width="100%">
                             </TelerikDatePicker>
                         </Template>
@@ -213,7 +213,7 @@
                 <FormItems>
                     <FormItem Field="@nameof(ContactFormModel.ContactDate)" LabelText="Contact Date/Time">
                         <Template>
-                            <TelerikDateTimePicker @bind-Value="@_contactModel.ContactDate" 
+                            <TelerikDateTimePicker @bind-Value="@_contactModel.ContactDate"
                                                    Width="100%">
                             </TelerikDateTimePicker>
                         </Template>
@@ -239,7 +239,7 @@
 
                     <FormItem Field="@nameof(ContactFormModel.PromisedPaymentDate)" LabelText="Promised Payment Date">
                         <Template>
-                            <TelerikDatePicker @bind-Value="@_contactModel.PromisedPaymentDate" 
+                            <TelerikDatePicker @bind-Value="@_contactModel.PromisedPaymentDate"
                                                Width="100%"
                                                Placeholder="If payment was promised">
                             </TelerikDatePicker>
@@ -278,7 +278,7 @@
                     {
                         <FormItem Field="@nameof(ContactFormModel.FollowUpDate)" LabelText="Follow-up Date">
                             <Template>
-                                <TelerikDateTimePicker @bind-Value="@_contactModel.FollowUpDate" 
+                                <TelerikDateTimePicker @bind-Value="@_contactModel.FollowUpDate"
                                                        Width="100%">
                                 </TelerikDateTimePicker>
                             </Template>
@@ -304,14 +304,14 @@
 @code {
     private PaymentFormModel _paymentModel = new();
     private ContactFormModel _contactModel = new();
-    
+
     private List<string> _paymentMethods = new() { "Cash", "Check", "ACH", "Credit Card", "Debit Card", "Money Order" };
     private List<string> _contactMethods = new() { "Phone", "Email", "Text", "In Person", "Letter" };
-    private List<string> _contactResults = new() 
-    { 
-        "Spoke with Customer", 
-        "Left Voicemail", 
-        "No Answer", 
+    private List<string> _contactResults = new()
+    {
+        "Spoke with Customer",
+        "Left Voicemail",
+        "No Answer",
         "Wrong Number",
         "Promised Payment",
         "Refused to Pay",

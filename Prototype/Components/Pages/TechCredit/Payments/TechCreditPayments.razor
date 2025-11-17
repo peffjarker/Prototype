@@ -1,4 +1,5 @@
 @page "/techcredit/payments"
+@using Prototype.Components.SharedComponents.Sidepanel
 @using Prototype.Pages.Collections
 @using Prototype.Components.Pages.Collections.TechCredit
 @using Services
@@ -15,17 +16,17 @@
         <div class="header-main">
             <h1>TechCredit Payments</h1>
             <div class="view-selector">
-                <button class="view-tab @(_params.View == "PastDue" ? "active" : "")"
+                <button class="view-tab @(_params.View == "PastDue" ? "active" : "")" 
                         @onclick='() => ChangeView("PastDue")'>
                     <span class="k-icon k-i-warning"></span>
                     Past Due (@_pastDueCount)
                 </button>
-                <button class="view-tab @(_params.View == "Scheduled" ? "active" : "")"
+                <button class="view-tab @(_params.View == "Scheduled" ? "active" : "")" 
                         @onclick='() => ChangeView("Scheduled")'>
                     <span class="k-icon k-i-calendar"></span>
-                    Scheduled 4
+                    Scheduled (@_scheduledPayments.Count)
                 </button>
-                <button class="view-tab @(_params.View == "History" ? "active" : "")"
+                <button class="view-tab @(_params.View == "History" ? "active" : "")" 
                         @onclick='() => ChangeView("History")'>
                     <span class="k-icon k-i-file-txt"></span>
                     History
@@ -58,43 +59,43 @@
 
     <div class="toolbar-section">
         <div class="toolbar-left">
-            <TelerikButton Icon="@SvgIcon.RecycleSolid"
+            <TelerikButton Icon="@SvgIcon.RecycleSolid" 
                            OnClick="@RefreshData"
                            ThemeColor="@ThemeConstants.Button.ThemeColor.Base">
                 Refresh
             </TelerikButton>
-
+            
             @if (_params.View == "PastDue")
             {
-                <TelerikButton Icon="@SvgIcon.InfoSolid"
+                <TelerikButton Icon="@SvgIcon.MyspaceBox" 
                                OnClick="@SendReminders"
                                ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
                                Enabled="@(_selectedPayments.Any())">
                     Send Reminders (@_selectedPayments.Count())
                 </TelerikButton>
             }
-
-            <TelerikButton Icon="@SvgIcon.FileExcel"
+            
+            <TelerikButton Icon="@SvgIcon.FileExcel" 
                            OnClick="@ExportToExcel"
                            ThemeColor="@ThemeConstants.Button.ThemeColor.Success">
                 Export
             </TelerikButton>
-
-            <TelerikButton Icon="@SvgIcon.Print"
+            
+            <TelerikButton Icon="@SvgIcon.Print" 
                            OnClick="@PrintPayments"
                            ThemeColor="@ThemeConstants.Button.ThemeColor.Base">
                 Print
             </TelerikButton>
         </div>
-
+        
         <div class="toolbar-right">
             @if (_params.View == "History")
             {
                 <div class="date-range-filter">
                     <label>Date Range:</label>
                     <TelerikDateRangePicker @bind-StartValue="@_startDate"
-                                            @bind-EndValue="@_endDate"
-                                            OnChange="@OnDateRangeChanged">
+                                             @bind-EndValue="@_endDate"
+                                             OnChange="@OnDateRangeChanged">
                     </TelerikDateRangePicker>
                 </div>
             }
@@ -149,12 +150,12 @@
                             @{
                                 var payment = (PaymentRecord)context;
                                 <div class="action-buttons">
-                                    <TelerikButton Icon="@SvgIcon.Dollar"
+                                    <TelerikButton Icon="@SvgIcon.Dollar" 
                                                    OnClick="@(() => RecordPayment(payment))"
                                                    Size="@ThemeConstants.Button.Size.Small"
                                                    Title="Record Payment">
                                     </TelerikButton>
-                                    <TelerikButton Icon="@SvgIcon.TabletOutline"
+                                    <TelerikButton Icon="@SvgIcon.TabletSolid" 
                                                    OnClick="@(() => LogContact(payment))"
                                                    Size="@ThemeConstants.Button.Size.Small"
                                                    Title="Log Contact">
@@ -219,20 +220,6 @@
                     </GridColumn>
                     <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance" Width="120px" DisplayFormat="{0:C2}" />
                     <GridColumn Field="@nameof(PaymentRecord.Phone)" Title="Phone" Width="140px" />
-                    <GridColumn Title="Actions" Width="120px">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                <div class="action-buttons">
-                                    <TelerikButton Icon="@SvgIcon.Dollar"
-                                                   OnClick="@(() => RecordPayment(payment))"
-                                                   Size="@ThemeConstants.Button.Size.Small"
-                                                   Title="Record Payment">
-                                    </TelerikButton>
-                                </div>
-                            }
-                        </Template>
-                    </GridColumn>
                 </GridColumns>
             </TelerikGrid>
         </div>
@@ -275,7 +262,7 @@
                             @{
                                 var payment = (PaymentRecord)context;
                                 <div class="action-buttons">
-                                    <TelerikButton Icon="@SvgIcon.Print"
+                                    <TelerikButton Icon="@SvgIcon.Print" 
                                                    OnClick="@(() => PrintReceipt(payment))"
                                                    Size="@ThemeConstants.Button.Size.Small"
                                                    Title="Print Receipt">
@@ -290,13 +277,23 @@
     }
 </div>
 
+<!-- Side Panel for Payment Preview -->
+<SidePanel IsOpen="@SidePanel.IsOpen"
+           IsOpenChanged="@((value) => { if (!value) SidePanel.Close(); })"
+           Title="@GetSidePanelTitle()">
+    @if (SidePanel.ContentType == Prototype.Components.Services.SidePanelContentType.Payment)
+    {
+        <PaymentSidePanelContent />
+    }
+</SidePanel>
+
 @code {
     private TechCreditPaymentsParameters _params = new();
     private List<PaymentRecord> _pastDuePayments = new();
     private List<PaymentRecord> _scheduledPayments = new();
     private List<PaymentRecord> _paymentHistory = new();
     private IEnumerable<PaymentRecord> _selectedPayments = new List<PaymentRecord>();
-
+    
     // Statistics
     private decimal _totalPastDue = 0m;
     private int _pastDueCount = 0;
@@ -306,7 +303,7 @@
     private int _collectedTodayCount = 0;
     private decimal _scheduledNext30Days = 0m;
     private int _scheduledNext30DaysCount = 0;
-
+    
     // Date range for history
     private DateTime? _startDate = DateTime.Today.AddMonths(-1);
     private DateTime? _endDate = DateTime.Today;
@@ -321,24 +318,24 @@
     private async Task LoadPaymentsAsync()
     {
         var allPayments = TechCreditPaymentsSeedData.GetPayments();
-
+        
         _pastDuePayments = allPayments
             .Where(p => p.IsPastDue && p.PastDueAmount > 0)
             .OrderByDescending(p => p.DaysOverdue)
             .ToList();
-
+        
         _scheduledPayments = allPayments
             .Where(p => p.ScheduledDate.HasValue && p.ScheduledDate.Value >= DateTime.Today)
             .OrderBy(p => p.ScheduledDate)
             .ToList();
-
+        
         _paymentHistory = allPayments
-            .Where(p => p.PaymentDate.HasValue &&
-                       p.PaymentDate.Value >= _startDate &&
+            .Where(p => p.PaymentDate.HasValue && 
+                       p.PaymentDate.Value >= _startDate && 
                        p.PaymentDate.Value <= _endDate)
             .OrderByDescending(p => p.PaymentDate)
             .ToList();
-
+        
         await Task.CompletedTask;
     }
 
@@ -346,20 +343,20 @@
     {
         _totalPastDue = _pastDuePayments.Sum(p => p.PastDueAmount);
         _pastDueCount = _pastDuePayments.Count;
-
+        
         var weekFromNow = DateTime.Today.AddDays(7);
         var dueThisWeek = _scheduledPayments
             .Where(p => p.ScheduledDate.HasValue && p.ScheduledDate.Value <= weekFromNow)
             .ToList();
         _dueThisWeek = dueThisWeek.Sum(p => p.AmountDue);
         _dueThisWeekCount = dueThisWeek.Count;
-
+        
         var todaysPayments = _paymentHistory
             .Where(p => p.PaymentDate.HasValue && p.PaymentDate.Value.Date == DateTime.Today)
             .ToList();
         _collectedToday = todaysPayments.Sum(p => p.AmountPaid);
         _collectedTodayCount = todaysPayments.Count;
-
+        
         var next30Days = DateTime.Today.AddDays(30);
         var scheduled30 = _scheduledPayments
             .Where(p => p.ScheduledDate.HasValue && p.ScheduledDate.Value <= next30Days)
@@ -451,6 +448,17 @@
             "failed" => "danger",
             "reversed" => "secondary",
             _ => "info"
+        };
+    }
+
+    private string GetSidePanelTitle()
+    {
+        return SidePanel.PaymentMode switch
+        {
+            PaymentSidePanelMode.Details => "Payment Details",
+            PaymentSidePanelMode.RecordPayment => "Record Payment",
+            PaymentSidePanelMode.LogContact => "Log Contact",
+            _ => "Payment"
         };
     }
 }
