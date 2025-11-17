@@ -17,12 +17,23 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 
-<div class="wrap">
+<div class="wrap po-page-wrapper">
     <header class="header">
-        <h3 class="title">Purchase Order Detail</h3>
+        <h3 class="title">
+            Purchase Order Detail
+            <button class="detail-toggle-btn @(IsDetailCollapsed ? "collapsed" : "")"
+                    @onclick="ToggleDetailSection">
+                <svg class="toggle-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <span class="toggle-text">@(IsDetailCollapsed ? "Show" : "Hide") Details</span>
+            </button>
+        </h3>
+
     </header>
 
-    <section class="card rop-detail">
+
+    <section class="card rop-detail @(IsDetailCollapsed ? "collapsed" : "")">
         <div class="rop-detail-grid">
             <!-- Left column -->
             <div class="col col-left">
@@ -149,9 +160,11 @@
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Lines Grid -->
-        <div style="margin-top: 2rem;">
+    <!-- Lines Grid Section - Separate from collapsible detail -->
+    <section class="card grid-section">
+        <div class="grid-container">
             <TelerikGrid Data="@Model.Lines"
                          SelectionMode="@GridSelectionMode.Multiple"
                          @bind-SelectedItems="@SelectedLinesCollection"
@@ -277,8 +290,8 @@
             </TelerikGrid>
         </div>
 
-        <!-- Footer actions -->
-        <footer class="rop-footer" style="margin-top: 1rem;">
+        <!-- Footer actions - Always visible at bottom -->
+        <footer class="grid-footer">
             <button class="btn" @onclick="PrintPo">Print</button>
             <button class="btn" @onclick="CreateNewPo">Create New</button>
             <button class="btn warn" @onclick="CancelSelectedLines" disabled="@(!Params.SelectedLines.Any())">
@@ -303,6 +316,14 @@
 @code {
     // Centralized parameters
     private PurchaseOrdersParameters Params = new();
+
+    // Detail section collapse state
+    private bool IsDetailCollapsed = false;
+
+    private void ToggleDetailSection()
+    {
+        IsDetailCollapsed = !IsDetailCollapsed;
+    }
 
     // ============================================================
     // Page contract & URL bindings
