@@ -1,0 +1,173 @@
+@page "/techcredit/wcs"
+@using Prototype.Pages.Collections
+@using Prototype.Components.Pages.Collections.TechCredit
+@using Services
+@using global::Services
+@using static Prototype.Components.Pages.Collections.TechCredit.WCSSeedData
+@inject IUrlState UrlState
+@inject NavigationManager Navigation
+
+<PageTitle>TechCredit Borrowers</PageTitle>
+
+<div class="techcredit-borrowers-page">
+    <div class="page-header">
+        <h1>TechCredit Borrowers</h1>
+        <div class="header-stats">
+            <div class="stat-item">
+                <span class="stat-label">Overall Past Due:</span>
+                <span class="stat-value">10.00%</span>
+            </div>
+            <div class="stat-divider">|</div>
+            <div class="stat-item">
+                <span class="stat-label">Non-Transferable Past Due:</span>
+                <span class="stat-value">10.52%</span>
+            </div>
+            <div class="stat-divider">|</div>
+            <div class="stat-item">
+                <span class="stat-label">Dealer Blue Ribbon Limit:</span>
+                <span class="stat-value">$0.00</span>
+            </div>
+            <div class="stat-divider">|</div>
+            <div class="stat-item">
+                <span class="stat-label">Balance:</span>
+                <span class="stat-value">$0.00</span>
+            </div>
+            <div class="stat-divider">|</div>
+            <div class="stat-item">
+                <span class="stat-label">Available:</span>
+                <span class="stat-value">$0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar-section">
+        <div class="toolbar-left">
+            <button class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-base" @onclick="OnPrint">
+                <span class="k-icon k-i-print"></span>
+                Print
+            </button>
+            <button class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-primary" @onclick="OnExport">
+                <span class="k-icon k-i-file-excel"></span>
+                Export
+            </button>
+            <button class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-error" @onclick="OnExitWCS">
+                <span class="k-icon k-i-close"></span>
+                Exit WCS
+            </button>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <TelerikGrid Data="@_borrowers"
+                     Height="calc(100vh - 280px)"
+                     Pageable="true"
+                     PageSize="20"
+                     Sortable="true"
+                     FilterMode="GridFilterMode.FilterRow"
+                     Resizable="true"
+                     Reorderable="true"
+                     SelectionMode="GridSelectionMode.Single"
+                     @bind-SelectedItems="@_selectedBorrowers">
+            <GridColumns>
+                <GridColumn Field="@nameof(BorrowerRecord.Borrower)" Title="Borrower" Width="200px" />
+                <GridColumn Field="@nameof(BorrowerRecord.Employer)" Title="Employer" Width="180px" />
+                <GridColumn Field="@nameof(BorrowerRecord.PrefRate)" Title="Pref Rate" Width="100px">
+                    <Template>
+                        @{
+                            var borrower = (BorrowerRecord)context;
+                            <span>@(borrower.PrefRate == "PF" ? "PF" : borrower.PrefRate)</span>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(BorrowerRecord.CoAppDate)" Title="Co-App Date" Width="110px" DisplayFormat="{0:M/d/yyyy}" />
+                <GridColumn Field="@nameof(BorrowerRecord.HomePhone)" Title="Home Phone" Width="130px" />
+                <GridColumn Field="@nameof(BorrowerRecord.WorkPhone)" Title="Work Phone" Width="130px" />
+                <GridColumn Field="@nameof(BorrowerRecord.AvailCredit)" Title="Avail Credit" Width="120px" DisplayFormat="{0:C2}" />
+                <GridColumn Field="@nameof(BorrowerRecord.CurrentBalance)" Title="Current Balance" Width="140px" DisplayFormat="{0:C2}" />
+                <GridColumn Field="@nameof(BorrowerRecord.WeeklyPmt)" Title="Weekly Pmt" Width="120px" DisplayFormat="{0:C2}" />
+                <GridColumn Field="@nameof(BorrowerRecord.AmtPastDue)" Title="Amt Past Due" Width="130px" DisplayFormat="{0:C2}">
+                    <Template>
+                        @{
+                            var borrower = (BorrowerRecord)context;
+                            <span class="@(borrower.AmtPastDue > 0 ? "past-due-amount" : "")">@borrower.AmtPastDue.ToString("C2")</span>
+                        }
+                    </Template>
+                </GridColumn>
+                <GridColumn Field="@nameof(BorrowerRecord.PastDueAmt)" Title="Past Due Amt" Width="130px" DisplayFormat="{0:C2}" />
+                <GridColumn Field="@nameof(BorrowerRecord.LastPmtDate)" Title="Last Pmt Date" Width="120px" DisplayFormat="{0:M/d/yyyy}" />
+                <GridColumn Field="@nameof(BorrowerRecord.YFRBIncl)" Title="YFR Incl" Width="90px" />
+                <GridColumn Field="@nameof(BorrowerRecord.XFR)" Title="XFR" Width="80px" />
+                <GridColumn Field="@nameof(BorrowerRecord.Wks)" Title="Wks" Width="80px" />
+                <GridColumn Field="@nameof(BorrowerRecord.BorrowerID)" Title="Borrower ID" Width="130px" />
+                <GridColumn Field="@nameof(BorrowerRecord.NextPmtDate)" Title="Next Pmt Date" Width="120px" DisplayFormat="{0:M/d/yyyy}" />
+                <GridColumn Field="@nameof(BorrowerRecord.AmtCollected)" Title="Amt Collected" Width="130px" DisplayFormat="{0:C2}" />
+                <GridColumn Field="@nameof(BorrowerRecord.DateCollected)" Title="Date Collected" Width="130px" DisplayFormat="{0:M/d/yyyy}" />
+            </GridColumns>
+        </TelerikGrid>
+    </div>
+
+    <div class="grid-footer-stats">
+        <div class="footer-stat">
+            <span class="footer-label">Balance:</span>
+            <span class="footer-value">@_totalBalance.ToString("C2")</span>
+        </div>
+        <div class="footer-stat">
+            <span class="footer-label">Amt Due:</span>
+            <span class="footer-value">@_totalAmtDue.ToString("C2")</span>
+        </div>
+        <div class="footer-stat">
+            <span class="footer-label">Past Due:</span>
+            <span class="footer-value past-due">@_totalPastDue.ToString("C2")</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    private WCSParameters _params = new();
+    private List<BorrowerRecord> _borrowers = new();
+    private IEnumerable<BorrowerRecord> _selectedBorrowers = new List<BorrowerRecord>();
+    
+    private decimal _totalBalance = 580605.92m;
+    private decimal _totalAmtDue = 3347.62m;
+    private decimal _totalPastDue = 1470.11m;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _params = WCSParameters.FromUrl(UrlState);
+        await LoadBorrowersAsync();
+    }
+
+    private async Task LoadBorrowersAsync()
+    {
+        // Load borrowers from seed data or repository
+        _borrowers = WCSSeedData.GetBorrowers();
+        
+        // Apply filters based on parameters
+        if (!string.IsNullOrEmpty(_params.FilterStatus))
+        {
+            _borrowers = _params.FilterStatus switch
+            {
+                "PastDue" => _borrowers.Where(b => b.AmtPastDue > 0).ToList(),
+                "Current" => _borrowers.Where(b => b.AmtPastDue == 0).ToList(),
+                _ => _borrowers
+            };
+        }
+        
+        await Task.CompletedTask;
+    }
+
+    private void OnPrint()
+    {
+        // Implement print functionality
+    }
+
+    private void OnExport()
+    {
+        // Implement export to Excel functionality
+    }
+
+    private void OnExitWCS()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

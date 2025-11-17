@@ -1,0 +1,409 @@
+@using Prototype.Components.Services
+@using static Prototype.Components.Pages.Collections.TechCredit.TechCreditPaymentsSeedData
+@inject SidePanelService SidePanelService
+
+@if (SidePanelService.CurrentPayment != null)
+{
+    var payment = SidePanelService.CurrentPayment;
+    
+    @if (SidePanelService.PaymentMode == PaymentSidePanelMode.Details)
+    {
+        <!-- Payment Details View -->
+        <div class="payment-details">
+            <!-- Customer Information -->
+            <div class="detail-section">
+                <h3>Customer Information</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Name</label>
+                        <div class="detail-value">@payment.CustomerName</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Borrower ID</label>
+                        <div class="detail-value">@payment.BorrowerId</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Phone</label>
+                        <div class="detail-value">@payment.Phone</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Email</label>
+                        <div class="detail-value">@payment.Email</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="detail-section">
+                <h3>Payment Information</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>Current Balance</label>
+                        <div class="detail-value">@payment.CurrentBalance.ToString("C2")</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Amount Due</label>
+                        <div class="detail-value">@payment.AmountDue.ToString("C2")</div>
+                    </div>
+                    @if (payment.IsPastDue)
+                    {
+                        <div class="detail-item">
+                            <label>Past Due Amount</label>
+                            <div class="detail-value text-danger">@payment.PastDueAmount.ToString("C2")</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Days Overdue</label>
+                            <div class="detail-value text-danger">@payment.DaysOverdue days</div>
+                        </div>
+                    }
+                    <div class="detail-item">
+                        <label>Payment Frequency</label>
+                        <div class="detail-value">@payment.PaymentFrequency</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Payment Method</label>
+                        <div class="detail-value">@payment.PaymentMethod</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity (if past due) -->
+            @if (payment.IsPastDue)
+            {
+                <div class="detail-section">
+                    <h3>Recent Activity</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label>Last Payment Date</label>
+                            <div class="detail-value">@payment.LastPaymentDate?.ToString("MM/dd/yyyy")</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Last Payment Amount</label>
+                            <div class="detail-value">@payment.LastPaymentAmount.ToString("C2")</div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Contact Attempts</label>
+                            <div class="detail-value">@payment.ContactAttempts</div>
+                        </div>
+                        @if (payment.LastContactDate.HasValue)
+                        {
+                            <div class="detail-item">
+                                <label>Last Contact</label>
+                                <div class="detail-value">
+                                    @payment.LastContactDate?.ToString("MM/dd/yyyy")<br/>
+                                    <small>@payment.LastContactMethod - @payment.LastContactResult</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Actions -->
+            <div class="panel-actions">
+                <TelerikButton OnClick="@(() => SwitchToRecordPayment())"
+                               ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                               Icon="@SvgIcon.Dollar">
+                    Record Payment
+                </TelerikButton>
+                @if (payment.IsPastDue)
+                {
+                    <TelerikButton OnClick="@(() => SwitchToLogContact())"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Base"
+                                   Icon="@SvgIcon.TabletSolid">
+                        Log Contact
+                    </TelerikButton>
+                }
+            </div>
+        </div>
+    }
+    else if (SidePanelService.PaymentMode == PaymentSidePanelMode.RecordPayment)
+    {
+        <!-- Record Payment Form -->
+        <div class="payment-form">
+            <!-- Customer Summary -->
+            <div class="customer-summary">
+                <h4>@payment.CustomerName</h4>
+                <p>Borrower ID: @payment.BorrowerId</p>
+                <p>Current Balance: <strong>@payment.CurrentBalance.ToString("C2")</strong></p>
+                @if (payment.IsPastDue)
+                {
+                    <p class="text-danger">Past Due: <strong>@payment.PastDueAmount.ToString("C2")</strong></p>
+                }
+            </div>
+
+            <!-- Payment Form -->
+            <TelerikForm Model="@_paymentModel" OnValidSubmit="@HandlePaymentSubmit">
+                <FormItems>
+                    <FormItem Field="@nameof(PaymentFormModel.PaymentDate)" LabelText="Payment Date">
+                        <Template>
+                            <TelerikDatePicker @bind-Value="@_paymentModel.PaymentDate" 
+                                               Width="100%">
+                            </TelerikDatePicker>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(PaymentFormModel.Amount)" LabelText="Amount">
+                        <Template>
+                            <TelerikNumericTextBox @bind-Value="@_paymentModel.Amount"
+                                                   Format="C2"
+                                                   Width="100%"
+                                                   Min="0">
+                            </TelerikNumericTextBox>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(PaymentFormModel.PaymentMethod)" LabelText="Payment Method">
+                        <Template>
+                            <TelerikDropDownList Data="@_paymentMethods"
+                                                 @bind-Value="@_paymentModel.PaymentMethod"
+                                                 Width="100%">
+                            </TelerikDropDownList>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(PaymentFormModel.ReferenceNumber)" LabelText="Reference Number">
+                        <Template>
+                            <TelerikTextBox @bind-Value="@_paymentModel.ReferenceNumber"
+                                            Width="100%"
+                                            Placeholder="Check #, Confirmation #, etc.">
+                            </TelerikTextBox>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(PaymentFormModel.Notes)" LabelText="Notes">
+                        <Template>
+                            <TelerikTextArea @bind-Value="@_paymentModel.Notes"
+                                             Width="100%"
+                                             Rows="3"
+                                             Placeholder="Additional notes...">
+                            </TelerikTextArea>
+                        </Template>
+                    </FormItem>
+                </FormItems>
+
+                <FormButtons>
+                    <TelerikButton ButtonType="ButtonType.Submit"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">
+                        Record Payment
+                    </TelerikButton>
+                    <TelerikButton ButtonType="ButtonType.Button"
+                                   OnClick="@SwitchBackToDetails">
+                        Cancel
+                    </TelerikButton>
+                </FormButtons>
+            </TelerikForm>
+        </div>
+    }
+    else if (SidePanelService.PaymentMode == PaymentSidePanelMode.LogContact)
+    {
+        <!-- Log Contact Form -->
+        <div class="contact-form">
+            <!-- Customer Summary -->
+            <div class="customer-summary">
+                <h4>@payment.CustomerName</h4>
+                <p>Borrower ID: @payment.BorrowerId</p>
+                <p class="text-danger">Past Due: <strong>@payment.PastDueAmount.ToString("C2")</strong></p>
+                <p>Days Overdue: <strong>@payment.DaysOverdue</strong></p>
+                <p>Previous Attempts: <strong>@payment.ContactAttempts</strong></p>
+            </div>
+
+            <!-- Contact Form -->
+            <TelerikForm Model="@_contactModel" OnValidSubmit="@HandleContactSubmit">
+                <FormItems>
+                    <FormItem Field="@nameof(ContactFormModel.ContactDate)" LabelText="Contact Date/Time">
+                        <Template>
+                            <TelerikDateTimePicker @bind-Value="@_contactModel.ContactDate" 
+                                                   Width="100%">
+                            </TelerikDateTimePicker>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(ContactFormModel.ContactMethod)" LabelText="Contact Method">
+                        <Template>
+                            <TelerikDropDownList Data="@_contactMethods"
+                                                 @bind-Value="@_contactModel.ContactMethod"
+                                                 Width="100%">
+                            </TelerikDropDownList>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(ContactFormModel.ContactResult)" LabelText="Result">
+                        <Template>
+                            <TelerikDropDownList Data="@_contactResults"
+                                                 @bind-Value="@_contactModel.ContactResult"
+                                                 Width="100%">
+                            </TelerikDropDownList>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(ContactFormModel.PromisedPaymentDate)" LabelText="Promised Payment Date">
+                        <Template>
+                            <TelerikDatePicker @bind-Value="@_contactModel.PromisedPaymentDate" 
+                                               Width="100%"
+                                               Placeholder="If payment was promised">
+                            </TelerikDatePicker>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(ContactFormModel.PromisedAmount)" LabelText="Promised Amount">
+                        <Template>
+                            <TelerikNumericTextBox @bind-Value="@_contactModel.PromisedAmount"
+                                                   Format="C2"
+                                                   Width="100%"
+                                                   Min="0"
+                                                   Placeholder="0.00">
+                            </TelerikNumericTextBox>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(ContactFormModel.Notes)" LabelText="Notes">
+                        <Template>
+                            <TelerikTextArea @bind-Value="@_contactModel.Notes"
+                                             Width="100%"
+                                             Rows="4"
+                                             Placeholder="Detailed notes...">
+                            </TelerikTextArea>
+                        </Template>
+                    </FormItem>
+
+                    <FormItem Field="@nameof(ContactFormModel.ScheduleFollowUp)" LabelText="Schedule Follow-up">
+                        <Template>
+                            <TelerikCheckBox @bind-Value="@_contactModel.ScheduleFollowUp">
+                            </TelerikCheckBox>
+                        </Template>
+                    </FormItem>
+
+                    @if (_contactModel.ScheduleFollowUp)
+                    {
+                        <FormItem Field="@nameof(ContactFormModel.FollowUpDate)" LabelText="Follow-up Date">
+                            <Template>
+                                <TelerikDateTimePicker @bind-Value="@_contactModel.FollowUpDate" 
+                                                       Width="100%">
+                                </TelerikDateTimePicker>
+                            </Template>
+                        </FormItem>
+                    }
+                </FormItems>
+
+                <FormButtons>
+                    <TelerikButton ButtonType="ButtonType.Submit"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Primary">
+                        Log Contact
+                    </TelerikButton>
+                    <TelerikButton ButtonType="ButtonType.Button"
+                                   OnClick="@SwitchBackToDetails">
+                        Cancel
+                    </TelerikButton>
+                </FormButtons>
+            </TelerikForm>
+        </div>
+    }
+}
+
+@code {
+    private PaymentFormModel _paymentModel = new();
+    private ContactFormModel _contactModel = new();
+    
+    private List<string> _paymentMethods = new() { "Cash", "Check", "ACH", "Credit Card", "Debit Card", "Money Order" };
+    private List<string> _contactMethods = new() { "Phone", "Email", "Text", "In Person", "Letter" };
+    private List<string> _contactResults = new() 
+    { 
+        "Spoke with Customer", 
+        "Left Voicemail", 
+        "No Answer", 
+        "Wrong Number",
+        "Promised Payment",
+        "Refused to Pay",
+        "Payment Plan Discussed",
+        "Requested Callback"
+    };
+
+    protected override void OnInitialized()
+    {
+        SidePanelService.OnChange += StateHasChanged;
+        InitializeForms();
+    }
+
+    protected override void OnParametersSet()
+    {
+        InitializeForms();
+    }
+
+    private void InitializeForms()
+    {
+        var payment = SidePanelService.CurrentPayment;
+        if (payment != null)
+        {
+            _paymentModel = new PaymentFormModel
+            {
+                PaymentDate = DateTime.Today,
+                Amount = payment.IsPastDue ? payment.PastDueAmount : payment.AmountDue,
+                PaymentMethod = "Cash"
+            };
+
+            _contactModel = new ContactFormModel
+            {
+                ContactDate = DateTime.Now,
+                ContactMethod = "Phone"
+            };
+        }
+    }
+
+    private void SwitchToRecordPayment()
+    {
+        SidePanelService.SwitchPaymentMode(PaymentSidePanelMode.RecordPayment);
+        InitializeForms();
+    }
+
+    private void SwitchToLogContact()
+    {
+        SidePanelService.SwitchPaymentMode(PaymentSidePanelMode.LogContact);
+        InitializeForms();
+    }
+
+    private void SwitchBackToDetails()
+    {
+        SidePanelService.SwitchPaymentMode(PaymentSidePanelMode.Details);
+    }
+
+    private async Task HandlePaymentSubmit()
+    {
+        // Here you would save the payment to your data source
+        // For now, we'll just close and trigger refresh
+        await SidePanelService.CompletePaymentAction();
+    }
+
+    private async Task HandleContactSubmit()
+    {
+        // Here you would save the contact log to your data source
+        // For now, we'll just close and trigger refresh
+        await SidePanelService.CompletePaymentAction();
+    }
+
+    public void Dispose()
+    {
+        SidePanelService.OnChange -= StateHasChanged;
+    }
+
+    public class PaymentFormModel
+    {
+        public DateTime PaymentDate { get; set; } = DateTime.Today;
+        public decimal Amount { get; set; }
+        public string PaymentMethod { get; set; } = "";
+        public string ReferenceNumber { get; set; } = "";
+        public string Notes { get; set; } = "";
+    }
+
+    public class ContactFormModel
+    {
+        public DateTime ContactDate { get; set; } = DateTime.Now;
+        public string ContactMethod { get; set; } = "";
+        public string ContactResult { get; set; } = "";
+        public DateTime? PromisedPaymentDate { get; set; }
+        public decimal? PromisedAmount { get; set; }
+        public string Notes { get; set; } = "";
+        public bool ScheduleFollowUp { get; set; }
+        public DateTime? FollowUpDate { get; set; }
+    }
+}

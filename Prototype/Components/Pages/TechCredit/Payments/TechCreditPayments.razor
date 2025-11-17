@@ -1,0 +1,456 @@
+@page "/techcredit/payments"
+@using Prototype.Pages.Collections
+@using Prototype.Components.Pages.Collections.TechCredit
+@using Services
+@using global::Services
+@using static Prototype.Components.Pages.Collections.TechCredit.TechCreditPaymentsSeedData
+@inject IUrlState UrlState
+@inject NavigationManager Navigation
+@inject SidePanelService SidePanel
+
+<PageTitle>TechCredit Payments</PageTitle>
+
+<div class="techcredit-payments-page">
+    <div class="page-header">
+        <div class="header-main">
+            <h1>TechCredit Payments</h1>
+            <div class="view-selector">
+                <button class="view-tab @(_params.View == "PastDue" ? "active" : "")"
+                        @onclick='() => ChangeView("PastDue")'>
+                    <span class="k-icon k-i-warning"></span>
+                    Past Due (@_pastDueCount)
+                </button>
+                <button class="view-tab @(_params.View == "Scheduled" ? "active" : "")"
+                        @onclick='() => ChangeView("Scheduled")'>
+                    <span class="k-icon k-i-calendar"></span>
+                    Scheduled 4
+                </button>
+                <button class="view-tab @(_params.View == "History" ? "active" : "")"
+                        @onclick='() => ChangeView("History")'>
+                    <span class="k-icon k-i-file-txt"></span>
+                    History
+                </button>
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="stat-card stat-danger">
+                <div class="stat-label">Total Past Due</div>
+                <div class="stat-value">@_totalPastDue.ToString("C2")</div>
+                <div class="stat-sublabel">@_pastDueCount accounts</div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="stat-label">Due This Week</div>
+                <div class="stat-value">@_dueThisWeek.ToString("C2")</div>
+                <div class="stat-sublabel">@_dueThisWeekCount payments</div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="stat-label">Collected Today</div>
+                <div class="stat-value">@_collectedToday.ToString("C2")</div>
+                <div class="stat-sublabel">@_collectedTodayCount payments</div>
+            </div>
+            <div class="stat-card stat-info">
+                <div class="stat-label">Scheduled Next 30 Days</div>
+                <div class="stat-value">@_scheduledNext30Days.ToString("C2")</div>
+                <div class="stat-sublabel">@_scheduledNext30DaysCount payments</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar-section">
+        <div class="toolbar-left">
+            <TelerikButton Icon="@SvgIcon.RecycleSolid"
+                           OnClick="@RefreshData"
+                           ThemeColor="@ThemeConstants.Button.ThemeColor.Base">
+                Refresh
+            </TelerikButton>
+
+            @if (_params.View == "PastDue")
+            {
+                <TelerikButton Icon="@SvgIcon.InfoSolid"
+                               OnClick="@SendReminders"
+                               ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                               Enabled="@(_selectedPayments.Any())">
+                    Send Reminders (@_selectedPayments.Count())
+                </TelerikButton>
+            }
+
+            <TelerikButton Icon="@SvgIcon.FileExcel"
+                           OnClick="@ExportToExcel"
+                           ThemeColor="@ThemeConstants.Button.ThemeColor.Success">
+                Export
+            </TelerikButton>
+
+            <TelerikButton Icon="@SvgIcon.Print"
+                           OnClick="@PrintPayments"
+                           ThemeColor="@ThemeConstants.Button.ThemeColor.Base">
+                Print
+            </TelerikButton>
+        </div>
+
+        <div class="toolbar-right">
+            @if (_params.View == "History")
+            {
+                <div class="date-range-filter">
+                    <label>Date Range:</label>
+                    <TelerikDateRangePicker @bind-StartValue="@_startDate"
+                                            @bind-EndValue="@_endDate"
+                                            OnChange="@OnDateRangeChanged">
+                    </TelerikDateRangePicker>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (_params.View == "PastDue")
+    {
+        <div class="grid-container">
+            <TelerikGrid Data="@_pastDuePayments"
+                         Height="calc(100vh - 380px)"
+                         Pageable="true"
+                         PageSize="25"
+                         Sortable="true"
+                         FilterMode="GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         SelectionMode="GridSelectionMode.Multiple"
+                         @bind-SelectedItems="@_selectedPayments"
+                         OnRowClick="@OnPaymentRowClick">
+                <GridColumns>
+                    <GridCheckboxColumn Width="50px" />
+                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="200px" />
+                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="130px" />
+                    <GridColumn Field="@nameof(PaymentRecord.DaysOverdue)" Title="Days Late" Width="100px">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <span class="days-overdue days-@GetOverdueSeverity(payment.DaysOverdue)">
+                                    @payment.DaysOverdue days
+                                </span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.AmountDue)" Title="Amount Due" Width="120px" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PastDueAmount)" Title="Past Due" Width="120px" DisplayFormat="{0:C2}">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <span class="past-due-amount">@payment.PastDueAmount.ToString("C2")</span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.LastPaymentDate)" Title="Last Payment" Width="130px" DisplayFormat="{0:MM/dd/yyyy}" />
+                    <GridColumn Field="@nameof(PaymentRecord.LastPaymentAmount)" Title="Last Pmt Amt" Width="130px" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentFrequency)" Title="Frequency" Width="110px" />
+                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance" Width="120px" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.Phone)" Title="Phone" Width="140px" />
+                    <GridColumn Field="@nameof(PaymentRecord.ContactAttempts)" Title="Attempts" Width="100px" />
+                    <GridColumn Title="Actions" Width="150px">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <div class="action-buttons">
+                                    <TelerikButton Icon="@SvgIcon.Dollar"
+                                                   OnClick="@(() => RecordPayment(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Record Payment">
+                                    </TelerikButton>
+                                    <TelerikButton Icon="@SvgIcon.TabletOutline"
+                                                   OnClick="@(() => LogContact(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Log Contact">
+                                    </TelerikButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    }
+    else if (_params.View == "Scheduled")
+    {
+        <div class="grid-container">
+            <TelerikGrid Data="@_scheduledPayments"
+                         Height="calc(100vh - 380px)"
+                         Pageable="true"
+                         PageSize="25"
+                         Sortable="true"
+                         FilterMode="GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         SelectionMode="GridSelectionMode.Single"
+                         @bind-SelectedItems="@_selectedPayments"
+                         OnRowClick="@OnPaymentRowClick">
+                <GridColumns>
+                    <GridColumn Field="@nameof(PaymentRecord.ScheduledDate)" Title="Scheduled Date" Width="140px" DisplayFormat="{0:MM/dd/yyyy}">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                var daysUntil = (payment.ScheduledDate.GetValueOrDefault() - DateTime.Today).Days;
+                                <span class="scheduled-date @(daysUntil <= 7 ? "due-soon" : "")">
+                                    @payment.ScheduledDate?.ToString("MM/dd/yyyy")
+                                    @if (daysUntil <= 7 && daysUntil >= 0)
+                                    {
+                                        <span class="days-badge">@daysUntil days</span>
+                                    }
+                                </span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="200px" />
+                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="130px" />
+                    <GridColumn Field="@nameof(PaymentRecord.AmountDue)" Title="Amount Due" Width="120px" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentMethod)" Title="Method" Width="120px" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentFrequency)" Title="Frequency" Width="110px" />
+                    <GridColumn Field="@nameof(PaymentRecord.AutoPay)" Title="Auto-Pay" Width="100px">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                @if (payment.AutoPay)
+                                {
+                                    <span class="badge badge-success">Yes</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">No</span>
+                                }
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance" Width="120px" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.Phone)" Title="Phone" Width="140px" />
+                    <GridColumn Title="Actions" Width="120px">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <div class="action-buttons">
+                                    <TelerikButton Icon="@SvgIcon.Dollar"
+                                                   OnClick="@(() => RecordPayment(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Record Payment">
+                                    </TelerikButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    }
+    else if (_params.View == "History")
+    {
+        <div class="grid-container">
+            <TelerikGrid Data="@_paymentHistory"
+                         Height="calc(100vh - 380px)"
+                         Pageable="true"
+                         PageSize="25"
+                         Sortable="true"
+                         FilterMode="GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         SelectionMode="GridSelectionMode.Single"
+                         @bind-SelectedItems="@_selectedPayments"
+                         OnRowClick="@OnPaymentRowClick">
+                <GridColumns>
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentDate)" Title="Payment Date" Width="140px" DisplayFormat="{0:MM/dd/yyyy}" />
+                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="200px" />
+                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="130px" />
+                    <GridColumn Field="@nameof(PaymentRecord.AmountPaid)" Title="Amount Paid" Width="130px" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentMethod)" Title="Method" Width="120px" />
+                    <GridColumn Field="@nameof(PaymentRecord.ReferenceNumber)" Title="Reference #" Width="140px" />
+                    <GridColumn Field="@nameof(PaymentRecord.ProcessedBy)" Title="Processed By" Width="140px" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentStatus)" Title="Status" Width="110px">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <span class="badge badge-@GetStatusBadgeClass(payment.PaymentStatus)">
+                                    @payment.PaymentStatus
+                                </span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.Notes)" Title="Notes" Width="200px" />
+                    <GridColumn Title="Actions" Width="100px">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <div class="action-buttons">
+                                    <TelerikButton Icon="@SvgIcon.Print"
+                                                   OnClick="@(() => PrintReceipt(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Print Receipt">
+                                    </TelerikButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    }
+</div>
+
+@code {
+    private TechCreditPaymentsParameters _params = new();
+    private List<PaymentRecord> _pastDuePayments = new();
+    private List<PaymentRecord> _scheduledPayments = new();
+    private List<PaymentRecord> _paymentHistory = new();
+    private IEnumerable<PaymentRecord> _selectedPayments = new List<PaymentRecord>();
+
+    // Statistics
+    private decimal _totalPastDue = 0m;
+    private int _pastDueCount = 0;
+    private decimal _dueThisWeek = 0m;
+    private int _dueThisWeekCount = 0;
+    private decimal _collectedToday = 0m;
+    private int _collectedTodayCount = 0;
+    private decimal _scheduledNext30Days = 0m;
+    private int _scheduledNext30DaysCount = 0;
+
+    // Date range for history
+    private DateTime? _startDate = DateTime.Today.AddMonths(-1);
+    private DateTime? _endDate = DateTime.Today;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _params = TechCreditPaymentsParameters.FromUrl(UrlState);
+        await LoadPaymentsAsync();
+        CalculateStatistics();
+    }
+
+    private async Task LoadPaymentsAsync()
+    {
+        var allPayments = TechCreditPaymentsSeedData.GetPayments();
+
+        _pastDuePayments = allPayments
+            .Where(p => p.IsPastDue && p.PastDueAmount > 0)
+            .OrderByDescending(p => p.DaysOverdue)
+            .ToList();
+
+        _scheduledPayments = allPayments
+            .Where(p => p.ScheduledDate.HasValue && p.ScheduledDate.Value >= DateTime.Today)
+            .OrderBy(p => p.ScheduledDate)
+            .ToList();
+
+        _paymentHistory = allPayments
+            .Where(p => p.PaymentDate.HasValue &&
+                       p.PaymentDate.Value >= _startDate &&
+                       p.PaymentDate.Value <= _endDate)
+            .OrderByDescending(p => p.PaymentDate)
+            .ToList();
+
+        await Task.CompletedTask;
+    }
+
+    private void CalculateStatistics()
+    {
+        _totalPastDue = _pastDuePayments.Sum(p => p.PastDueAmount);
+        _pastDueCount = _pastDuePayments.Count;
+
+        var weekFromNow = DateTime.Today.AddDays(7);
+        var dueThisWeek = _scheduledPayments
+            .Where(p => p.ScheduledDate.HasValue && p.ScheduledDate.Value <= weekFromNow)
+            .ToList();
+        _dueThisWeek = dueThisWeek.Sum(p => p.AmountDue);
+        _dueThisWeekCount = dueThisWeek.Count;
+
+        var todaysPayments = _paymentHistory
+            .Where(p => p.PaymentDate.HasValue && p.PaymentDate.Value.Date == DateTime.Today)
+            .ToList();
+        _collectedToday = todaysPayments.Sum(p => p.AmountPaid);
+        _collectedTodayCount = todaysPayments.Count;
+
+        var next30Days = DateTime.Today.AddDays(30);
+        var scheduled30 = _scheduledPayments
+            .Where(p => p.ScheduledDate.HasValue && p.ScheduledDate.Value <= next30Days)
+            .ToList();
+        _scheduledNext30Days = scheduled30.Sum(p => p.AmountDue);
+        _scheduledNext30DaysCount = scheduled30.Count;
+    }
+
+    private void ChangeView(string view)
+    {
+        _params.View = view;
+        Navigation.NavigateTo(UrlState.BuildHref("/techcredit/payments", _params.ToScalars()));
+    }
+
+    private async Task OnDateRangeChanged()
+    {
+        await LoadPaymentsAsync();
+    }
+
+    private void OnPaymentRowClick(GridRowClickEventArgs args)
+    {
+        var payment = (PaymentRecord)args.Item;
+        OpenPaymentSidebar(payment);
+    }
+
+    private void OpenPaymentSidebar(PaymentRecord payment)
+    {
+        SidePanel.OnPaymentActionCompleted += RefreshData;
+        SidePanel.OpenPaymentPanel(payment, PaymentSidePanelMode.Details);
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadPaymentsAsync();
+        CalculateStatistics();
+        StateHasChanged();
+    }
+
+    private void RecordPayment(PaymentRecord payment)
+    {
+        SidePanel.OnPaymentActionCompleted += RefreshData;
+        SidePanel.OpenPaymentPanel(payment, PaymentSidePanelMode.RecordPayment);
+    }
+
+    private void LogContact(PaymentRecord payment)
+    {
+        SidePanel.OnPaymentActionCompleted += RefreshData;
+        SidePanel.OpenPaymentPanel(payment, PaymentSidePanelMode.LogContact);
+    }
+
+    private async Task SendReminders()
+    {
+        // Implement send reminders logic
+        await Task.CompletedTask;
+    }
+
+    private async Task ExportToExcel()
+    {
+        // Implement export logic
+        await Task.CompletedTask;
+    }
+
+    private async Task PrintPayments()
+    {
+        // Implement print logic
+        await Task.CompletedTask;
+    }
+
+    private async Task PrintReceipt(PaymentRecord payment)
+    {
+        // Implement print receipt logic
+        await Task.CompletedTask;
+    }
+
+    private string GetOverdueSeverity(int daysOverdue)
+    {
+        if (daysOverdue >= 30) return "critical";
+        if (daysOverdue >= 14) return "high";
+        if (daysOverdue >= 7) return "medium";
+        return "low";
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "completed" => "success",
+            "pending" => "warning",
+            "failed" => "danger",
+            "reversed" => "secondary",
+            _ => "info"
+        };
+    }
+}

@@ -37,41 +37,45 @@
         color: var(--text); /* ✅ Already using variable */
     }
 
-    /* Inputs / selects within meta (unified height) */
-    .rop-meta input,
-    .rop-meta select {
-        appearance: none;
-        height: 36px;
-        padding: 6px 10px;
-        border: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.14) */
-        border-radius: 10px;
-        background: var(--card-bg); /* ✅ Changed from #fff */
-        color: var(--text); /* ✅ Added */
-        font-size: .95rem;
-        outline: none;
-        transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+.rop-card {
+    margin-bottom: 1rem;
+}
+
+/* Inputs / selects within meta (unified height) */
+.rop-meta input,
+.rop-meta select {
+    appearance: none;
+    height: 36px;
+    padding: 6px 10px;
+    border: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.14) */
+    border-radius: 10px;
+    background: var(--card-bg); /* ✅ Changed from #fff */
+    color: var(--text); /* ✅ Added */
+    font-size: .95rem;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+    .rop-meta input[readonly] {
+        background: var(--hover-bg, #f9fafb); /* ✅ Changed from #f9fafb */
     }
 
-        .rop-meta input[readonly] {
-            background: var(--hover-bg, #f9fafb); /* ✅ Changed from #f9fafb */
-        }
-
-        .rop-meta input:focus,
-        .rop-meta select:focus {
-            border-color: var(--accent); /* ✅ Changed from #6aa5ff */
-            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), .15); /* ✅ Dynamic */
-        }
-
-    /* Checkbox */
-    .rop-meta .rop-pno {
-        width: 18px;
-        height: 18px;
+    .rop-meta input:focus,
+    .rop-meta select:focus {
+        border-color: var(--accent); /* ✅ Changed from #6aa5ff */
+        box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), .15); /* ✅ Dynamic */
     }
 
-    /* Align action buttons to grid end */
-    .rop-meta .field.align-end {
-        align-self: end;
-    }
+/* Checkbox */
+.rop-meta .rop-pno {
+    width: 18px;
+    height: 18px;
+}
+
+/* Align action buttons to grid end */
+.rop-meta .field.align-end {
+    align-self: end;
+}
 
 /* Tables (header tint just a bit different on this page) */
 .tbl.tbl-rop thead th {

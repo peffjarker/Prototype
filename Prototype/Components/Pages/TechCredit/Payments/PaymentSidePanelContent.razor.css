@@ -1,0 +1,99 @@
+/* PaymentSidePanelContent.razor.css */
+/* Styles for payment sidebar content */
+
+.payment-details,
+.payment-form,
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.customer-summary {
+    padding: 1rem;
+    background: var(--accent-weak);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.customer-summary h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text);
+    font-size: 1.1rem;
+}
+
+.customer-summary p {
+    margin: 0.25rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+[data-theme="dark"] .customer-summary {
+    background: rgba(var(--accent-rgb), 0.1);
+}
+
+.detail-section {
+    margin-bottom: 1.5rem;
+}
+
+.detail-section h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.5rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.detail-item label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.detail-value {
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+    .detail-value small {
+        color: var(--muted);
+        font-size: 0.85rem;
+    }
+
+.text-danger {
+    color: #dc2626 !important;
+}
+
+[data-theme="dark"] .text-danger {
+    color: #fca5a5 !important;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-actions {
+        flex-direction: column;
+    }
+}

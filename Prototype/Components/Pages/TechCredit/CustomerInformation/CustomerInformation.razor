@@ -271,15 +271,25 @@
             Title: "Option",
             Options: () => new[]
             {
-                new FacetOption("Customer Information", "Customer Information",
-                    Href: Url.BuildHref("/techcredit/customerinformation",
-                        new Dictionary<string, string?> { ["status"] = "All" })),
-                new FacetOption("Credit Application", "Credit Application",
-                    Href: Url.BuildHref("/techcredit/creditapplication",
-                        new Dictionary<string, string?> { ["status"] = "All" })),
-                new FacetOption("Sales Authorizations", "Sales Authorizations",
-                    Href: Url.BuildHref("/techcredit/salesauthorizations",
-                        new Dictionary<string, string?> { ["status"] = "All" })),
+        new FacetOption("Customer Information", "Customer Information",
+            Href: Url.BuildHref("/techcredit/customerinformation",
+                new Dictionary<string, string?> { ["status"] = "All" })),
+
+        new FacetOption("Credit Application", "Credit Application",
+            Href: Url.BuildHref("/techcredit/creditapplication",
+                new Dictionary<string, string?> { ["status"] = "All" })),
+
+        new FacetOption("Sales Authorizations", "Sales Authorizations",
+            Href: Url.BuildHref("/techcredit/salesauthorizations",
+                new Dictionary<string, string?> { ["status"] = "All" })),
+
+        new FacetOption("WCS Borrowers", "WCS Borrowers",
+            Href: Url.BuildHref("/techcredit/wcs",
+                new Dictionary<string, string?>())),
+
+        new FacetOption("Payments", "Payments",
+            Href: Url.BuildHref("/techcredit/payments",
+                new Dictionary<string, string?> { ["view"] = "PastDue" }))
             }
         );
 

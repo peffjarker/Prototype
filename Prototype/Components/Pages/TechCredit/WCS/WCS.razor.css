@@ -1,0 +1,155 @@
+/* TechCreditBorrowers.razor.css */
+/* Scoped styles for TechCredit Borrowers page */
+
+.techcredit-borrowers-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px);
+    padding: 1rem;
+    gap: 1rem;
+}
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.header-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+}
+
+.stat-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stat-value {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.stat-divider {
+    color: var(--border-strong);
+    font-weight: 300;
+}
+
+/* ===== TOOLBAR SECTION ===== */
+.toolbar-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.toolbar-left {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ===== GRID CONTAINER ===== */
+.grid-container {
+    flex: 1;
+    overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+/* ===== GRID FOOTER STATS ===== */
+.grid-footer-stats {
+    display: flex;
+    gap: 2rem;
+    padding: 0.75rem 1rem;
+    background: var(--header-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.footer-stat {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.footer-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.footer-value {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.footer-value.past-due {
+    color: #dc3545;
+}
+
+/* ===== CUSTOM GRID STYLES ===== */
+.past-due-amount {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Dark mode enhancements */
+[data-theme="dark"] .past-due-amount {
+    color: #ff6b6b;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+    .header-stats {
+        font-size: 0.8rem;
+    }
+
+    .toolbar-left {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .techcredit-borrowers-page {
+        padding: 0.5rem;
+    }
+
+    .header-stats {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .stat-divider {
+        display: none;
+    }
+
+    .grid-footer-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}

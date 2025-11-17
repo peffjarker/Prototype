@@ -1,7 +1,9 @@
 using Prototype.Components.Pages.Product.Webcat;
 using Prototype.Components.Pages.POXfer.PO;
+using Prototype.Components.Pages.Collections.TechCredit;
 using static Prototype.Components.Pages.Product.Webcat.WebcatSeedData;
 using static Prototype.Components.Pages.POXfer.PO.PurchaseOrdersSeedData;
+using static Prototype.Components.Pages.Collections.TechCredit.TechCreditPaymentsSeedData;
 
 namespace Prototype.Components.Services;
 
@@ -21,12 +23,21 @@ public class SidePanelService
     private string? _currentPoNumber;
     private PurchaseOrder? _currentPo;
 
+    // Payment-related state
+    private PaymentRecord? _currentPayment;
+    private PaymentSidePanelMode _paymentMode;
+
     private string? _errorMessage;
 
     /// <summary>
     /// Event raised when the side panel state changes
     /// </summary>
     public event Action? OnChange;
+
+    /// <summary>
+    /// Event raised when a payment action is completed (for refreshing parent)
+    /// </summary>
+    public event Func<Task>? OnPaymentActionCompleted;
 
     /// <summary>
     /// Gets whether the side panel is currently open
@@ -59,6 +70,16 @@ public class SidePanelService
     public PurchaseOrder? CurrentPo => _currentPo;
 
     /// <summary>
+    /// Gets the current payment being displayed
+    /// </summary>
+    public PaymentRecord? CurrentPayment => _currentPayment;
+
+    /// <summary>
+    /// Gets the current payment sidebar mode
+    /// </summary>
+    public PaymentSidePanelMode PaymentMode => _paymentMode;
+
+    /// <summary>
     /// Gets any error message to display
     /// </summary>
     public string? ErrorMessage => _errorMessage;
@@ -78,6 +99,7 @@ public class SidePanelService
         _currentItemNumber = itemNumber;
         _currentPoNumber = null;
         _currentPo = null;
+        _currentPayment = null;
         _errorMessage = null;
 
         // Fetch item data
@@ -110,6 +132,7 @@ public class SidePanelService
         _currentPoNumber = poNumber;
         _currentItemNumber = null;
         _currentItem = null;
+        _currentPayment = null;
         _errorMessage = null;
 
         // Fetch PO data
@@ -127,6 +150,58 @@ public class SidePanelService
     }
 
     /// <summary>
+    /// Opens the side panel with payment details
+    /// </summary>
+    /// <param name="payment">The payment record to display</param>
+    /// <param name="mode">The mode (Details, RecordPayment, LogContact)</param>
+    public void OpenPaymentPanel(PaymentRecord payment, PaymentSidePanelMode mode = PaymentSidePanelMode.Details)
+    {
+        if (payment == null)
+        {
+            return;
+        }
+
+        _contentType = SidePanelContentType.Payment;
+        _currentPayment = payment;
+        _paymentMode = mode;
+        _currentItemNumber = null;
+        _currentItem = null;
+        _currentPoNumber = null;
+        _currentPo = null;
+        _errorMessage = null;
+
+        _isOpen = true;
+        NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// Switches the payment panel to a different mode without closing
+    /// </summary>
+    /// <param name="mode">The new mode to switch to</param>
+    public void SwitchPaymentMode(PaymentSidePanelMode mode)
+    {
+        if (_contentType != SidePanelContentType.Payment || _currentPayment == null)
+        {
+            return;
+        }
+
+        _paymentMode = mode;
+        NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// Notifies that a payment action was completed and closes the panel
+    /// </summary>
+    public async Task CompletePaymentAction()
+    {
+        if (OnPaymentActionCompleted != null)
+        {
+            await OnPaymentActionCompleted.Invoke();
+        }
+        Close();
+    }
+
+    /// <summary>
     /// Closes the side panel
     /// </summary>
     public void Close()
@@ -137,6 +212,7 @@ public class SidePanelService
         _currentItem = null;
         _currentPoNumber = null;
         _currentPo = null;
+        _currentPayment = null;
         _errorMessage = null;
         NotifyStateChanged();
     }
@@ -154,5 +230,16 @@ public enum SidePanelContentType
 {
     None,
     Item,
-    PurchaseOrder
+    PurchaseOrder,
+    Payment
+}
+
+/// <summary>
+/// Enum representing the mode of the payment side panel
+/// </summary>
+public enum PaymentSidePanelMode
+{
+    Details,
+    RecordPayment,
+    LogContact
 }
