@@ -1,0 +1,116 @@
+/* ===================================================================== */
+/* TELERIK GRID DARK MODE FIX - FOR PAGE CONTENT AREAS                   */
+/* This fixes Telerik grids on Items On Order, PO, and other pages       */
+/* ===================================================================== */
+
+/* ============================================== */
+/* TELERIK GRIDS - MAIN CONTENT AREA              */
+/* ============================================== */
+
+/* Grid Container */
+[data-theme="dark"] .k-grid,
+[data-theme="dark"] .k-grid-container {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Grid Toolbar (Export buttons, Search, etc) */
+[data-theme="dark"] .k-grid-toolbar {
+    background-color: var(--header-bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Grid Header Row */
+[data-theme="dark"] .k-grid-header {
+    background-color: var(--header-bg) !important;
+    border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .k-grid-header th {
+    background-color: var(--header-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Grid Body - Data Cells */
+[data-theme="dark"] .k-grid-content {
+    background-color: var(--app-bg) !important;
+}
+
+[data-theme="dark"] .k-grid td {
+    background-color: var(--app-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Alternating Row Colors */
+[data-theme="dark"] .k-grid tr.k-alt td {
+    background-color: var(--card-bg) !important;
+}
+
+/* Hover State */
+[data-theme="dark"] .k-grid tr:hover td {
+    background-color: var(--row-hover) !important;
+}
+
+/* Selected Rows */
+[data-theme="dark"] .k-grid tr.k-selected td {
+    background-color: var(--sel-bg) !important;
+    color: var(--sel-text) !important;
+}
+
+/* Grid Footer (Totals) */
+[data-theme="dark"] .k-grid-footer {
+    background-color: var(--header-bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Pager */
+[data-theme="dark"] .k-pager {
+    background-color: var(--header-bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] .k-pager .k-button {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .k-pager .k-button:hover {
+    background-color: var(--hover-bg) !important;
+}
+
+/* Search Box and Inputs */
+[data-theme="dark"] .k-grid input,
+[data-theme="dark"] .k-grid-toolbar input {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Buttons in Toolbar */
+[data-theme="dark"] .k-grid-toolbar .k-button {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .k-grid-toolbar .k-button:hover {
+    background-color: var(--hover-bg) !important;
+}
+
+/* Icons */
+[data-theme="dark"] .k-grid .k-icon,
+[data-theme="dark"] .k-grid .k-svg-icon {
+    color: var(--text) !important;
+}
+
+/* ===================================================================== */
+/* LOAD ORDER: This file must load AFTER Telerik CSS                    */
+/* Place in HTML head AFTER kendo-theme-default/all.css                 */
+/* ===================================================================== */

@@ -83,13 +83,14 @@
 }
 
 <style>
+    /* Uses appearance CSS variables for theme support */
     .sidebar-footer {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.75rem;
-        background: #ffffff;
-        border-top: 1px solid #e2e8f0;
+        padding: var(--kendo-spacing-3);
+        background: var(--nav-bg);
+        border-top: 1px solid var(--nav-border);
         margin-top: auto;
     }
 
@@ -100,22 +101,22 @@
         background: transparent;
         border: none;
         cursor: pointer;
-        padding: 0.5rem 0.75rem;
+        padding: var(--kendo-spacing-2) var(--kendo-spacing-3);
         border-radius: 6px;
-        transition: all 0.15s ease;
+        transition: all var(--transition-duration) ease;
         flex: 1;
-        color: #475569;
+        color: var(--text-secondary);
         font-size: 0.875rem;
         font-weight: 400;
     }
 
         .settings-button:hover {
-            background: #f1f5f9;
-            color: #334155;
+            background: var(--hover-bg);
+            color: var(--text);
         }
 
         .settings-button:active {
-            background: #e2e8f0;
+            background: var(--border);
             transform: scale(0.98);
         }
 
@@ -125,34 +126,34 @@
 
     .collapse-toggle {
         background: transparent;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border);
         cursor: pointer;
-        padding: 0.5rem;
+        padding: var(--kendo-spacing-2);
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 6px;
-        transition: all 0.15s ease;
-        color: #64748b;
+        transition: all var(--transition-duration) ease;
+        color: var(--muted);
         min-width: 32px;
         height: 32px;
     }
 
         .collapse-toggle:hover {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
-            color: #475569;
+            background: var(--hover-bg);
+            border-color: var(--border-strong);
+            color: var(--text-secondary);
         }
 
         .collapse-toggle:active {
-            background: #e2e8f0;
+            background: var(--border);
             transform: scale(0.95);
         }
 
     /* When collapsed, center the toggle button */
     .sidebar-collapsed .sidebar-footer {
         justify-content: center;
-        padding: 0.75rem 0.5rem;
+        padding: var(--kendo-spacing-3) var(--kendo-spacing-2);
     }
 
     .sidebar-collapsed .settings-button {

@@ -131,10 +131,10 @@
 }
 
 <style>
-    /* Modern sidebar with refined aesthetics */
+    /* Modern sidebar with appearance CSS variables for theme support */
     .sidebar-sections {
         width: var(--ss-width);
-        background: #fafbfc;
+        background: var(--page-bg);
         display: flex;
         flex-direction: column;
         overflow-y: auto;
@@ -148,7 +148,7 @@
     }
 
         .ss-collapsible-wrapper:first-child {
-            margin-top: 0.75rem; /* Add breathing room after header */
+            margin-top: var(--kendo-spacing-3); /* Add breathing room after header */
         }
 
     /* Refined collapsible header */
@@ -159,35 +159,35 @@
         align-items: center;
         justify-content: space-between;
         padding: 0.625rem 1rem;
-        background: #ffffff;
+        background: var(--card-bg);
         border-radius: 8px;
-        margin: 0 0.5rem;
-        transition: all 0.2s ease;
+        margin: 0 var(--kendo-spacing-2);
+        transition: all var(--transition-duration) ease;
         font-weight: 500;
         font-size: 0.8125rem;
-        color: #475569;
+        color: var(--text-secondary);
         letter-spacing: 0.015em;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border);
     }
 
         .ss-collapsible-header:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            background: var(--hover-bg);
+            border-color: var(--border-strong);
+            box-shadow: var(--shadow-sm);
         }
 
         .ss-collapsible-header:active {
-            background: #f1f5f9;
+            background: var(--hover-bg);
             transform: scale(0.995);
         }
 
     /* Refined collapse icon using SVG-style character */
     .ss-collapse-icon {
         font-size: 0.625rem;
-        color: #94a3b8;
+        color: var(--muted);
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         margin-left: auto;
-        padding-left: 0.75rem;
+        padding-left: var(--kendo-spacing-3);
         font-weight: 600;
     }
 
@@ -214,7 +214,7 @@
 
     .ss-collapsible-inner {
         overflow: hidden;
-        padding: 0.25rem 0.5rem 0.5rem;
+        padding: 0.25rem var(--kendo-spacing-2) var(--kendo-spacing-2);
     }
 
     /* Section container */
@@ -233,34 +233,34 @@
         gap: 2px;
     }
 
-    /* Modern item styling with subtle accents */
+    /* Modern item styling with appearance variables */
     .ss-item {
         display: flex;
         align-items: center;
         gap: 0.625rem;
         padding: 0.5rem 0.875rem;
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all var(--transition-duration) ease;
         border-radius: 6px;
         border-left: 2px solid transparent;
         font-size: 0.875rem;
-        color: #475569;
+        color: var(--text-secondary);
         margin: 0 0.25rem;
         position: relative;
     }
 
         .ss-item:hover {
-            background: #f1f5f9;
-            border-left-color: #cbd5e1;
-            color: #334155;
+            background: var(--hover-bg);
+            border-left-color: var(--border-strong);
+            color: var(--text);
         }
 
         .ss-item.selected {
-            background: #eff6ff;
-            border-left-color: #3b82f6;
-            color: #1e40af;
+            background: var(--sel-bg);
+            border-left-color: var(--accent);
+            color: var(--accent);
             font-weight: 500;
-            box-shadow: 0 1px 2px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 1px 2px rgba(var(--accent-rgb), 0.1);
         }
 
             .ss-item.selected::before {
@@ -271,7 +271,7 @@
                 transform: translateY(-50%);
                 width: 2px;
                 height: 60%;
-                background: #3b82f6;
+                background: var(--accent);
                 border-radius: 0 2px 2px 0;
             }
 
@@ -282,16 +282,16 @@
         width: 1.125rem;
         height: 1.125rem;
         flex-shrink: 0;
-        color: #64748b;
-        transition: color 0.15s ease;
+        color: var(--muted);
+        transition: color var(--transition-duration) ease;
     }
 
     .ss-item:hover .ss-item-icon {
-        color: #475569;
+        color: var(--text-secondary);
     }
 
     .ss-item.selected .ss-item-icon {
-        color: #3b82f6;
+        color: var(--accent);
     }
 
     .ss-item-text {
@@ -299,11 +299,11 @@
         line-height: 1.4;
     }
 
-    /* Refined legend styles */
+    /* Refined legend styles with appearance variables */
     .ss-legend {
         list-style: none;
         margin: 0;
-        padding: 0.5rem 0.875rem;
+        padding: var(--kendo-spacing-2) 0.875rem;
     }
 
     .ss-legend-item {
@@ -318,23 +318,23 @@
             height: 0.625rem;
             border-radius: 50%;
             flex-shrink: 0;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 0 2px var(--card-bg);
         }
 
         .ss-legend-item .text {
             font-size: 0.8125rem;
-            color: #64748b;
+            color: var(--muted);
             line-height: 1.4;
         }
 
-    /* Subtle separator */
+    /* Subtle separator using appearance variables */
     .ss-separator {
-        padding: 0.75rem 1rem;
+        padding: var(--kendo-spacing-3) 1rem;
     }
 
         .ss-separator div {
             height: 1px;
-            background: linear-gradient(to right, transparent, #e2e8f0 15%, #e2e8f0 85%, transparent);
+            background: linear-gradient(to right, transparent, var(--border) 15%, var(--border) 85%, transparent);
         }
 
     /* Franchise selector integration */
@@ -343,7 +343,7 @@
         background: transparent;
     }
 
-    /* Scrollbar styling for modern look */
+    /* Scrollbar styling for modern look using appearance variables */
     .sidebar-sections::-webkit-scrollbar {
         width: 6px;
     }
@@ -353,11 +353,17 @@
     }
 
     .sidebar-sections::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: var(--border-strong);
         border-radius: 3px;
     }
 
         .sidebar-sections::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            background: var(--muted);
         }
+
+    /* Firefox scrollbar */
+    .sidebar-sections {
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-strong) transparent;
+    }
 </style>

@@ -1,0 +1,374 @@
+/* sidebar-complete-dark-mode.css */
+/* Complete sidebar dark mode solution - addresses all light elements */
+
+/* ===== MAIN SIDEBAR CONTAINER ===== */
+
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .app-sidebar,
+[data-theme="dark"] nav.sidebar {
+    background-color: var(--nav-bg) !important;
+    color: var(--text) !important;
+    /*border-right-color: var(--nav-border) !important;*/
+}
+
+/* ===== DEALER SECTION ===== */
+
+[data-theme="dark"] .dealer-section,
+[data-theme="dark"] .sidebar .dealer-selector {
+    background-color: var(--nav-bg) !important;
+    border-bottom-color: var(--nav-border) !important;
+}
+
+[data-theme="dark"] .dealer-section label,
+[data-theme="dark"] .dealer-label {
+    color: var(--muted) !important;
+}
+
+/* ===== ALL TELERIK DROPDOWNS IN SIDEBAR ===== */
+
+/* Main input containers */
+[data-theme="dark"] .sidebar .k-input,
+[data-theme="dark"] .sidebar .k-picker,
+[data-theme="dark"] .sidebar .k-combobox,
+[data-theme="dark"] .sidebar .k-dropdownlist,
+[data-theme="dark"] nav .k-input,
+[data-theme="dark"] nav .k-picker {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Input text */
+[data-theme="dark"] .sidebar .k-input-inner,
+[data-theme="dark"] .sidebar .k-input-value-text,
+[data-theme="dark"] nav .k-input-inner {
+    background-color: transparent !important;
+    color: var(--text) !important;
+}
+
+/* Placeholder */
+[data-theme="dark"] .sidebar .k-input-inner::placeholder,
+[data-theme="dark"] nav .k-input-inner::placeholder {
+    color: var(--muted) !important;
+    opacity: 0.7;
+}
+
+/* Hover state */
+[data-theme="dark"] .sidebar .k-input:hover,
+[data-theme="dark"] .sidebar .k-picker:hover,
+[data-theme="dark"] nav .k-input:hover {
+    background-color: var(--hover-bg) !important;
+    border-color: var(--border-strong) !important;
+}
+
+/* Focus state */
+[data-theme="dark"] .sidebar .k-input:focus-within,
+[data-theme="dark"] .sidebar .k-picker:focus-within,
+[data-theme="dark"] nav .k-input:focus-within {
+    background-color: var(--card-bg) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.25) !important;
+}
+
+/* Dropdown arrow button */
+[data-theme="dark"] .sidebar .k-select,
+[data-theme="dark"] .sidebar .k-input-button,
+[data-theme="dark"] nav .k-select {
+    background-color: transparent !important;
+    color: var(--text-secondary) !important;
+}
+
+    [data-theme="dark"] .sidebar .k-select:hover,
+    [data-theme="dark"] nav .k-select:hover {
+        background-color: var(--hover-bg) !important;
+        color: var(--text) !important;
+    }
+
+/* ===== NAVIGATION MENU ITEMS ===== */
+
+[data-theme="dark"] .sidebar nav ul,
+[data-theme="dark"] .sidebar .nav-menu,
+[data-theme="dark"] .sidebar-menu {
+    background-color: transparent !important;
+}
+
+[data-theme="dark"] .sidebar nav li,
+[data-theme="dark"] .sidebar .nav-item,
+[data-theme="dark"] .sidebar-menu-item {
+    color: var(--text-secondary) !important;
+    background-color: transparent !important;
+}
+
+    [data-theme="dark"] .sidebar nav li:hover,
+    [data-theme="dark"] .sidebar .nav-item:hover {
+        background-color: var(--hover-bg) !important;
+        color: var(--text) !important;
+    }
+
+    [data-theme="dark"] .sidebar nav li.active,
+    [data-theme="dark"] .sidebar .nav-item.active,
+    [data-theme="dark"] .sidebar .nav-item.selected {
+        background-color: var(--sel-bg) !important;
+        color: var(--sel-text) !important;
+        border-left-color: var(--accent) !important;
+    }
+
+/* Menu item text */
+[data-theme="dark"] .sidebar .menu-text,
+[data-theme="dark"] .sidebar .nav-link {
+    color: var(--text-secondary) !important;
+}
+
+    [data-theme="dark"] .sidebar .menu-text:hover,
+    [data-theme="dark"] .sidebar .nav-link:hover {
+        color: var(--text) !important;
+    }
+
+/* Faded/disabled looking items */
+[data-theme="dark"] .sidebar nav li[style*="opacity"],
+[data-theme="dark"] .sidebar .nav-item[style*="opacity"] {
+    opacity: 1 !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ===== MODULE SELECTOR / DROPDOWN NAVIGATION ===== */
+
+[data-theme="dark"] .module-selector,
+[data-theme="dark"] .sidebar-dropdown,
+[data-theme="dark"] .nav-dropdown-container {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .module-selector .k-dropdown,
+[data-theme="dark"] .sidebar-dropdown button,
+[data-theme="dark"] .nav-dropdown-toggle {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* ===== DROPDOWN POPUP LISTS ===== */
+
+/* Popup container */
+[data-theme="dark"] .k-animation-container,
+[data-theme="dark"] .k-popup,
+[data-theme="dark"] .k-list-container {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-strong) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+
+/* List wrapper */
+[data-theme="dark"] .k-list-ul,
+[data-theme="dark"] .k-list {
+    background-color: transparent !important;
+}
+
+/* List items */
+[data-theme="dark"] .k-list-item,
+[data-theme="dark"] .k-list-optionlabel {
+    background-color: transparent !important;
+    color: var(--text) !important;
+}
+
+/* Hover */
+[data-theme="dark"] .k-list-item:hover,
+[data-theme="dark"] .k-list-item.k-hover {
+    background-color: var(--hover-bg) !important;
+    color: var(--text) !important;
+}
+
+/* Selected */
+[data-theme="dark"] .k-list-item.k-selected {
+    background-color: var(--sel-bg) !important;
+    color: var(--sel-text) !important;
+}
+
+/* Focus */
+[data-theme="dark"] .k-list-item.k-focus {
+    outline-color: var(--accent) !important;
+}
+
+/* ===== SIDEBAR SECTIONS/GROUPS ===== */
+
+[data-theme="dark"] .sidebar-section,
+[data-theme="dark"] .sidebar-group {
+    background-color: transparent !important;
+    border-color: var(--nav-border) !important;
+}
+
+[data-theme="dark"] .sidebar-section-header,
+[data-theme="dark"] .sidebar-group-header {
+    background-color: transparent !important;
+    color: var(--text-secondary) !important;
+    border-bottom-color: var(--nav-border) !important;
+}
+
+/* ===== SIDEBAR SCROLLBAR ===== */
+
+[data-theme="dark"] .sidebar::-webkit-scrollbar,
+[data-theme="dark"] nav::-webkit-scrollbar {
+    width: 8px;
+}
+
+[data-theme="dark"] .sidebar::-webkit-scrollbar-track,
+[data-theme="dark"] nav::-webkit-scrollbar-track {
+    background: var(--app-bg);
+}
+
+[data-theme="dark"] .sidebar::-webkit-scrollbar-thumb,
+[data-theme="dark"] nav::-webkit-scrollbar-thumb {
+    background-color: var(--border-strong);
+    border-radius: 4px;
+}
+
+    [data-theme="dark"] .sidebar::-webkit-scrollbar-thumb:hover,
+    [data-theme="dark"] nav::-webkit-scrollbar-thumb:hover {
+        background-color: var(--muted);
+    }
+
+/* ===== SPECIFIC COMPONENT FIXES ===== */
+
+/* Franchise combo in header */
+[data-theme="dark"] .franchise-combo-wrapper .k-input {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border) !important;
+}
+
+[data-theme="dark"] .franchise-combo-wrapper .k-input-inner {
+    color: var(--text) !important;
+}
+
+/* PO/Transfer selector */
+[data-theme="dark"] [class*="po-transfer"] .k-dropdown,
+[data-theme="dark"] [class*="module-select"] .k-dropdown {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+}
+
+/* ===== BUTTONS IN SIDEBAR ===== */
+
+[data-theme="dark"] .sidebar button,
+[data-theme="dark"] .sidebar .k-button {
+    background-color: transparent !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border) !important;
+}
+
+    [data-theme="dark"] .sidebar button:hover,
+    [data-theme="dark"] .sidebar .k-button:hover {
+        background-color: var(--hover-bg) !important;
+        color: var(--text) !important;
+    }
+
+    [data-theme="dark"] .sidebar button:active,
+    [data-theme="dark"] .sidebar .k-button:active {
+        background-color: var(--border) !important;
+    }
+
+/* ===== ICONS IN SIDEBAR ===== */
+
+[data-theme="dark"] .sidebar .k-icon,
+[data-theme="dark"] .sidebar .k-svg-icon,
+[data-theme="dark"] nav .icon {
+    color: var(--text-secondary) !important;
+}
+
+    [data-theme="dark"] .sidebar .nav-item:hover .k-icon,
+    [data-theme="dark"] .sidebar .nav-item:hover .k-svg-icon {
+        color: var(--text) !important;
+    }
+
+    [data-theme="dark"] .sidebar .nav-item.active .k-icon,
+    [data-theme="dark"] .sidebar .nav-item.active .k-svg-icon {
+        color: var(--accent) !important;
+    }
+
+/* ===== DIVIDERS/SEPARATORS ===== */
+
+[data-theme="dark"] .sidebar hr,
+[data-theme="dark"] .sidebar .divider,
+[data-theme="dark"] .sidebar .separator {
+    border-color: var(--nav-border) !important;
+    background-color: var(--nav-border) !important;
+}
+
+/* ===== REMOVE ANY INLINE WHITE BACKGROUNDS ===== */
+
+[data-theme="dark"] .sidebar [style*="background: white"],
+[data-theme="dark"] .sidebar [style*="background: #fff"],
+[data-theme="dark"] .sidebar [style*="background-color: white"],
+[data-theme="dark"] .sidebar [style*="background-color: #fff"] {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] nav [style*="background: white"],
+[data-theme="dark"] nav [style*="background-color: white"] {
+    background-color: var(--nav-bg) !important;
+}
+
+/* Remove any inline light text colors */
+[data-theme="dark"] .sidebar [style*="color: #333"],
+[data-theme="dark"] .sidebar [style*="color: #666"],
+[data-theme="dark"] .sidebar [style*="color: black"] {
+    color: var(--text-secondary) !important;
+}
+
+/* ===== SYSTEM PREFERENCE SUPPORT ===== */
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .sidebar {
+        background-color: var(--nav-bg) !important;
+    }
+
+    :root:not([data-theme="light"]) .sidebar .k-input,
+    :root:not([data-theme="light"]) nav .k-input {
+        background-color: var(--card-bg) !important;
+        color: var(--text) !important;
+        border-color: var(--border) !important;
+    }
+
+    :root:not([data-theme="light"]) .sidebar nav li {
+        color: var(--text-secondary) !important;
+    }
+}
+
+/* ===== HIGHEST PRIORITY OVERRIDES ===== */
+
+/* If nothing else works, these nuclear options will */
+[data-theme="dark"] #sidebar,
+[data-theme="dark"] aside.sidebar,
+[data-theme="dark"] .app-sidebar,
+[data-theme="dark"] .main-sidebar {
+    background-color: var(--nav-bg) !important;
+    color: var(--text) !important;
+}
+
+    [data-theme="dark"] #sidebar *,
+    [data-theme="dark"] aside.sidebar *,
+    [data-theme="dark"] .app-sidebar * {
+        border-color: var(--nav-border) !important;
+    }
+
+/* Force all inputs in sidebar to be dark */
+[data-theme="dark"] .sidebar input,
+[data-theme="dark"] .sidebar select,
+[data-theme="dark"] .sidebar textarea,
+[data-theme="dark"] nav input,
+[data-theme="dark"] nav select {
+    background-color: var(--card-bg) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* ===== DEBUG HELPER ===== */
+
+/* Uncomment this to highlight all white/light backgrounds in dark mode */
+/*
+[data-theme="dark"] .sidebar *[style*="background: white"],
+[data-theme="dark"] .sidebar *[style*="background: #fff"],
+[data-theme="dark"] .sidebar *[style*="background-color: white"],
+[data-theme="dark"] .sidebar *[style*="background-color: #ffffff"] {
+    outline: 2px solid red !important;
+}
+*/

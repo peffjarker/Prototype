@@ -1,7 +1,7 @@
 // appearance-manager.js
 // This file manages loading and applying appearance settings from localStorage
 
-(function() {
+(function () {
     'use strict';
 
     // Default settings
@@ -51,7 +51,7 @@
     // Load settings from localStorage
     function loadSettings() {
         const settings = { ...defaults };
-        
+
         try {
             const theme = localStorage.getItem('ibn-theme');
             if (theme) settings.theme = JSON.parse(theme);
@@ -89,7 +89,7 @@
     // Apply theme (light/dark/auto)
     function applyTheme(theme) {
         const root = document.documentElement;
-        
+
         if (theme === 'auto') {
             // Check system preference
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -97,15 +97,16 @@
         }
 
         if (theme === 'dark') {
-            root.style.setProperty('--app-bg', '#111827');
-            root.style.setProperty('--card-bg', '#1f2937');
-            root.style.setProperty('--border', '#374151');
+            root.style.setProperty('--app-bg', '#0f172a');
+            root.style.setProperty('--card-bg', '#1a1f2e');
+            root.style.setProperty('--border', '#2d3748');
             root.style.setProperty('--border-strong', '#4b5563');
-            root.style.setProperty('--text', '#f9fafb');
-            root.style.setProperty('--muted', '#9ca3af');
+            root.style.setProperty('--text', '#f1f5f9');
+            root.style.setProperty('--muted', '#94a3b8');
             root.style.setProperty('--row-hover', '#374151');
-            root.style.setProperty('--nav-bg', '#111827');
-            root.style.setProperty('--nav-border', '#1f2937');
+            root.style.setProperty('--nav-bg', '#1a1f2e');
+            root.style.setProperty('--nav-border', '#2d3748');
+            root.style.setProperty('--hover-bg', '#1f2937');
         } else {
             root.style.setProperty('--app-bg', '#fff');
             root.style.setProperty('--card-bg', '#fff');
@@ -116,6 +117,7 @@
             root.style.setProperty('--row-hover', '#f1f5f9');
             root.style.setProperty('--nav-bg', '#ffffff');
             root.style.setProperty('--nav-border', '#e5e7eb');
+            root.style.setProperty('--hover-bg', '#f8f9fa');
         }
 
         // Set body background
@@ -130,6 +132,22 @@
         root.style.setProperty('--accent', colors.primary);
         root.style.setProperty('--accent-weak', colors.light);
         root.style.setProperty('--accent-hover', colors.hover);
+
+        // Extract RGB values from hex
+        const rgb = hexToRgb(colors.primary);
+        if (rgb) {
+            root.style.setProperty('--accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+        }
+    }
+
+    // Convert hex to RGB
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
     }
 
     // Apply density
@@ -164,7 +182,7 @@
     // Apply animations setting
     function applyAnimations(enabled) {
         const root = document.documentElement;
-        
+
         if (!enabled) {
             root.style.setProperty('--transition-duration', '0ms');
             root.style.setProperty('--animation-duration', '0ms');

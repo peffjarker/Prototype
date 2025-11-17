@@ -58,20 +58,21 @@
 }
 
 <style>
+    /* Uses appearance CSS variables for theme support */
     .sidebar-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 1rem;
-        background: #ffffff;
-        border-bottom: 1px solid #e5e7eb;
+        background: var(--nav-bg);
+        border-bottom: 1px solid var(--nav-border);
         min-height: 52px;
     }
 
     .sidebar-title {
         font-weight: 600;
         font-size: 0.875rem;
-        color: #6b7280;
+        color: var(--muted);
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
@@ -80,32 +81,32 @@
         background: transparent;
         border: none;
         cursor: pointer;
-        padding: 0.5rem;
+        padding: var(--kendo-spacing-2);
         display: flex;
         align-items: center;
         justify-content: center;
         border-radius: 6px;
-        transition: all 0.15s ease;
+        transition: all var(--transition-duration) ease;
     }
 
         .sidebar-toggle:hover {
-            background: #f3f4f6;
+            background: var(--hover-bg);
         }
 
         .sidebar-toggle:active {
-            background: #e5e7eb;
+            background: var(--border);
         }
 
     .toggle-icon {
         font-size: 1.25rem;
-        color: #6b7280;
+        color: var(--muted);
         line-height: 1;
     }
 
     /* When collapsed, center the button */
     .sidebar-collapsed .sidebar-header {
         justify-content: center;
-        padding: 0.75rem 0.5rem;
+        padding: var(--kendo-spacing-3) var(--kendo-spacing-2);
     }
 
     .sidebar-collapsed .sidebar-title {

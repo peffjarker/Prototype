@@ -120,7 +120,7 @@ main {
 }
 
 .ptl-sidebar {
-    border-right: 1px solid #e5e7eb;
+    border-right: 1px solid var(--border);
     overflow: auto;
     background: #f9fafb;
 }
