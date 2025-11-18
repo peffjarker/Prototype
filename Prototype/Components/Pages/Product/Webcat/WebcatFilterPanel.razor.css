@@ -39,7 +39,7 @@
     align-items: center;
     padding: 1rem;
     border-top: 1px solid #dee2e6;
-    background: #f8f9fa;
+    background: var(--app-bg);
 }
 
 .filter-summary {

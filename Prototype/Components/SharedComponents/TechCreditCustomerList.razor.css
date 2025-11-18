@@ -28,7 +28,7 @@
     }
 
     .customer-item.selected {
-        background: #007bff;
+        background: var(--accent);
         color: white;
         font-weight: 600;
     }

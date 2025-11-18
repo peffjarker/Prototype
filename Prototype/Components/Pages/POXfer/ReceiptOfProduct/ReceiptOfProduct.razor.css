@@ -77,40 +77,6 @@
     align-self: end;
 }
 
-/* Tables (header tint just a bit different on this page) */
-.tbl.tbl-rop thead th {
-    background: var(--hover-bg, #fbfcfe); /* ✅ Changed from #fbfcfe */
-    border-bottom: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.08) */
-}
-
-.tbl.tbl-rop tbody td {
-    border-bottom: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.06) */
-}
-
-.tbl.tbl-rop tbody tr:hover {
-    background: var(--row-hover, #fafbff); /* ✅ Changed from #fafbff */
-}
-
-.tbl.tbl-rop .num {
-    text-align: right;
-}
-
-.tbl.tbl-rop .w-label {
-    width: 72px;
-}
-
-.tbl.tbl-rop .w-po {
-    width: 140px;
-}
-
-.tbl.tbl-rop .w-ln {
-    width: 76px;
-}
-
-.tbl.tbl-rop .w-status {
-    width: 120px;
-}
-
 /* Responsive */
 @media (max-width:1200px) {
     .rop-meta {
