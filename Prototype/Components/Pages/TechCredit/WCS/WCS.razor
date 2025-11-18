@@ -92,12 +92,10 @@
                         }
                     </Template>
                 </GridColumn>
-                <GridColumn Field="@nameof(BorrowerRecord.PastDueAmt)" Title="Past Due Amt" Width="130px" DisplayFormat="{0:C2}" />
+                <GridColumn Field="@nameof(BorrowerRecord.XFR)" Title="Amt Due" Width="100px" DisplayFormat="{0:C2}" />
                 <GridColumn Field="@nameof(BorrowerRecord.LastPmtDate)" Title="Last Pmt Date" Width="120px" DisplayFormat="{0:M/d/yyyy}" />
-                <GridColumn Field="@nameof(BorrowerRecord.YFRBIncl)" Title="YFR Incl" Width="90px" />
-                <GridColumn Field="@nameof(BorrowerRecord.XFR)" Title="XFR" Width="80px" />
                 <GridColumn Field="@nameof(BorrowerRecord.Wks)" Title="Wks" Width="80px" />
-                <GridColumn Field="@nameof(BorrowerRecord.BorrowerID)" Title="Borrower ID" Width="130px" />
+                <GridColumn Field="@nameof(BorrowerRecord.XFR)" Title="XFR" Width="80px" />
                 <GridColumn Field="@nameof(BorrowerRecord.NextPmtDate)" Title="Next Pmt Date" Width="120px" DisplayFormat="{0:M/d/yyyy}" />
                 <GridColumn Field="@nameof(BorrowerRecord.AmtCollected)" Title="Amt Collected" Width="130px" DisplayFormat="{0:C2}" />
                 <GridColumn Field="@nameof(BorrowerRecord.DateCollected)" Title="Date Collected" Width="130px" DisplayFormat="{0:M/d/yyyy}" />
