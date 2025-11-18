@@ -38,8 +38,8 @@
     }
 
     .item-row.selected {
-        background-color: #e7f3ff;
-        border-left: 3px solid #007bff;
+        background-color: rgb(var(--accent) / 10%);
+        border-left: 3px solid var(--accent);
     }
 
     .item-row.item-discontinued {

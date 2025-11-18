@@ -2,7 +2,6 @@
 
 .customers-panel {
     border-right: 1px solid var(--kendo-color-border, #e5e7eb);
-    background: #f8f9fa;
     overflow-y: auto;
     max-height: calc(100vh - 200px);
 }
@@ -28,7 +27,6 @@
     }
 
     .customer-item.selected {
-        background: var(--accent);
-        color: white;
-        font-weight: 600;
+        background-color: rgb(var(--accent) / 10%);
+        border-left: 3px solid var(--accent);
     }

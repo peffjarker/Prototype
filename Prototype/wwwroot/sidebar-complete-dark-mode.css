@@ -179,8 +179,8 @@
 }
 
 /* Selected */
-[data-theme="dark"] .k-list-item.k-selected {
-    background-color: var(--sel-bg) !important;
+.k-list-item.k-selected {
+    background-color: var(--accent) !important;
     color: var(--sel-text) !important;
 }
 

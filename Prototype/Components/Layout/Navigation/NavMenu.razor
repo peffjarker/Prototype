@@ -384,51 +384,6 @@
 }
 
 <style>
-    /* wwwroot/css/navmenu.css */
-    /* --- Design tokens (light) --- */
-    :root {
-        --nav-bg: #ffffff;
-        --nav-border: #e5e7eb;
-        --nav-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-        --text-muted: #6b7280;
-        --text: #111827;
-        --text-secondary: #374151;
-        --brand: #1e40af;
-        --brand-hover: #1e3a8a;
-        --hover-bg: #f3f4f6;
-        --active-bg: #eff6ff;
-        --active-text: #1e40af;
-        --accent: #3b82f6;
-        --danger: #dc2626;
-        --surface: #ffffff;
-        --overlay: rgba(0, 0, 0, 0.4);
-        --border-radius: 6px;
-    }
-
-    /* --- Design tokens (dark) --- */
-    @@media (prefers-color-scheme: dark) {
-        : root
-
-    {
-        --nav-bg: #111827;
-        --nav-border: #1f2937;
-        --nav-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        --text-muted: #9ca3af;
-        --text: #f9fafb;
-        --text-secondary: #d1d5db;
-        --brand: #60a5fa;
-        --brand-hover: #93c5fd;
-        --hover-bg: #1f2937;
-        --active-bg: #1e3a8a;
-        --active-text: #93c5fd;
-        --accent: #3b82f6;
-        --danger: #ef4444;
-        --surface: #1f2937;
-        --overlay: rgba(0, 0, 0, 0.7);
-    }
-
-    }
-
     /* --- App bar --- */
     .appbar {
         position: sticky;
@@ -529,7 +484,6 @@
         transition: all 0.15s ease;
         position: relative;
         white-space: nowrap;
-        color: var(--text-secondary);
     }
 
         .nav-item:hover {
@@ -538,8 +492,7 @@
         }
 
         .nav-item.is-active {
-            background: var(--active-bg);
-            color: var(--nav-bg);
+            color: var(--accent);
             font-weight: 600;
         }
 
