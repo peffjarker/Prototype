@@ -310,9 +310,16 @@
     private bool IsActive(string href)
     {
         if (string.IsNullOrWhiteSpace(currentPath)) return href == "/";
-        var rel = "/" + currentPath.TrimStart('/');
-        return string.Equals(rel, href, StringComparison.OrdinalIgnoreCase)
-               || (href != "/" && rel.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase));
+
+        // Remove query string from current path for comparison
+        var currentPathWithoutQuery = currentPath.Split('?')[0];
+        var rel = "/" + currentPathWithoutQuery.TrimStart('/');
+
+        // Remove query string from href for comparison
+        var hrefWithoutQuery = href.Split('?')[0];
+
+        return string.Equals(rel, hrefWithoutQuery, StringComparison.OrdinalIgnoreCase)
+               || (hrefWithoutQuery != "/" && rel.StartsWith(hrefWithoutQuery + "/", StringComparison.OrdinalIgnoreCase));
     }
 
     private void ToggleDrawer() => drawerOpen = !drawerOpen;
@@ -484,6 +491,7 @@
         transition: all 0.15s ease;
         position: relative;
         white-space: nowrap;
+        color: var(--muted);
     }
 
         .nav-item:hover {
@@ -581,7 +589,7 @@
         color: #fff;
         font-weight: 600;
         font-size: 13px;
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        background: var(--accent);
     }
 
         .user-avatar.large {
@@ -640,7 +648,7 @@
         background: var(--nav-bg);
         color: var(--text);
         border: 1px solid var(--nav-border);
-        border-radius: 12px;
+        /* border-radius: 12px; */
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1);
         z-index: 5001;
         display: flex;
@@ -687,7 +695,7 @@
         font-weight: 600;
         cursor: pointer;
         padding: 4px 8px;
-        border-radius: 4px;
+        /* border-radius: 4px; */
         transition: all 0.15s ease;
     }
 
@@ -725,7 +733,7 @@
         width: 36px;
         height: 36px;
         padding: 8px;
-        border-radius: 8px;
+        /* border-radius: 8px; */
         background: var(--hover-bg);
         color: var(--text-muted);
         flex-shrink: 0;
@@ -1012,10 +1020,6 @@
 
     .brand-text {
         font-size: 15px;
-    }
-
-    .brand-sub {
-        font-size: 10px;
     }
 
     }

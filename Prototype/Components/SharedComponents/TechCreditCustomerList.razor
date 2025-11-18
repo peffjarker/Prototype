@@ -1,20 +1,90 @@
-@* Shared component for displaying filterable customer list in TechCredit pages *@
-
+﻿@* Shared component for displaying filterable customer list in TechCredit pages *@
 @typeparam TCustomer where TCustomer : class
-
 <div class="customers-panel">
-    <div class="customer-list">
-        @foreach (var customer in Customers)
+    <div class="search-container">
+        <input type="text"
+               class="customer-search"
+               placeholder="Search customers..."
+               @bind="SearchTerm"
+               @bind:event="oninput" />
+        @if (!string.IsNullOrWhiteSpace(SearchTerm))
         {
-            <button class="customer-item @(GetCustomerId(customer) == SelectedCustomerId ? "selected" : "")"
-                    @onclick="() => OnCustomerSelected.InvokeAsync(GetCustomerId(customer))">
-                @GetCustomerName(customer)
+            <button class="clear-search" @onclick="ClearSearch" title="Clear search">
+                ✕
             </button>
+        }
+    </div>
+    <div class="customer-list">
+        @if (FilteredCustomers.Any())
+        {
+            @foreach (var customer in FilteredCustomers)
+            {
+                <button class="customer-item @(GetCustomerId(customer) == SelectedCustomerId ? "selected" : "")"
+                        @onclick="() => OnCustomerSelected.InvokeAsync(GetCustomerId(customer))">
+                    @GetCustomerName(customer)
+                </button>
+            }
+        }
+        else
+        {
+            <div class="no-results">
+                No customers found matching "@SearchTerm"
+            </div>
         }
     </div>
 </div>
 
+<style>
+    .search-container {
+        position: relative;
+        padding: 12px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .customer-search {
+        width: 100%;
+        padding: 8px 32px 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+        .customer-search:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+        }
+
+    .clear-search {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px 8px;
+        line-height: 1;
+    }
+
+        .clear-search:hover {
+            color: #333;
+        }
+
+    .no-results {
+        padding: 20px;
+        text-align: center;
+        color: #666;
+        font-style: italic;
+    }
+</style>
+
 @code {
+    private string _searchTerm = string.Empty;
+
     /// <summary>
     /// List of customers to display
     /// </summary>
@@ -45,11 +115,50 @@
     [Parameter]
     public EventCallback<string> OnCustomerSelected { get; set; }
 
+    /// <summary>
+    /// Search term for filtering customers
+    /// </summary>
+    private string SearchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            if (_searchTerm != value)
+            {
+                _searchTerm = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Filtered list of customers based on search term
+    /// </summary>
+    private IEnumerable<TCustomer> FilteredCustomers
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(SearchTerm))
+                return Customers;
+
+            return Customers.Where(c =>
+                GetCustomerName(c)?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) == true);
+        }
+    }
+
+    /// <summary>
+    /// Clears the search term
+    /// </summary>
+    private void ClearSearch()
+    {
+        SearchTerm = string.Empty;
+    }
+
     protected override void OnParametersSet()
     {
         if (GetCustomerId == null)
             throw new ArgumentNullException(nameof(GetCustomerId), "GetCustomerId parameter is required");
-        
+
         if (GetCustomerName == null)
             throw new ArgumentNullException(nameof(GetCustomerName), "GetCustomerName parameter is required");
     }

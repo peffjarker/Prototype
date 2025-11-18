@@ -58,12 +58,6 @@
 
     <div class="toolbar-section">
         <div class="toolbar-left">
-            <TelerikButton Icon="@SvgIcon.RecycleSolid"
-                           OnClick="@RefreshData"
-                           ThemeColor="@ThemeConstants.Button.ThemeColor.Base">
-                Refresh
-            </TelerikButton>
-
             @if (_view == "PastDue")
             {
                 <TelerikButton Icon="@SvgIcon.MyspaceBox"

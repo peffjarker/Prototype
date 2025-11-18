@@ -20,6 +20,8 @@
     border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
     transition: background 0.15s ease;
     font-size: 0.875rem;
+    color: var(--muted);
+    border-bottom: 1px solid var(--nav-border);
 }
 
     .customer-item:hover {
@@ -27,6 +29,6 @@
     }
 
     .customer-item.selected {
-        background-color: rgb(var(--accent) / 10%);
+        background-color: color-mix(in srgb, var(--accent) 10%, transparent);
         border-left: 3px solid var(--accent);
     }
