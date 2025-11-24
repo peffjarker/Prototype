@@ -252,45 +252,24 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
             // CRITICAL CHECK: Is this page responsible for the current path?
             if (!IsPathMatch(currentPath, _myBasePath!))
             {
-                Console.WriteLine($"   [{_pageTypeName}] Not my path, ignoring");
-                return;
-            }
+                Console.WriteLine($"   [{_pageTypeName}] Not my path, cleaning up and ignoring");
 
-            // DUPLICATE CHECK: Already processed this path?
-            if (_lastProcessedPath == currentPath && !_isNavigating)
-            {
-                Console.WriteLine($"   [{_pageTypeName}] Already processed this path, ignoring");
-                return;
-            }
-
-            // Small delay for debouncing - only if not programmatic navigation
-            if (!_isNavigating)
-            {
-                Console.WriteLine($"   [{_pageTypeName}] Debouncing (15ms)...");
-                await Task.Delay(15, token);
-            }
-
-            _isNavigating = false;
-
-            if (token.IsCancellationRequested)
-            {
-                Console.WriteLine($"   [{_pageTypeName}] Cancelled during debounce");
-                return;
-            }
-
-            await InvokeAsync(() =>
-            {
-                if (!token.IsCancellationRequested && !_isDisposed)
+                // 🔧 NEW: Unsubscribe from location changes to prevent further interference
+                if (_locationChangedHandler is not null)
                 {
-                    Console.WriteLine($"   [{_pageTypeName}] Processing location change");
-
-                    ReadFromUrl();
-                    RebuildSidebar();
-                    StateHasChanged();
-
-                    _lastProcessedPath = currentPath;
+                    Nav.LocationChanged -= _locationChangedHandler;
+                    _locationChangedHandler = null;
                 }
-            });
+
+                // 🔧 NEW: Clear sidebar handler if we still own it
+                if (ReferenceEquals(Sidebar.ItemSelectedHandler, _itemSelectedHandler))
+                {
+                    Sidebar.ItemSelectedHandler = null;
+                }
+
+                _isDisposed = true; // Mark as disposed to prevent further processing
+                return;
+            }
         }
         catch (OperationCanceledException)
         {
@@ -378,7 +357,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         return false;
     }
 
-    private static string GetCurrentPathOnly(NavigationManager nav)
+    public static string GetCurrentPathOnly(NavigationManager nav)
     {
         var abs = nav.ToAbsoluteUri(nav.Uri);
         var rel = nav.ToBaseRelativePath(abs.ToString());

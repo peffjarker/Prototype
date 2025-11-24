@@ -97,6 +97,7 @@
         }
 
         if (theme === 'dark') {
+            // Custom app variables
             root.style.setProperty('--app-bg', '#0f172a');
             root.style.setProperty('--card-bg', '#1a1f2e');
             root.style.setProperty('--border', '#2d3748');
@@ -107,7 +108,28 @@
             root.style.setProperty('--nav-bg', '#1a1f2e');
             root.style.setProperty('--nav-border', '#2d3748');
             root.style.setProperty('--hover-bg', '#1f2937');
+
+            // Kendo/Telerik dark theme variables
+            root.style.setProperty('--kendo-color-base', '#1a1f2e');
+            root.style.setProperty('--kendo-color-base-hover', '#1f2937');
+            root.style.setProperty('--kendo-color-base-active', '#374151');
+            root.style.setProperty('--kendo-color-on-base', '#f1f5f9');
+            root.style.setProperty('--kendo-color-surface', '#0f172a');
+            root.style.setProperty('--kendo-color-surface-alt', '#1a1f2e');
+            root.style.setProperty('--kendo-color-border', '#2d3748');
+            root.style.setProperty('--kendo-color-border-alt', '#4b5563');
+
+            // Grid-specific dark variables
+            root.style.setProperty('--kendo-grid-bg', '#1a1f2e');
+            root.style.setProperty('--kendo-grid-text', '#f1f5f9');
+            root.style.setProperty('--kendo-grid-border', '#2d3748');
+            root.style.setProperty('--kendo-grid-header-bg', '#0f172a');
+            root.style.setProperty('--kendo-grid-header-text', '#f1f5f9');
+            root.style.setProperty('--kendo-grid-alt-bg', '#151d2c');
+            root.style.setProperty('--kendo-grid-hover-bg', '#374151');
+            root.style.setProperty('--kendo-grid-selected-bg', '#1e3a5f');
         } else {
+            // Custom app variables (light)
             root.style.setProperty('--app-bg', '#fff');
             root.style.setProperty('--card-bg', '#fff');
             root.style.setProperty('--border', '#e5e7eb');
@@ -118,6 +140,26 @@
             root.style.setProperty('--nav-bg', '#ffffff');
             root.style.setProperty('--nav-border', '#e5e7eb');
             root.style.setProperty('--hover-bg', '#f8f9fa');
+
+            // Kendo/Telerik light theme variables
+            root.style.setProperty('--kendo-color-base', '#ffffff');
+            root.style.setProperty('--kendo-color-base-hover', '#f8f9fa');
+            root.style.setProperty('--kendo-color-base-active', '#e5e7eb');
+            root.style.setProperty('--kendo-color-on-base', '#111827');
+            root.style.setProperty('--kendo-color-surface', '#ffffff');
+            root.style.setProperty('--kendo-color-surface-alt', '#f9fafb');
+            root.style.setProperty('--kendo-color-border', '#e5e7eb');
+            root.style.setProperty('--kendo-color-border-alt', '#d1d5db');
+
+            // Grid-specific light variables
+            root.style.setProperty('--kendo-grid-bg', '#ffffff');
+            root.style.setProperty('--kendo-grid-text', '#111827');
+            root.style.setProperty('--kendo-grid-border', '#e5e7eb');
+            root.style.setProperty('--kendo-grid-header-bg', '#f3f4f6');
+            root.style.setProperty('--kendo-grid-header-text', '#111827');
+            root.style.setProperty('--kendo-grid-alt-bg', '#f9fafb');
+            root.style.setProperty('--kendo-grid-hover-bg', '#f1f5f9');
+            root.style.setProperty('--kendo-grid-selected-bg', '#dbeafe');
         }
 
         // Set body background
@@ -129,9 +171,16 @@
         const root = document.documentElement;
         const colors = accentColors[accentName] || accentColors.blue;
 
+        // Custom app variables
         root.style.setProperty('--accent', colors.primary);
         root.style.setProperty('--accent-weak', colors.light);
         root.style.setProperty('--accent-hover', colors.hover);
+
+        // Kendo/Telerik theme variables
+        root.style.setProperty('--kendo-color-primary', colors.primary);
+        root.style.setProperty('--kendo-color-primary-hover', colors.hover);
+        root.style.setProperty('--kendo-color-primary-active', colors.hover);
+        root.style.setProperty('--kendo-color-on-primary', '#ffffff');
 
         // Extract RGB values from hex
         const rgb = hexToRgb(colors.primary);
@@ -164,6 +213,19 @@
 
         // Adjust line height
         root.style.setProperty('--base-line-height', density.lineHeight);
+
+        // Component-specific padding based on density
+        const componentPadding = {
+            compact: { x: '8px', y: '4px' },
+            comfortable: { x: '12px', y: '8px' },
+            spacious: { x: '16px', y: '12px' }
+        };
+
+        const padding = componentPadding[densityName];
+        root.style.setProperty('--kendo-grid-cell-padding-x', padding.x);
+        root.style.setProperty('--kendo-grid-cell-padding-y', padding.y);
+        root.style.setProperty('--kendo-grid-header-padding-x', padding.x);
+        root.style.setProperty('--kendo-grid-header-padding-y', padding.y);
     }
 
     // Apply font settings
@@ -171,8 +233,15 @@
         const root = document.documentElement;
         const fontFamily = fontFamilies[fontName] || fontFamilies['System Default'];
 
+        // Custom app variables
         root.style.setProperty('--base-font-family', fontFamily);
         root.style.setProperty('--base-font-size', `${fontSize}px`);
+
+        // Kendo/Telerik typography variables
+        root.style.setProperty('--kendo-font-family', fontFamily);
+        root.style.setProperty('--kendo-font-size', `${fontSize}px`);
+        root.style.setProperty('--kendo-font-size-sm', `${fontSize - 1}px`);
+        root.style.setProperty('--kendo-font-size-lg', `${fontSize + 2}px`);
 
         // Apply to body
         document.body.style.fontFamily = fontFamily;
@@ -212,10 +281,14 @@
 
     // Apply grid lines setting
     function applyGridLines(enabled) {
+        const root = document.documentElement;
+
         if (enabled) {
             document.documentElement.classList.add('show-grid-lines');
+            root.style.setProperty('--kendo-grid-border-width', '1px');
         } else {
             document.documentElement.classList.remove('show-grid-lines');
+            root.style.setProperty('--kendo-grid-border-width', '0px');
         }
     }
 

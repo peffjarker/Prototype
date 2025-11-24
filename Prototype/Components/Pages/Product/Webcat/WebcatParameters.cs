@@ -11,6 +11,7 @@ namespace Prototype.Pages.Product
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
         public string Class { get; set; } = "All Items";
+        public string Option { get; set; } = "Webcat";
         public string? Category { get; set; }
         public string? Subcategory { get; set; }
         public string? Brand { get; set; }
@@ -70,7 +71,7 @@ namespace Prototype.Pages.Product
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = "Webcat",  // Hard-coded for Webcat page - derived from page, not URL
+                ["option"] = "Webcat",
                 ["class"] = Class,
                 ["category"] = !string.IsNullOrEmpty(Category) ? Category : null,
                 ["subcategory"] = !string.IsNullOrEmpty(Subcategory) ? Subcategory : null,

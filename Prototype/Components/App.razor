@@ -1,22 +1,24 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
-
 <head>
     <!-- ===== Meta / Base ===== -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <!-- ===== Vendor CSS (frameworks & UI libraries) ===== -->
+
+    <!-- ===== Vendor CSS (frameworks & UI libraries) - LOAD FIRST ===== -->
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="_content/Telerik.UI.for.Blazor/css/kendo-theme-default/all.css" />
-    <!-- ===== App Styles (order: library-generated -> your site CSS) ===== -->
+
+    <!-- ===== App Styles - LOAD AFTER VENDOR CSS ===== -->
     <link rel="stylesheet" href="Prototype.styles.css" />
-    <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="badges.css" />
     <link rel="stylesheet" href="global.css" />
+    <link rel="stylesheet" href="app.css" /> <!-- MOVED HERE - MUST BE LAST -->
     <!-- ===== Icons / Fonts (optional) ===== -->
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+
     <!-- ===== Favicons ===== -->
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet @rendermode="InteractiveServer" />
@@ -26,11 +28,9 @@
     <main>
         <Routes @rendermode="InteractiveServer" />
     </main>
-
     <!-- Blazor bootstrap (must be last in body) -->
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/Telerik.UI.for.Blazor/js/telerik-blazor.js"></script>
     <script src="js/appearance-manager.js"></script>
 </body>
-
 </html>

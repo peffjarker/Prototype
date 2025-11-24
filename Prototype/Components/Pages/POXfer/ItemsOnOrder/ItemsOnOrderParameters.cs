@@ -54,7 +54,7 @@ namespace Prototype.Pages.POTransfer
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = "Items On Order",  // Hard-coded - derived from page, not URL
+                ["option"] = "Items On Order",
                 ["status"] = StatusToString(Status)
             };
         }

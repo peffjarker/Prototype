@@ -219,10 +219,48 @@
 
     protected override void ReadFromUrl()
     {
+        // Only process if we're on a Product page
+        var uri = new Uri(Nav.Uri);
+        var path = uri.AbsolutePath.ToLowerInvariant();
+
+        if (!path.StartsWith("/product"))
+        {
+            return;
+        }
+
         // Read raw values from URL
         var rawParams = WebcatParameters.FromUrl(Url);
 
-        // No dependency validation needed for this page - just use the raw params
+        // 🔧 VALIDATE class parameter - ensure it's valid for Webcat
+        // You'll need to update this list based on your actual valid class options
+        var validClasses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "All Items",
+        "CQT Stock",
+        "Local Only"
+    };
+
+        // If the class from URL is not a valid Webcat class, use default
+        if (!validClasses.Contains(rawParams.Class))
+        {
+            Console.WriteLine($"  Invalid class '{rawParams.Class}' for Webcat, using default");
+            rawParams.Class = "All Items"; // Default for Webcat
+        }
+
+        // 🔧 VALIDATE option parameter too (similar to TechCredit)
+        var validOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Webcat",
+            "Set Maintenance",
+            "View/Change Prices"
+        };
+
+        if (!validOptions.Contains(rawParams.Option))
+        {
+            Console.WriteLine($"  Invalid option '{rawParams.Option}' for Product pages, using default");
+            rawParams.Option = "Webcat"; // Default for this page
+        }
+
         Params = rawParams;
 
         // Validate subcategory against current category
