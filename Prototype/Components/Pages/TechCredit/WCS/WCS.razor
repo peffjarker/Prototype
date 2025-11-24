@@ -120,52 +120,69 @@
 </div>
 
 @code {
-    // ===== Required by PageWithSidebarBase =====
+    // Centralized parameters
+    private WCSParameters Params = new();
 
+    // ============================================================
+    // Page contract & URL bindings
+    // ============================================================
     protected override string BasePath => "/techcredit/wcs";
 
-    protected override IEnumerable<Facet> Facets()
-    {
-        return new[]
-        {
-            new Facet(
-                Key: "option",
-                Title: "Option",
-                Options: () => new[]
-                {
-                    new FacetOption("Customer Information", "Customer Information", Href: AppendPreserved("/techcredit/customerinformation")),
-                    new FacetOption("Credit Application", "Credit Application", Href: AppendPreserved("/techcredit/creditapplication")),
-                    new FacetOption("Sales Authorizations", "Sales Authorizations", Href: AppendPreserved("/techcredit/salesauthorizations")),
-                    new FacetOption("WCS", "WCS", Href: AppendPreserved("/techcredit/wcs")),
-                    new FacetOption("Payments", "Payments", Href: AppendPreserved("/techcredit/payments"))
-                }
-            ),
-            new Facet(
-                Key: "status",
-                Title: "Customer Status",
-                Options: () => new[]
-                {
-                    new FacetOption("All", "All"),
-                    new FacetOption("TC Borrowers", "TC Borrowers"),
-                    new FacetOption("TC Past Due", "TC Past Due")
-                }
-            )
-        };
-    }
-
-    private string _filterStatus = "All";
-
-    protected override IReadOnlyDictionary<string, string?> Scalars => new Dictionary<string, string?>
-    {
-        ["status"] = _filterStatus
-    };
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
 
     protected override void ReadFromUrl()
     {
-        _filterStatus = Url.Get("status") ?? "All";
+        // Read raw values from URL
+        Params = WCSParameters.FromUrl(Url);
     }
+
+    // ============================================================
+    // Sidebar facets
+    // ============================================================
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+        new FacetOption("Customer Information", "Customer Information",
+            Href: Url.BuildHref("/techcredit/customerinformation",
+                new Dictionary<string, string?> { ["status"] = "All" })),
+
+        new FacetOption("Credit Application", "Credit Application",
+            Href: Url.BuildHref("/techcredit/creditapplication",
+                new Dictionary<string, string?> { ["status"] = "All" })),
+
+        new FacetOption("Sales Authorizations", "Sales Authorizations",
+            Href: Url.BuildHref("/techcredit/salesauthorizations",
+                new Dictionary<string, string?> { ["status"] = "All" })),
+
+        new FacetOption("WCS", "WCS",
+            Href: Url.BuildHref("/techcredit/wcs",
+                new Dictionary<string, string?>())),
+
+        new FacetOption("Payments", "Payments",
+            Href: Url.BuildHref("/techcredit/payments",
+                new Dictionary<string, string?> { ["view"] = "PastDue" }))
+            }
+        );
+
+        yield return new Facet(
+            Key: "status",
+            Title: "Customer Status",
+            Options: () => new[]
+            {
+                new FacetOption("All", "All"),
+                new FacetOption("TC Borrowers", "TC Borrowers"),
+                new FacetOption("TC Past Due", "TC Past Due")
+            }
+        );
+    }
+
+    private string _filterStatus = "All";
 
     // ===== Page Data =====
 

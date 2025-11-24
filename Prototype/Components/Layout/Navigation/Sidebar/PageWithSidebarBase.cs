@@ -48,9 +48,9 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     {
         _myBasePath = BasePath; // Cache it
 
-        Console.WriteLine($"┌─ [{_pageTypeName}] OnInitialized");
-        Console.WriteLine($"│  BasePath: {_myBasePath}");
-        Console.WriteLine($"│  Current URI: {Nav.Uri}");
+        Console.WriteLine($"[{_pageTypeName}] OnInitialized");
+        Console.WriteLine($"  BasePath: {_myBasePath}");
+        Console.WriteLine($"  Current URI: {Nav.Uri}");
 
         _itemSelectedHandler = HandleSidebarItemSelected;
         _sidebarStateChangedHandler = () => InvokeAsync(StateHasChanged);
@@ -64,27 +64,27 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         var currentPath = GetCurrentPathOnly(Nav);
         if (IsPathMatch(currentPath, _myBasePath))
         {
-            Console.WriteLine($"│  ✓ Path matches, initializing sidebar");
+            Console.WriteLine($"  Path matches, initializing sidebar");
             ReadFromUrl();
             RebuildSidebar();
             _lastProcessedPath = currentPath;
         }
         else
         {
-            Console.WriteLine($"│  ✗ Path doesn't match, skipping initialization");
-            Console.WriteLine($"│    Current: {currentPath}");
-            Console.WriteLine($"│    Expected: {_myBasePath}");
+            Console.WriteLine($"  Path doesn't match, skipping initialization");
+            Console.WriteLine($"    Current: {currentPath}");
+            Console.WriteLine($"    Expected: {_myBasePath}");
         }
 
         _isInitialized = true;
-        Console.WriteLine($"└─ [{_pageTypeName}] Initialized");
+        Console.WriteLine($"[{_pageTypeName}] Initialized");
     }
 
     public virtual void Dispose()
     {
         if (_isDisposed) return;
 
-        Console.WriteLine($"🗑️  [{_pageTypeName}] Disposing");
+        Console.WriteLine($"[{_pageTypeName}] Disposing");
         _isDisposed = true;
 
         _rebuildCts?.Cancel();
@@ -186,7 +186,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     {
         if (_isDisposed) return;
 
-        Console.WriteLine($"🖱️  [{_pageTypeName}] Sidebar item clicked: {item.Text}");
+        Console.WriteLine($"[{_pageTypeName}] Sidebar item clicked: {item.Text}");
 
         if (item.Key?.StartsWith("franchise:") == true)
         {
@@ -207,7 +207,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         if (!string.IsNullOrWhiteSpace(item.Url))
         {
             _isNavigating = true;
-            Console.WriteLine($"  → Navigating to: {item.Url}");
+            Console.WriteLine($"  Navigating to: {item.Url}");
             Nav.NavigateTo(item.Url);
         }
 
@@ -216,7 +216,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
     private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        Console.WriteLine($"🔔 [{_pageTypeName}] LocationChanged event received");
+        Console.WriteLine($"[{_pageTypeName}] LocationChanged event received");
         Console.WriteLine($"   New location: {e.Location}");
         _ = HandleLocationChangedAsync();
     }
@@ -225,13 +225,13 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     {
         if (_isDisposed)
         {
-            Console.WriteLine($"   ⏭️  [{_pageTypeName}] Already disposed, ignoring");
+            Console.WriteLine($"   [{_pageTypeName}] Already disposed, ignoring");
             return;
         }
 
         if (!_isInitialized)
         {
-            Console.WriteLine($"   ⏭️  [{_pageTypeName}] Not initialized yet, ignoring");
+            Console.WriteLine($"   [{_pageTypeName}] Not initialized yet, ignoring");
             return;
         }
 
@@ -245,28 +245,28 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         {
             var currentPath = GetCurrentPathOnly(Nav);
 
-            Console.WriteLine($"   📍 [{_pageTypeName}] Checking path ownership");
+            Console.WriteLine($"   [{_pageTypeName}] Checking path ownership");
             Console.WriteLine($"      Current path: {currentPath}");
             Console.WriteLine($"      My BasePath:  {_myBasePath}");
 
             // CRITICAL CHECK: Is this page responsible for the current path?
             if (!IsPathMatch(currentPath, _myBasePath!))
             {
-                Console.WriteLine($"   ⏭️  [{_pageTypeName}] Not my path, ignoring");
+                Console.WriteLine($"   [{_pageTypeName}] Not my path, ignoring");
                 return;
             }
 
             // DUPLICATE CHECK: Already processed this path?
             if (_lastProcessedPath == currentPath && !_isNavigating)
             {
-                Console.WriteLine($"   ⏭️  [{_pageTypeName}] Already processed this path, ignoring");
+                Console.WriteLine($"   [{_pageTypeName}] Already processed this path, ignoring");
                 return;
             }
 
             // Small delay for debouncing - only if not programmatic navigation
             if (!_isNavigating)
             {
-                Console.WriteLine($"   ⏳ [{_pageTypeName}] Debouncing (15ms)...");
+                Console.WriteLine($"   [{_pageTypeName}] Debouncing (15ms)...");
                 await Task.Delay(15, token);
             }
 
@@ -274,7 +274,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
 
             if (token.IsCancellationRequested)
             {
-                Console.WriteLine($"   ❌ [{_pageTypeName}] Cancelled during debounce");
+                Console.WriteLine($"   [{_pageTypeName}] Cancelled during debounce");
                 return;
             }
 
@@ -282,7 +282,7 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
             {
                 if (!token.IsCancellationRequested && !_isDisposed)
                 {
-                    Console.WriteLine($"   ✅ [{_pageTypeName}] Processing location change");
+                    Console.WriteLine($"   [{_pageTypeName}] Processing location change");
 
                     ReadFromUrl();
                     RebuildSidebar();
@@ -294,11 +294,11 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine($"   ❌ [{_pageTypeName}] Operation cancelled");
+            Console.WriteLine($"   [{_pageTypeName}] Operation cancelled");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"   ❌ [{_pageTypeName}] Error: {ex.Message}");
+            Console.WriteLine($"   [{_pageTypeName}] Error: {ex.Message}");
         }
     }
 
@@ -306,25 +306,25 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
     {
         if (_isDisposed)
         {
-            Console.WriteLine($"⏭️  [{_pageTypeName}] RebuildSidebar called but disposed");
+            Console.WriteLine($"[{_pageTypeName}] RebuildSidebar called but disposed");
             return;
         }
 
         var currentPath = GetCurrentPathOnly(Nav);
 
-        Console.WriteLine($"🔨 [{_pageTypeName}] RebuildSidebar");
+        Console.WriteLine($"[{_pageTypeName}] RebuildSidebar");
         Console.WriteLine($"   Current path: {currentPath}");
         Console.WriteLine($"   BasePath:     {_myBasePath}");
 
         // Double-check path ownership (defensive)
         if (!IsPathMatch(currentPath, _myBasePath!))
         {
-            Console.WriteLine($"   ⚠️  Path mismatch in RebuildSidebar! This shouldn't happen!");
-            Console.WriteLine($"   ⏭️  Aborting rebuild");
+            Console.WriteLine($"   Path mismatch in RebuildSidebar! This shouldn't happen!");
+            Console.WriteLine($"   Aborting rebuild");
             return;
         }
 
-        Console.WriteLine($"   ✓ Building sidebar sections...");
+        Console.WriteLine($"   Building sidebar sections...");
 
         var sections = new List<SidebarSection>();
 
@@ -339,11 +339,11 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
         Console.WriteLine($"   Initial selections:");
         foreach (var kvp in initialSelections)
         {
-            Console.WriteLine($"     • {kvp.Key} = {kvp.Value}");
+            Console.WriteLine($"     {kvp.Key} = {kvp.Value}");
         }
 
         Sidebar.SetSections(sections, initialSelections);
-        Console.WriteLine($"   ✅ Sidebar rebuilt successfully");
+        Console.WriteLine($"   Sidebar rebuilt successfully");
     }
 
     /// <summary>

@@ -28,7 +28,8 @@ public enum SearchResultType
     PurchaseOrder,
     Receipt,
     Customer,
-    Unknown
+    Unknown,
+    Vendor
 }
 
 /// <summary>

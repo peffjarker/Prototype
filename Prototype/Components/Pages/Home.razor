@@ -8,7 +8,7 @@
 
 <PageTitle>Home - IBN Dealer Suite</PageTitle>
 
-<main class="main-content home-page">
+<main class="main-content home-page" data-density="@currentDensity">
     @if (FavoritePages.Any())
     {
         <section class="favorites-section">
@@ -16,13 +16,20 @@
                 <TelerikSvgIcon Icon="@SvgIcon.Star" />
                 <h2>Favorites</h2>
             </div>
-            <div class="page-grid">
-                @foreach (var Page in FavoritePages)
-                {
-                    <div class="page-card favorite" @onclick="@(() => NavigateToPage(Page.Url))">
-                        <div class="card-header">
-                            <div class="card-icon-wrapper">
+
+            @if (currentDensity == "compact")
+            {
+                <!-- Compact: Simple list view -->
+                <div class="compact-list">
+                    @foreach (var Page in FavoritePages)
+                    {
+                        <div class="compact-item" @onclick="@(() => NavigateToPage(Page.Url))">
+                            <div class="compact-icon">
                                 <TelerikSvgIcon Icon="@Page.IconValue" />
+                            </div>
+                            <div class="compact-content">
+                                <h3>@Page.Title</h3>
+                                <span class="compact-category">@Page.Category</span>
                             </div>
                             <button class="favorite-btn active"
                                     @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
@@ -31,14 +38,36 @@
                                 <TelerikSvgIcon Icon="@SvgIcon.Star" />
                             </button>
                         </div>
-                        <h3>@Page.Title</h3>
-                        <p class="card-description">@Page.Description</p>
-                        <div class="card-meta">
-                            <span class="badge">@Page.Category</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <!-- Comfortable & Spacious: Card grid -->
+                <div class="page-grid">
+                    @foreach (var Page in FavoritePages)
+                    {
+                        <div class="page-card favorite" @onclick="@(() => NavigateToPage(Page.Url))">
+                            <div class="card-header">
+                                <div class="card-icon-wrapper">
+                                    <TelerikSvgIcon Icon="@Page.IconValue" />
+                                </div>
+                                <button class="favorite-btn active"
+                                        @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
+                                        @onclick:stopPropagation="true"
+                                        title="Remove from favorites">
+                                    <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                                </button>
+                            </div>
+                            <h3>@Page.Title</h3>
+                            <p class="card-description">@Page.Description</p>
+                            <div class="card-meta">
+                                <span class="badge">@Page.Category</span>
+                            </div>
                         </div>
-                    </div>
-                }
-            </div>
+                    }
+                </div>
+            }
         </section>
     }
 
@@ -55,14 +84,21 @@
                     <TelerikSvgIcon Icon="@module.IconValue" />
                     <h3>@module.Name</h3>
                 </div>
-                <div class="page-grid">
-                    @foreach (var Page in module.Pages)
-                    {
-                        var isFav = IsFavorite(Page.Id);
-                        <div class="page-card" @onclick="@(() => NavigateToPage(Page.Url))">
-                            <div class="card-header">
-                                <div class="card-icon-wrapper @(isFav ? "favorite" : "")">
+
+                @if (currentDensity == "compact")
+                {
+                    <!-- Compact: Simple list view -->
+                    <div class="compact-list">
+                        @foreach (var Page in module.Pages)
+                        {
+                            var isFav = IsFavorite(Page.Id);
+                            <div class="compact-item" @onclick="@(() => NavigateToPage(Page.Url))">
+                                <div class="compact-icon @(isFav ? "favorite" : "")">
                                     <TelerikSvgIcon Icon="@Page.IconValue" />
+                                </div>
+                                <div class="compact-content">
+                                    <h3>@Page.Title</h3>
+                                    <span class="compact-category">@Page.Category</span>
                                 </div>
                                 <button class="favorite-btn @(isFav ? "active" : "")"
                                         @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
@@ -71,14 +107,37 @@
                                     <TelerikSvgIcon Icon="@SvgIcon.Star" />
                                 </button>
                             </div>
-                            <h3>@Page.Title</h3>
-                            <p class="card-description">@Page.Description</p>
-                            <div class="card-meta">
-                                <span class="badge">@Page.Category</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <!-- Comfortable & Spacious: Card grid -->
+                    <div class="page-grid">
+                        @foreach (var Page in module.Pages)
+                        {
+                            var isFav = IsFavorite(Page.Id);
+                            <div class="page-card" @onclick="@(() => NavigateToPage(Page.Url))">
+                                <div class="card-header">
+                                    <div class="card-icon-wrapper @(isFav ? "favorite" : "")">
+                                        <TelerikSvgIcon Icon="@Page.IconValue" />
+                                    </div>
+                                    <button class="favorite-btn @(isFav ? "active" : "")"
+                                            @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
+                                            @onclick:stopPropagation="true"
+                                            title="@(isFav ? "Remove from favorites" : "Add to favorites")">
+                                        <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                                    </button>
+                                </div>
+                                <h3>@Page.Title</h3>
+                                <p class="card-description">@Page.Description</p>
+                                <div class="card-meta">
+                                    <span class="badge">@Page.Category</span>
+                                </div>
                             </div>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
             </div>
         }
     </section>
@@ -86,6 +145,7 @@
 
 @code {
     private HashSet<string> FavoritePageIds = new();
+    private string currentDensity = "comfortable";
 
     private List<PageLink> FavoritePages
     {
@@ -113,8 +173,26 @@
         if (firstRender)
         {
             await LoadFavoritesAsync();
+            await LoadDensityAsync();
             BuildFavoritesSidebar();
             StateHasChanged();
+        }
+    }
+
+    private async Task LoadDensityAsync()
+    {
+        try
+        {
+            var densityJson = await JS.InvokeAsync<string>("localStorage.getItem", "ibn-density");
+            if (!string.IsNullOrEmpty(densityJson))
+            {
+                currentDensity = System.Text.Json.JsonSerializer.Deserialize<string>(densityJson) ?? "comfortable";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading density: {ex.Message}");
+            currentDensity = "comfortable";
         }
     }
 
@@ -331,6 +409,24 @@
                         Category = "TechCredit",
                         IconValue = SvgIcon.CheckCircle,
                         Url = "/techcredit/salesauthorizations?status=All"
+                    },
+                    new PageLink
+                    {
+                        Id = "wcs",
+                        Title = "WCS",
+                        Description = "Review TechCredit borrowers and statistics",
+                        Category = "TechCredit",
+                        IconValue = SvgIcon.CheckCircle,
+                        Url = "/techcredit/wcs?status=All"
+                    },
+                    new PageLink
+                    {
+                        Id = "payments",
+                        Title = "Payments",
+                        Description = "Review TechCredit upcoming payments, past due and history",
+                        Category = "TechCredit",
+                        IconValue = SvgIcon.MoneyExchange,
+                        Url = "/techcredit/payments"
                     }
                 }
             }
@@ -356,138 +452,363 @@
 }
 
 <style>
-    /* ===== Color Tokens ===== */
+    /* ===== Base CSS Variables ===== */
     :root {
-        --bg-primary: #070b13;
-        --bg-secondary: #0f1419;
-        --text-primary: #ffffff;
-        --text-secondary: #d5d7db;
-        --text-muted: #9ca3af;
-        --card-bg: #f7f8fa;
-        --card-bg-dark: #1a2332;
-        --border-color: #2c3240;
-        --accent-primary: #0c5ea8;
-        --accent-warning: #ffc107;
-        --accent-hover: #0a4d8a;
-        --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
-        --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.3);
-        --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.4);
+        /* Light Mode (Default) */
+        --home-bg: #ffffff;
+        --home-text: #111827;
+        --home-text-secondary: #6b7280;
+        --home-text-muted: #9ca3af;
+        --home-border: #e5e7eb;
+        --home-card-bg: #ffffff;
+        --home-card-hover: #f9fafb;
+        --home-accent: #0c5ea8;
+        --home-accent-hover: #0a4d8a;
+        --home-accent-light: #e6f0fb;
+        --home-favorite-bg-start: #fffbdb;
+        --home-favorite-bg-end: #fff9c4;
+        --home-favorite-border: #ffd966;
+        --home-favorite-text: #856404;
+        --home-shadow-sm: 0 0.5px 1px rgba(0, 0, 0, 0.02);
+        --home-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08);
+        --home-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.12);
     }
 
+    /* Dark Mode */
+    @@media (prefers-color-scheme: dark) {
+        :root {
+            --home-bg: #0f172a;
+            --home-text: #f1f5f9;
+            --home-text-secondary: #cbd5e0;
+            --home-text-muted: #94a3b8;
+            --home-border: #2d3748;
+            --home-card-bg: #1a2332;
+            --home-card-hover: #222d3d;
+            --home-accent: #3b82f6;
+            --home-accent-hover: #2563eb;
+            --home-accent-light: rgba(59, 130, 246, 0.15);
+            --home-favorite-bg-start: #2d2411;
+            --home-favorite-bg-end: #3a2f15;
+            --home-favorite-border: #5a4a2a;
+            --home-favorite-text: #fbbf24;
+            --home-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+            --home-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+            --home-shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+    }
+
+    /* ===== Base Layout ===== */
     .home-page {
         margin: 0 auto;
-        padding: 2rem;
         max-width: 1600px;
-        background-color: var(--app-bg, #ffffff);
-        color: var(--text, #212529);
+        color: var(--home-text);
+        transition: all 0.2s ease;
     }
 
-    /* Section Headers */
+        /* ===== Density-Specific Padding ===== */
+        .home-page[data-density="compact"] {
+            padding: 1rem;
+        }
+
+        .home-page[data-density="comfortable"] {
+            padding: 2rem;
+        }
+
+        .home-page[data-density="spacious"] {
+            padding: 2.5rem 3rem;
+        }
+
+    /* ===== Section Headers ===== */
     .section-header {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        margin-bottom: 2rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
+        border-bottom: 1px solid var(--home-border);
         letter-spacing: 0.3px;
     }
 
         .section-header h2 {
             margin: 0;
-            font-size: 1.5rem;
             font-weight: 600;
-            color: var(--text-primary, #495057);
+            color: var(--home-text);
             letter-spacing: 0.2px;
             line-height: 1.3;
         }
 
         .section-header .k-svg-icon {
-            color: var(--accent);
+            color: var(--home-accent);
+        }
+
+    /* Density-specific section header spacing */
+    .home-page[data-density="compact"] .section-header {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+    }
+
+        .home-page[data-density="compact"] .section-header h2 {
+            font-size: 1.25rem;
+        }
+
+        .home-page[data-density="compact"] .section-header .k-svg-icon {
+            font-size: 1.25rem;
+        }
+
+    .home-page[data-density="comfortable"] .section-header {
+        margin-bottom: 2rem;
+    }
+
+        .home-page[data-density="comfortable"] .section-header h2 {
             font-size: 1.5rem;
         }
 
-    /* Favorites Section with Gradient */
+        .home-page[data-density="comfortable"] .section-header .k-svg-icon {
+            font-size: 1.5rem;
+        }
+
+    .home-page[data-density="spacious"] .section-header {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.25rem;
+    }
+
+        .home-page[data-density="spacious"] .section-header h2 {
+            font-size: 1.75rem;
+        }
+
+        .home-page[data-density="spacious"] .section-header .k-svg-icon {
+            font-size: 1.75rem;
+        }
+
+    /* ===== Favorites Section ===== */
     .favorites-section {
-        margin-bottom: 2rem;
         padding: 1.5rem;
-        background: linear-gradient(180deg, #fffbdb 0%, #fff9c4 100%);
+        background: linear-gradient(180deg, var(--home-favorite-bg-start) 0%, var(--home-favorite-bg-end) 100%);
         border-radius: 12px;
         border: none;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: var(--home-shadow-sm);
         animation: fadeIn 0.3s ease-in-out;
     }
 
-        .favorites-section .section-header {
-            border-bottom-color: #ffd966;
-            margin-bottom: 1.5rem;
+    .home-page[data-density="compact"] .favorites-section {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .home-page[data-density="comfortable"] .favorites-section {
+        margin-bottom: 2rem;
+    }
+
+    .home-page[data-density="spacious"] .favorites-section {
+        margin-bottom: 3rem;
+        padding: 2rem;
+    }
+
+    .favorites-section .section-header {
+        border-bottom-color: var(--home-favorite-border);
+    }
+
+        .favorites-section .section-header h2 {
+            color: var(--home-favorite-text);
         }
 
-            .favorites-section .section-header h2 {
-                color: #856404;
-            }
+        .favorites-section .section-header .k-svg-icon {
+            color: var(--home-favorite-text);
+        }
 
-            .favorites-section .section-header .k-svg-icon {
-                color: var(--accent-warning, #ffc107);
-            }
-
-    /* Modules Section */
+    /* ===== Modules Section ===== */
     .modules-section {
         margin-bottom: 2rem;
     }
 
     .module-group {
-        margin-bottom: 2rem;
         animation: fadeIn 0.4s ease-in-out;
     }
 
-        .module-group:last-child {
+    .home-page[data-density="compact"] .module-group {
+        margin-bottom: 1.25rem;
+    }
+
+        .home-page[data-density="compact"] .module-group:last-child {
             margin-bottom: 0;
         }
 
+    .home-page[data-density="comfortable"] .module-group {
+        margin-bottom: 2rem;
+    }
+
+        .home-page[data-density="comfortable"] .module-group:last-child {
+            margin-bottom: 0;
+        }
+
+    .home-page[data-density="spacious"] .module-group {
+        margin-bottom: 3rem;
+    }
+
+        .home-page[data-density="spacious"] .module-group:last-child {
+            margin-bottom: 0;
+        }
+
+    /* ===== Module Title ===== */
     .module-title {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        margin-bottom: 1.5rem;
-        padding: 1rem 1rem;
-        background: rgba(12, 94, 168, 0.08);
+        background: var(--home-accent-light);
         border-radius: 8px;
-        border-left: 4px solid var(--accent);
+        border-left: 4px solid var(--home-accent);
         transition: all 0.2s ease-in-out;
     }
 
         .module-title h3 {
             margin: 0;
-            font-size: 1.25rem;
             font-weight: 600;
-            color: var(--accent);
+            color: var(--home-accent);
             letter-spacing: 0.3px;
             line-height: 1.3;
         }
 
         .module-title .k-svg-icon {
-            color: var(--accent);
+            color: var(--home-accent);
         }
 
-    /* Card Grid */
+    .home-page[data-density="compact"] .module-title {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-radius: 6px;
+    }
+
+        .home-page[data-density="compact"] .module-title h3 {
+            font-size: 1rem;
+        }
+
+        .home-page[data-density="compact"] .module-title .k-svg-icon {
+            font-size: 1.125rem;
+        }
+
+    .home-page[data-density="comfortable"] .module-title {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+        .home-page[data-density="comfortable"] .module-title h3 {
+            font-size: 1.25rem;
+        }
+
+        .home-page[data-density="comfortable"] .module-title .k-svg-icon {
+            font-size: 1.25rem;
+        }
+
+    .home-page[data-density="spacious"] .module-title {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-radius: 10px;
+    }
+
+        .home-page[data-density="spacious"] .module-title h3 {
+            font-size: 1.5rem;
+        }
+
+        .home-page[data-density="spacious"] .module-title .k-svg-icon {
+            font-size: 1.5rem;
+        }
+
+    /* ===== COMPACT MODE: List View ===== */
+    .compact-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .compact-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: var(--home-card-bg);
+        border: 1px solid var(--home-border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+        .compact-item:hover {
+            background: var(--home-card-hover);
+            border-color: var(--home-accent);
+            box-shadow: var(--home-shadow-sm);
+        }
+
+    .compact-icon {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--home-accent-light);
+        color: var(--home-accent);
+        border-radius: 6px;
+        font-size: 1rem;
+    }
+
+        .compact-icon.favorite {
+            background: rgba(251, 191, 36, 0.15);
+            color: #f59e0b;
+        }
+
+    .compact-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+        .compact-content h3 {
+            margin: 0;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--home-text);
+            letter-spacing: 0.2px;
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    .compact-category {
+        display: inline-block;
+        font-size: 0.75rem;
+        color: var(--home-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+
+    /* ===== CARD GRID (Comfortable & Spacious) ===== */
     .page-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 1.5rem;
         margin-bottom: 1rem;
     }
 
-    /* Page Cards */
+    /* Comfortable density */
+    .home-page[data-density="comfortable"] .page-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    /* Spacious density */
+    .home-page[data-density="spacious"] .page-grid {
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 2rem;
+    }
+
+    /* ===== Page Cards ===== */
     .page-card {
         position: relative;
-        padding: 1.5rem;
-        background: var(--card-bg, #ffffff);
-        border: none;
+        background: var(--home-card-bg);
+        border: 1px solid var(--home-border);
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s ease-in-out;
-        box-shadow: 0 0.5px 1px rgba(0, 0, 0, 0.02);
+        box-shadow: var(--home-shadow-sm);
         animation: slideUp 0.3s ease-in-out backwards;
     }
 
@@ -508,58 +829,86 @@
         }
 
         .page-card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-            background: rgba(255, 255, 255, 0.98);
+            transform: translateY(-2px);
+            box-shadow: var(--home-shadow-lg);
+            background: var(--home-card-hover);
+            border-color: var(--home-accent);
         }
 
         .page-card.favorite {
-            border: 1px solid rgba(255, 193, 7, 0.15);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 0 1px rgba(255, 193, 7, 0.1);
+            border-color: rgba(251, 191, 36, 0.3);
+            box-shadow: var(--home-shadow-md), inset 0 0 0 1px rgba(251, 191, 36, 0.1);
         }
 
             .page-card.favorite:hover {
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), inset 0 0 1px rgba(255, 193, 7, 0.15);
+                box-shadow: var(--home-shadow-lg), inset 0 0 0 1px rgba(251, 191, 36, 0.2);
             }
 
-    /* Card Header */
+    /* Comfortable card padding */
+    .home-page[data-density="comfortable"] .page-card {
+        padding: 1.5rem;
+    }
+
+    /* Spacious card padding */
+    .home-page[data-density="spacious"] .page-card {
+        padding: 2rem;
+    }
+
+    /* ===== Card Header ===== */
     .card-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 1rem;
         gap: 0.75rem;
     }
 
-    /* Icon Wrapper */
+    .home-page[data-density="comfortable"] .card-header {
+        margin-bottom: 1rem;
+    }
+
+    .home-page[data-density="spacious"] .card-header {
+        margin-bottom: 1.5rem;
+    }
+
+    /* ===== Card Icon Wrapper ===== */
     .card-icon-wrapper {
         flex-shrink: 0;
-        width: 48px;
-        height: 48px;
-        padding: 12px;
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border-radius: 12px;
-        color: var(--accent);
         display: flex;
         align-items: center;
         justify-content: center;
+        background: var(--home-accent-light);
+        border-radius: 12px;
+        color: var(--home-accent);
         transition: all 0.2s ease-in-out;
+    }
+
+    .home-page[data-density="comfortable"] .card-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        padding: 12px;
         font-size: 1.25rem;
     }
 
-        .card-icon-wrapper.favorite {
-            background: linear-gradient(135deg, #fff9e6 0%, #ffe082 100%);
-            color: #f57c00;
-        }
+    .home-page[data-density="spacious"] .card-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        padding: 14px;
+        font-size: 1.5rem;
+    }
 
-    /* Favorite Button */
+    .card-icon-wrapper.favorite {
+        background: rgba(251, 191, 36, 0.15);
+        color: #f59e0b;
+    }
+
+    /* ===== Favorite Button ===== */
     .favorite-btn {
         flex-shrink: 0;
         padding: 0.5rem;
         background: transparent;
         border: none;
         cursor: pointer;
-        color: #ccc;
+        color: var(--home-text-muted);
         transition: all 0.2s ease-in-out;
         border-radius: 6px;
         display: flex;
@@ -568,16 +917,16 @@
     }
 
         .favorite-btn:hover {
-            background: rgba(255, 193, 7, 0.1);
-            color: var(--accent-warning, #ffc107);
+            background: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
         }
 
         .favorite-btn.active {
-            color: var(--accent-warning, #ffc107);
+            color: #fbbf24;
         }
 
             .favorite-btn.active:hover {
-                background: rgba(255, 193, 7, 0.15);
+                background: rgba(251, 191, 36, 0.15);
             }
 
         .favorite-btn .k-svg-icon {
@@ -585,24 +934,43 @@
             height: 20px;
         }
 
-    /* Card Content */
+    /* ===== Card Content ===== */
     .page-card h3 {
-        margin: 0 0 0.5rem 0;
-        font-size: 1.1rem;
+        margin: 0;
         font-weight: 600;
-        color: var(--text-primary, #212529);
+        color: var(--home-text);
         letter-spacing: 0.2px;
         line-height: 1.3;
     }
 
+    .home-page[data-density="comfortable"] .page-card h3 {
+        margin-bottom: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .home-page[data-density="spacious"] .page-card h3 {
+        margin-bottom: 0.75rem;
+        font-size: 1.25rem;
+    }
+
     .card-description {
-        margin: 0 0 1rem 0;
-        font-size: 0.9rem;
-        color: var(--text-secondary, #6c757d);
+        margin: 0;
+        color: var(--home-text-secondary);
         line-height: 1.6;
         letter-spacing: 0.3px;
     }
 
+    .home-page[data-density="comfortable"] .card-description {
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .home-page[data-density="spacious"] .card-description {
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* ===== Card Meta (Badge) ===== */
     .card-meta {
         display: flex;
         gap: 0.5rem;
@@ -610,12 +978,11 @@
         flex-wrap: wrap;
     }
 
-    /* Badge */
     .badge {
         display: inline-block;
         padding: 0.35rem 0.75rem;
         background: rgba(0, 0, 0, 0.05);
-        color: var(--text-primary, #495057);
+        color: var(--home-text);
         border-radius: 6px;
         font-size: 0.75rem;
         font-weight: 600;
@@ -624,172 +991,148 @@
         transition: all 0.2s ease-in-out;
     }
 
-    /* Animations */
+    @@media (prefers-color-scheme: dark) {
+        .badge {
+            background: rgba(255, 255, 255, 0.08);
+        }
+    }
+
+    /* ===== Animations ===== */
     @@keyframes fadeIn {
-        from
+        from {
+            opacity: 0;
+        }
 
-    {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-
+        to {
+            opacity: 1;
+        }
     }
 
     @@keyframes slideUp {
-        from
-
-    {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    }
-
-    /* Smooth transitions for all interactive elements */
-    .page-card,
-    .favorite-btn,
-    .card-icon-wrapper,
-    .module-title {
-        transition: all 0.2s ease-in-out;
-    }
-
-    /* Dark Mode Support */
-    @@media (prefers-color-scheme: dark) {
-        .home-page
-
-    {
-        background-color: var(--app-bg, #0f172a);
-        color: var(--text, #f1f5f9);
-    }
-
-    .section-header {
-        border-bottom-color: var(--border, #2d3748);
-    }
-
-        .section-header h2 {
-            color: var(--text, #f1f5f9);
+        from {
+            opacity: 0;
+            transform: translateY(8px);
         }
 
-    .page-card {
-        background: var(--card-bg, #1a2332);
-        color: var(--text, #f1f5f9);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
-    }
-
-        .page-card:hover {
-            background: var(--card-bg, #222d3d);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
-
-        .page-card h3 {
-            color: var(--text, #f1f5f9);
-        }
-
-    .card-description {
-        color: var(--text, #cbd5e0);
     }
 
-    .badge {
-        background: rgba(255, 255, 255, 0.08);
-        color: var(--text, #e2e8f0);
-    }
+    /* ===== Responsive Design ===== */
 
-    .favorite-btn {
-        color: var(--border, #4b5563);
-    }
-
-        .favorite-btn:hover {
-            background: rgba(255, 193, 7, 0.15);
-            color: var(--accent-warning, #ffc107);
-        }
-
-    }
-
-    /* Responsive Design */
+    /* Tablets and smaller desktops */
     @@media (max-width: 1200px) {
-        .home-page
+        .home-page[data-density="comfortable"] {
+            padding: 1.5rem;
+        }
 
-    {
-        padding: 1.5rem;
+        .home-page[data-density="spacious"] {
+            padding: 2rem;
+        }
+
+            .home-page[data-density="comfortable"] .page-grid,
+            .home-page[data-density="spacious"] .page-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+
+        .home-page[data-density="comfortable"] .page-grid {
+            gap: 1.25rem;
+        }
+
+        .home-page[data-density="spacious"] .page-grid {
+            gap: 1.75rem;
+        }
     }
 
-    .page-grid {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 1.25rem;
-    }
-
-    }
-
+    /* Mobile devices */
     @@media (max-width: 768px) {
-        .home-page
+        .home-page[data-density="comfortable"],
+        .home-page[data-density="spacious"] {
+            padding: 1rem;
+        }
 
-    {
-        padding: 1rem;
+            .home-page[data-density="comfortable"] .page-grid,
+            .home-page[data-density="spacious"] .page-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .home-page[data-density="comfortable"] .section-header h2,
+            .home-page[data-density="spacious"] .section-header h2 {
+                font-size: 1.25rem;
+            }
+
+            .home-page[data-density="comfortable"] .module-title h3,
+            .home-page[data-density="spacious"] .module-title h3 {
+                font-size: 1.1rem;
+            }
+
+            .home-page[data-density="comfortable"] .page-card,
+            .home-page[data-density="spacious"] .page-card {
+                padding: 1.25rem;
+            }
+
+            .home-page[data-density="comfortable"] .card-icon-wrapper,
+            .home-page[data-density="spacious"] .card-icon-wrapper {
+                width: 44px;
+                height: 44px;
+            }
     }
 
-    .page-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .section-header h2 {
-        font-size: 1.25rem;
-    }
-
-    .module-title h3 {
-        font-size: 1.1rem;
-    }
-
-    .page-card {
-        padding: 1.25rem;
-    }
-
-    .card-icon-wrapper {
-        width: 44px;
-        height: 44px;
-    }
-
-    }
-
+    /* Small mobile devices */
     @@media (max-width: 480px) {
-        .home-page
+        .home-page[data-density="compact"],
+        .home-page[data-density="comfortable"],
+        .home-page[data-density="spacious"] {
+            padding: 0.75rem;
+        }
 
-    {
-        padding: 0.75rem;
-    }
+        .section-header {
+            gap: 0.5rem;
+        }
 
-    .section-header {
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
+        .home-page[data-density="compact"] .section-header {
+            margin-bottom: 0.75rem;
+        }
 
-        .section-header h2 {
+        .home-page[data-density="comfortable"] .section-header,
+        .home-page[data-density="spacious"] .section-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .home-page[data-density="compact"] .section-header h2 {
             font-size: 1.1rem;
         }
 
-    .page-grid {
-        gap: 0.75rem;
-    }
+        .home-page[data-density="comfortable"] .section-header h2,
+        .home-page[data-density="spacious"] .section-header h2 {
+            font-size: 1.15rem;
+        }
 
-    .page-card {
-        padding: 1rem;
-    }
+        .compact-list {
+            gap: 0.375rem;
+        }
 
-    .card-header {
-        margin-bottom: 0.75rem;
-    }
+        .compact-item {
+            padding: 0.625rem 0.75rem;
+        }
 
-    .card-description {
-        font-size: 0.85rem;
-    }
+        .page-grid {
+            gap: 0.75rem;
+        }
 
+        .page-card {
+            padding: 1rem;
+        }
+
+        .card-header {
+            margin-bottom: 0.75rem;
+        }
+
+        .card-description {
+            font-size: 0.85rem;
+        }
     }
 </style>

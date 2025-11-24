@@ -7,31 +7,40 @@
 @using global::Services
 @using static Prototype.Components.Pages.Collections.TechCredit.TechCreditPaymentsSeedData
 @inject SidePanelService SidePanel
+@inject IJSRuntime JS
 
 <PageTitle>TechCredit Payments</PageTitle>
 
-<div class="techcredit-payments-page">
+<div class="techcredit-payments-page" data-density="@_currentDensity" data-display-mode="@_displayMode">
     <div class="page-header">
         <div class="header-main">
-            <h1>TechCredit Payments</h1>
-            <div class="view-selector">
-                <button class="view-tab @(_view == "PastDue" ? "active" : "")"
-                        @onclick='() => ChangeView("PastDue")'>
-                    <span class="k-icon k-i-warning"></span>
-                    Past Due (@_pastDueCount)
-                </button>
-                <button class="view-tab @(_view == "Scheduled" ? "active" : "")"
-                        @onclick='() => ChangeView("Scheduled")'>
-                    <span class="k-icon k-i-calendar"></span>
-                    Scheduled (@_scheduledPayments.Count)
-                </button>
-                <button class="view-tab @(_view == "History" ? "active" : "")"
-                        @onclick='() => ChangeView("History")'>
-                    <span class="k-icon k-i-file-txt"></span>
-                    History
-                </button>
+            <div class="header-left">
+                <h1>TechCredit Payments</h1>
             </div>
+
+            <!-- Tabs (only show in tabbed mode AND when density is not compact) -->
+            @if (_displayMode == "tabbed" && _currentDensity != "compact")
+            {
+                <div class="view-selector">
+                    <button class="view-tab @(_view == "PastDue" ? "active" : "")"
+                            @onclick='() => ChangeView("PastDue")'>
+                        <span class="k-icon k-i-warning"></span>
+                        Past Due (@_pastDueCount)
+                    </button>
+                    <button class="view-tab @(_view == "Scheduled" ? "active" : "")"
+                            @onclick='() => ChangeView("Scheduled")'>
+                        <span class="k-icon k-i-calendar"></span>
+                        Scheduled (@_scheduledPayments.Count)
+                    </button>
+                    <button class="view-tab @(_view == "History" ? "active" : "")"
+                            @onclick='() => ChangeView("History")'>
+                        <span class="k-icon k-i-file-txt"></span>
+                        History
+                    </button>
+                </div>
+            }
         </div>
+
         <div class="header-stats">
             <div class="stat-card stat-danger">
                 <div class="stat-label">Total Past Due</div>
@@ -58,274 +67,318 @@
 
     <div class="toolbar-section">
         <div class="toolbar-left">
-            @if (_view == "PastDue")
+            @* Top-level action buttons remain only for non-compact densities.
+               Compact density will show actions inside section headers. *@
+            @if (_currentDensity != "compact")
             {
-                <TelerikButton Icon="@SvgIcon.MyspaceBox"
-                               OnClick="@SendReminders"
-                               ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
-                               Enabled="@(_selectedPayments.Any())">
-                    Send Reminders (@_selectedPayments.Count())
+                @if ((_displayMode == "tabbed" && _view == "PastDue") || _displayMode != "tabbed")
+                {
+                    <TelerikButton Icon="@SvgIcon.MyspaceBox"
+                                   OnClick="@SendReminders"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                   Enabled="@(_selectedPayments.Any())">
+                        Send Reminders (@_selectedPayments.Count())
+                    </TelerikButton>
+                }
+
+                <TelerikButton Icon="@SvgIcon.FileExcel"
+                               OnClick="@ExportToExcel"
+                               ThemeColor="@ThemeConstants.Button.ThemeColor.Success">
+                    Export
+                </TelerikButton>
+
+                <TelerikButton Icon="@SvgIcon.Print"
+                               OnClick="@PrintPayments"
+                               ThemeColor="@ThemeConstants.Button.ThemeColor.Base">
+                    Print
                 </TelerikButton>
             }
-
-            <TelerikButton Icon="@SvgIcon.FileExcel"
-                           OnClick="@ExportToExcel"
-                           ThemeColor="@ThemeConstants.Button.ThemeColor.Success">
-                Export
-            </TelerikButton>
-
-            <TelerikButton Icon="@SvgIcon.Print"
-                           OnClick="@PrintPayments"
-                           ThemeColor="@ThemeConstants.Button.ThemeColor.Base">
-                Print
-            </TelerikButton>
         </div>
 
         <div class="toolbar-right">
-            @if (_view == "History")
+            @if (_currentDensity != "compact")
             {
-                <div class="date-range-filter">
-                    <label>Date Range:</label>
-                    <TelerikDateRangePicker @bind-StartValue="@_startDate"
-                                            @bind-EndValue="@_endDate"
-                                            OnChange="@OnDateRangeChanged">
-                    </TelerikDateRangePicker>
-                </div>
+                @if ((_displayMode == "tabbed" && _view == "History") || _displayMode != "tabbed")
+                {
+                    <div class="date-range-filter">
+                        <label>History Range:</label>
+                        <TelerikDateRangePicker @bind-StartValue="@_startDate"
+                                                @bind-EndValue="@_endDate"
+                                                OnChange="@OnDateRangeChanged">
+                        </TelerikDateRangePicker>
+                    </div>
+                }
             }
         </div>
     </div>
 
-    @if (_view == "PastDue")
+    @* ---------- RENDERING ---------- *@
+    @if (_displayMode == "tabbed" && _currentDensity != "compact")
     {
-        <div class="grid-container">
-            <TelerikGrid Data="@_pastDuePayments"
-                         Height="calc(100vh - 380px)"
-                         Pageable="true"
-                         PageSize="25"
-                         Sortable="true"
-                         FilterMode="GridFilterMode.FilterRow"
-                         Resizable="true"
-                         Reorderable="true"
-                         SelectionMode="GridSelectionMode.Multiple"
-                         @bind-SelectedItems="@_selectedPayments"
-                         OnRowClick="@OnPaymentRowClick">
-                <GridColumns>
-                    <GridCheckboxColumn Width="50px" />
-                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="200px" />
-                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="130px" />
-                    <GridColumn Field="@nameof(PaymentRecord.DaysOverdue)" Title="Days Late" Width="100px">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                <span class="days-overdue days-@GetOverdueSeverity(payment.DaysOverdue)">
-                                    @payment.DaysOverdue days
-                                </span>
-                            }
-                        </Template>
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PaymentRecord.AmountDue)" Title="Amount Due" Width="120px" DisplayFormat="{0:C2}" />
-                    <GridColumn Field="@nameof(PaymentRecord.PastDueAmount)" Title="Past Due" Width="120px" DisplayFormat="{0:C2}">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                <span class="past-due-amount">@payment.PastDueAmount.ToString("C2")</span>
-                            }
-                        </Template>
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PaymentRecord.LastPaymentDate)" Title="Last Payment" Width="130px" DisplayFormat="{0:MM/dd/yyyy}" />
-                    <GridColumn Field="@nameof(PaymentRecord.LastPaymentAmount)" Title="Last Pmt Amt" Width="130px" DisplayFormat="{0:C2}" />
-                    <GridColumn Field="@nameof(PaymentRecord.PaymentFrequency)" Title="Frequency" Width="110px" />
-                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance" Width="120px" DisplayFormat="{0:C2}" />
-                    <GridColumn Field="@nameof(PaymentRecord.Phone)" Title="Phone" Width="140px" />
-                    <GridColumn Field="@nameof(PaymentRecord.ContactAttempts)" Title="Attempts" Width="100px" />
-                    <GridColumn Title="Actions" Width="150px">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                <div class="action-buttons">
-                                    <TelerikButton Icon="@SvgIcon.Dollar"
-                                                   OnClick="@(() => RecordPayment(payment))"
-                                                   Size="@ThemeConstants.Button.Size.Small"
-                                                   Title="Record Payment">
-                                    </TelerikButton>
-                                    <TelerikButton Icon="@SvgIcon.TabletSolid"
-                                                   OnClick="@(() => LogContact(payment))"
-                                                   Size="@ThemeConstants.Button.Size.Small"
-                                                   Title="Log Contact">
-                                    </TelerikButton>
-                                </div>
-                            }
-                        </Template>
-                    </GridColumn>
-                </GridColumns>
-            </TelerikGrid>
+        <!-- MODE 1: ORIGINAL TABBED VIEW (non-compact densities) -->
+        @if (_view == "PastDue")
+        {
+            @RenderPastDueGrid()
+        }
+        else if (_view == "Scheduled")
+        {
+            @RenderScheduledGrid()
+        }
+        else if (_view == "History")
+        {
+            @RenderHistoryGrid()
+        }
+    }
+    else if (_displayMode == "tabbed" && _currentDensity == "compact")
+    {
+        <!-- COMPACT: tabbed selected, but show collapsible headers inside the page; actions moved into section headers -->
+        <div class="data-section compact-past-due-section">
+            <div class="section-title">
+                <div class="section-title-content" @onclick="@(() => _showPastDue = !_showPastDue)">
+                    <span class="k-icon @(_showPastDue ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-warning"></span>
+                    <h2>Past Due (@_pastDueCount)</h2>
+                </div>
+
+                <div class="section-actions">
+                    <TelerikButton Icon="@SvgIcon.MyspaceBox"
+                                   OnClick="@SendReminders"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                                   Enabled="@(_selectedPayments.Any())"
+                                   Title="Send Reminders">
+                        Send
+                    </TelerikButton>
+
+                    <TelerikButton Icon="@SvgIcon.FileExcel"
+                                   OnClick="@ExportToExcel"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Success"
+                                   Title="Export">
+                    </TelerikButton>
+
+                    <TelerikButton Icon="@SvgIcon.Print"
+                                   OnClick="@PrintPayments"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Base"
+                                   Title="Print">
+                    </TelerikButton>
+                </div>
+            </div>
+
+            @if (_showPastDue)
+            {
+                @RenderPastDueGrid()
+            }
+        </div>
+
+        <div class="data-section compact-scheduled-section">
+            <div class="section-title">
+                <div class="section-title-content" @onclick="@(() => _showScheduled = !_showScheduled)">
+                    <span class="k-icon @(_showScheduled ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-calendar"></span>
+                    <h2>Scheduled Payments (@_scheduledPayments.Count)</h2>
+                </div>
+
+                <div class="section-actions">
+                    <TelerikButton Icon="@SvgIcon.FileExcel"
+                                   OnClick="@ExportToExcel"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Success"
+                                   Title="Export">
+                    </TelerikButton>
+
+                    <TelerikButton Icon="@SvgIcon.Print"
+                                   OnClick="@PrintPayments"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Base"
+                                   Title="Print">
+                    </TelerikButton>
+                </div>
+            </div>
+
+            @if (_showScheduled)
+            {
+                @RenderScheduledGrid()
+            }
+        </div>
+
+        <div class="data-section compact-history-section">
+            <div class="section-title">
+                <div class="section-title-content" @onclick="@(() => _showHistory = !_showHistory)">
+                    <span class="k-icon @(_showHistory ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-file-txt"></span>
+                    <h2>Payment History (@_paymentHistory.Count)</h2>
+                </div>
+
+                <div class="section-actions">
+                    <div class="compact-date-range">
+                        <label class="compact-history-label">History Range:</label>
+                        <TelerikDateRangePicker @bind-StartValue="@_startDate"
+                                                @bind-EndValue="@_endDate"
+                                                Size="@ThemeConstants.Calendar.Size.Small"
+                                                OnChange="@OnDateRangeChanged">
+                        </TelerikDateRangePicker>
+                    </div>
+
+                    <TelerikButton Icon="@SvgIcon.FileExcel"
+                                   OnClick="@ExportToExcel"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Success"
+                                   Title="Export">
+                    </TelerikButton>
+
+                    <TelerikButton Icon="@SvgIcon.Print"
+                                   OnClick="@PrintPayments"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Base"
+                                   Title="Print">
+                    </TelerikButton>
+                </div>
+            </div>
+
+            @if (_showHistory)
+            {
+                @RenderHistoryGrid()
+            }
         </div>
     }
-    else if (_view == "Scheduled")
+    else if (_displayMode == "sections")
     {
-        <div class="grid-container">
-            <TelerikGrid Data="@_scheduledPayments"
-                         Height="calc(100vh - 380px)"
-                         Pageable="true"
-                         PageSize="25"
-                         Sortable="true"
-                         FilterMode="GridFilterMode.FilterRow"
-                         Resizable="true"
-                         Reorderable="true"
-                         SelectionMode="GridSelectionMode.Single"
-                         @bind-SelectedItems="@_selectedPayments"
-                         OnRowClick="@OnPaymentRowClick">
-                <GridColumns>
-                    <GridColumn Field="@nameof(PaymentRecord.ScheduledDate)" Title="Scheduled Date" Width="140px" DisplayFormat="{0:MM/dd/yyyy}">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                var daysUntil = (payment.ScheduledDate.GetValueOrDefault() - DateTime.Today).Days;
-                                <span class="scheduled-date @(daysUntil <= 7 ? "due-soon" : "")">
-                                    @payment.ScheduledDate?.ToString("MM/dd/yyyy")
-                                    @if (daysUntil <= 7)
-                                    {
-                                        <span class="days-badge">@daysUntil days</span>
-                                    }
-                                </span>
-                            }
-                        </Template>
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="200px" />
-                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="130px" />
-                    <GridColumn Field="@nameof(PaymentRecord.AmountDue)" Title="Amount Due" Width="120px" DisplayFormat="{0:C2}" />
-                    <GridColumn Field="@nameof(PaymentRecord.PaymentMethod)" Title="Method" Width="120px" />
-                    <GridColumn Field="@nameof(PaymentRecord.PaymentFrequency)" Title="Frequency" Width="110px" />
-                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance" Width="120px" DisplayFormat="{0:C2}" />
-                    <GridColumn Field="@nameof(PaymentRecord.Phone)" Title="Phone" Width="140px" />
-                    <GridColumn Title="Actions" Width="120px">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                <div class="action-buttons">
-                                    <TelerikButton Icon="@SvgIcon.Dollar"
-                                                   OnClick="@(() => RecordPayment(payment))"
-                                                   Size="@ThemeConstants.Button.Size.Small"
-                                                   Title="Record Payment">
-                                    </TelerikButton>
-                                </div>
-                            }
-                        </Template>
-                    </GridColumn>
-                </GridColumns>
-            </TelerikGrid>
+        <!-- MODE 2: COLLAPSIBLE SECTIONS VIEW (unchanged) -->
+        <div class="data-section past-due-section">
+            <div class="section-title" @onclick="@(() => _showPastDue = !_showPastDue)">
+                <div class="section-title-content">
+                    <span class="k-icon @(_showPastDue ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-warning"></span>
+                    <h2>Past Due (@_pastDueCount)</h2>
+                </div>
+            </div>
+            @if (_showPastDue)
+            {
+                @RenderPastDueGrid()
+            }
+        </div>
+
+        <div class="data-section scheduled-section">
+            <div class="section-title" @onclick="@(() => _showScheduled = !_showScheduled)">
+                <div class="section-title-content">
+                    <span class="k-icon @(_showScheduled ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-calendar"></span>
+                    <h2>Scheduled Payments (@_scheduledPayments.Count)</h2>
+                </div>
+            </div>
+            @if (_showScheduled)
+            {
+                @RenderScheduledGrid()
+            }
+        </div>
+
+        <div class="data-section history-section">
+            <div class="section-title" @onclick="@(() => _showHistory = !_showHistory)">
+                <div class="section-title-content">
+                    <span class="k-icon @(_showHistory ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-file-txt"></span>
+                    <h2>Payment History (@_paymentHistory.Count)</h2>
+                </div>
+            </div>
+            @if (_showHistory)
+            {
+                @RenderHistoryGrid()
+            }
         </div>
     }
-    else if (_view == "History")
+    else if (_displayMode == "alldata")
     {
-        <div class="grid-container">
-            <TelerikGrid Data="@_paymentHistory"
-                         Height="calc(100vh - 380px)"
-                         Pageable="true"
-                         PageSize="25"
-                         Sortable="true"
-                         FilterMode="GridFilterMode.FilterRow"
-                         Resizable="true"
-                         Reorderable="true"
-                         SelectionMode="GridSelectionMode.Single"
-                         @bind-SelectedItems="@_selectedPayments"
-                         OnRowClick="@OnPaymentRowClick">
-                <GridColumns>
-                    <GridColumn Field="@nameof(PaymentRecord.PaymentDate)" Title="Payment Date" Width="140px" DisplayFormat="{0:MM/dd/yyyy}" />
-                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="200px" />
-                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="130px" />
-                    <GridColumn Field="@nameof(PaymentRecord.AmountPaid)" Title="Amount Paid" Width="120px" DisplayFormat="{0:C2}" />
-                    <GridColumn Field="@nameof(PaymentRecord.PaymentMethod)" Title="Method" Width="120px" />
-                    <GridColumn Field="@nameof(PaymentRecord.PaymentStatus)" Title="Status" Width="100px">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                <span class="badge badge-@GetStatusBadgeClass(payment.PaymentStatus)">
-                                    @payment.PaymentStatus
-                                </span>
-                            }
-                        </Template>
-                    </GridColumn>
-                    <GridColumn Field="@nameof(PaymentRecord.ProcessedBy)" Title="Processed By" Width="140px" />
-                    <GridColumn Title="Actions" Width="100px">
-                        <Template>
-                            @{
-                                var payment = (PaymentRecord)context;
-                                <div class="action-buttons">
-                                    <TelerikButton Icon="@SvgIcon.Print"
-                                                   OnClick="@(() => PrintReceipt(payment))"
-                                                   Size="@ThemeConstants.Button.Size.Small"
-                                                   Title="Print Receipt">
-                                    </TelerikButton>
-                                </div>
-                            }
-                        </Template>
-                    </GridColumn>
-                </GridColumns>
-            </TelerikGrid>
+        <!-- MODE 3: ALL DATA VIEW (everything expanded, no collapsing) -->
+        <div class="data-section past-due-section">
+            <div class="section-title-static">
+                <span class="k-icon k-i-warning"></span>
+                <h2>Past Due (@_pastDueCount)</h2>
+            </div>
+            @RenderPastDueGrid()
+        </div>
+
+        <div class="data-section scheduled-section">
+            <div class="section-title-static">
+                <span class="k-icon k-i-calendar"></span>
+                <h2>Scheduled Payments (@_scheduledPayments.Count)</h2>
+            </div>
+            @RenderScheduledGrid()
+        </div>
+
+        <div class="data-section history-section">
+            <div class="section-title-static">
+                <span class="k-icon k-i-file-txt"></span>
+                <h2>Payment History (@_paymentHistory.Count)</h2>
+            </div>
+            @RenderHistoryGrid()
         </div>
     }
 </div>
 
-<!-- Side Panel for Payment Preview -->
-<SidePanel IsOpen="@SidePanel.IsOpen"
-           IsOpenChanged="@((value) => { if (!value) SidePanel.Close(); })"
-           Title="@GetSidePanelTitle()">
-    @if (SidePanel.ContentType == Prototype.Components.Services.SidePanelContentType.Payment)
-    {
-        <PaymentSidePanelContent />
-    }
-</SidePanel>
-
 @code {
-    // ===== Required by PageWithSidebarBase =====
+    // ===== Display Mode =====
+    private string _displayMode = "tabbed"; // tabbed, sections, alldata
 
-    protected override string BasePath => "/techcredit/payments";
-
-    protected override IEnumerable<Facet> Facets()
-    {
-        return new[]
-        {
-            new Facet(
-                Key: "option",
-                Title: "Option",
-                Options: () => new[]
-                {
-                    new FacetOption("Customer Information", "Customer Information", Href: AppendPreserved("/techcredit/customerinformation")),
-                    new FacetOption("Credit Application", "Credit Application", Href: AppendPreserved("/techcredit/creditapplication")),
-                    new FacetOption("Sales Authorizations", "Sales Authorizations", Href: AppendPreserved("/techcredit/salesauthorizations")),
-                    new FacetOption("WCS", "WCS", Href: AppendPreserved("/techcredit/wcs")),
-                    new FacetOption("Payments", "Payments", Href: AppendPreserved("/techcredit/payments"))
-                }
-            ),
-            new Facet(
-                Key: "status",
-                Title: "Customer Status",
-                Options: () => new[]
-                {
-                    new FacetOption("All", "All"),
-                    new FacetOption("TC Borrowers", "TC Borrowers"),
-                    new FacetOption("TC Past Due", "TC Past Due")
-                }
-            )
-        };
-    }
-
+    // ===== View State (for tabbed mode) =====
     private string _view = "PastDue";
     private string _status = "All";
+    private string _currentDensity = "comfortable";
 
-    protected override IReadOnlyDictionary<string, string?> Scalars => new Dictionary<string, string?>
-    {
-        ["view"] = _view,
-        ["status"] = _status
-    };
+    // Section visibility (for sections mode and compact tabbed)
+    private bool _showPastDue = true;
+    private bool _showScheduled = true;
+    private bool _showHistory = false;
+
+    // Centralized parameters
+    private TechCreditPaymentParameters Params = new();
+
+    // ============================================================
+    // Page contract & URL bindings
+    // ============================================================
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
 
     protected override IReadOnlyCollection<string> MultiValues => Array.Empty<string>();
 
     protected override void ReadFromUrl()
     {
-        _view = Url.Get("view") ?? "PastDue";
-        _status = Url.Get("status") ?? "All";
+        // Read raw values from URL
+        Params = TechCreditPaymentParameters.FromUrl(Url);
+    }
+
+    // ===== Required PageWithSidebarBase Implementations =====
+
+    protected override string BasePath => "/techcredit/payments";
+
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+            new FacetOption("Customer Information", "Customer Information",
+                Href: Url.BuildHref("/techcredit/customerinformation",
+                    new Dictionary<string, string?> { ["status"] = "All" })),
+
+            new FacetOption("Credit Application", "Credit Application",
+                Href: Url.BuildHref("/techcredit/creditapplication",
+                    new Dictionary<string, string?> { ["status"] = "All" })),
+
+            new FacetOption("Sales Authorizations", "Sales Authorizations",
+                Href: Url.BuildHref("/techcredit/salesauthorizations",
+                    new Dictionary<string, string?> { ["status"] = "All" })),
+
+            new FacetOption("WCS", "WCS",
+                Href: Url.BuildHref("/techcredit/wcs",
+                    new Dictionary<string, string?>())),
+
+            new FacetOption("Payments", "Payments",
+                Href: Url.BuildHref("/techcredit/payments",
+                    new Dictionary<string, string?> { ["view"] = "PastDue" }))
+            }
+        );
     }
 
     // ===== Page Data =====
@@ -351,9 +404,50 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync(); // This handles sidebar setup
+        await base.OnInitializedAsync();
         await LoadPaymentsAsync();
         CalculateStatistics();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadDensityAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDensityAsync()
+    {
+        try
+        {
+            var densityJson = await JS.InvokeAsync<string>("localStorage.getItem", "ibn-density");
+            if (!string.IsNullOrEmpty(densityJson))
+            {
+                _currentDensity = System.Text.Json.JsonSerializer.Deserialize<string>(densityJson) ?? "comfortable";
+            }
+
+            // If compact density, optionally collapse the history by default to keep header area small
+            if (_currentDensity == "compact")
+            {
+                // keep PastDue and Scheduled expanded — history collapsed by default (you can change)
+                _showPastDue = true;
+                _showScheduled = true;
+                _showHistory = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading density: {ex.Message}");
+            _currentDensity = "comfortable";
+        }
+    }
+
+    private void SetDisplayMode(string mode)
+    {
+        _displayMode = mode;
+        Url.Update(new Dictionary<string, string?> { ["mode"] = mode });
     }
 
     private async Task LoadPaymentsAsync()
@@ -488,16 +582,233 @@
         };
     }
 
-    private string GetSidePanelTitle()
+    // ===== Density-Aware Sizing =====
+
+    private string GetGridHeight()
     {
-        return SidePanel.PaymentMode switch
+        return _currentDensity switch
         {
-            PaymentSidePanelMode.Details => "Payment Details",
-            PaymentSidePanelMode.RecordPayment => "Record Payment",
-            PaymentSidePanelMode.LogContact => "Log Contact",
-            _ => "Payment"
+            "compact" => "350px",
+            "spacious" => "550px",
+            _ => "450px"
         };
     }
+
+    private int GetPageSize()
+    {
+        return _currentDensity switch
+        {
+            "compact" => 15,
+            "spacious" => 10,
+            _ => 12
+        };
+    }
+
+    private string GetCheckboxWidth()
+    {
+        return _currentDensity switch
+        {
+            "compact" => "40px",
+            "spacious" => "60px",
+            _ => "50px"
+        };
+    }
+
+    private string GetColumnWidth(string type)
+    {
+        return type switch
+        {
+            "name" => _currentDensity == "compact" ? "150px" : _currentDensity == "spacious" ? "250px" : "200px",
+            "id" => _currentDensity == "compact" ? "100px" : _currentDensity == "spacious" ? "150px" : "130px",
+            "days" => _currentDensity == "compact" ? "80px" : _currentDensity == "spacious" ? "120px" : "100px",
+            "currency" => _currentDensity == "compact" ? "100px" : _currentDensity == "spacious" ? "140px" : "120px",
+            "date" => _currentDensity == "compact" ? "100px" : _currentDensity == "spacious" ? "150px" : "130px",
+            "text" => _currentDensity == "compact" ? "90px" : _currentDensity == "spacious" ? "130px" : "110px",
+            "phone" => _currentDensity == "compact" ? "110px" : _currentDensity == "spacious" ? "160px" : "140px",
+            "small" => _currentDensity == "compact" ? "70px" : _currentDensity == "spacious" ? "110px" : "100px",
+            "actions" => _currentDensity == "compact" ? "100px" : _currentDensity == "spacious" ? "180px" : "150px",
+            "actions-small" => _currentDensity == "compact" ? "70px" : _currentDensity == "spacious" ? "110px" : "90px",
+            "reference" => _currentDensity == "compact" ? "100px" : _currentDensity == "spacious" ? "150px" : "130px",
+            "status" => _currentDensity == "compact" ? "90px" : _currentDensity == "spacious" ? "130px" : "110px",
+            _ => "120px"
+        };
+    }
+
+    // ===== Grid Rendering Methods =====
+
+    private RenderFragment RenderPastDueGrid() => __builder =>
+    {
+        <div class="grid-container">
+            <TelerikGrid Data="@_pastDuePayments"
+                         Height="@GetGridHeight()"
+                         Pageable="true"
+                         PageSize="@GetPageSize()"
+                         Sortable="true"
+                         FilterMode="GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         SelectionMode="GridSelectionMode.Multiple"
+                         @bind-SelectedItems="@_selectedPayments"
+                         OnRowClick="@OnPaymentRowClick">
+                <GridColumns>
+                    <GridCheckboxColumn Width="@GetCheckboxWidth()" />
+                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="@GetColumnWidth("name")" />
+                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="@GetColumnWidth("id")" />
+                    <GridColumn Field="@nameof(PaymentRecord.DaysOverdue)" Title="Days Late" Width="@GetColumnWidth("days")">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <span class="days-overdue days-@GetOverdueSeverity(payment.DaysOverdue)">
+                                    @payment.DaysOverdue days
+                                </span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.AmountDue)" Title="Amount Due" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PastDueAmount)" Title="Past Due" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <span class="past-due-amount">@payment.PastDueAmount.ToString("C2")</span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.LastPaymentDate)" Title="Last Payment" Width="@GetColumnWidth("date")" DisplayFormat="{0:MM/dd/yyyy}" />
+                    <GridColumn Field="@nameof(PaymentRecord.LastPaymentAmount)" Title="Last Pmt Amt" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentFrequency)" Title="Frequency" Width="@GetColumnWidth("text")" />
+                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.Phone)" Title="Phone" Width="@GetColumnWidth("phone")" />
+                    <GridColumn Field="@nameof(PaymentRecord.ContactAttempts)" Title="Attempts" Width="@GetColumnWidth("small")" />
+                    <GridColumn Title="Actions" Width="@GetColumnWidth("actions")">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <div class="action-buttons">
+                                    <TelerikButton Icon="@SvgIcon.Dollar"
+                                                   OnClick="@(() => RecordPayment(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Record Payment">
+                                    </TelerikButton>
+                                    <TelerikButton Icon="@SvgIcon.TabletSolid"
+                                                   OnClick="@(() => LogContact(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Log Contact">
+                                    </TelerikButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    };
+
+    private RenderFragment RenderScheduledGrid() => __builder =>
+    {
+        <div class="grid-container">
+            <TelerikGrid Data="@_scheduledPayments"
+                         Height="@GetGridHeight()"
+                         Pageable="true"
+                         PageSize="@GetPageSize()"
+                         Sortable="true"
+                         FilterMode="GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         SelectionMode="GridSelectionMode.Single"
+                         @bind-SelectedItems="@_selectedPayments"
+                         OnRowClick="@OnPaymentRowClick">
+                <GridColumns>
+                    <GridColumn Field="@nameof(PaymentRecord.ScheduledDate)" Title="Scheduled Date" Width="@GetColumnWidth("date")" DisplayFormat="{0:MM/dd/yyyy}">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                var daysUntil = (payment.ScheduledDate.GetValueOrDefault() - DateTime.Today).Days;
+                                <span class="scheduled-date @(daysUntil <= 7 ? "due-soon" : "")">
+                                    @payment.ScheduledDate?.ToString("MM/dd/yyyy")
+                                    @if (daysUntil <= 7)
+                                    {
+                                        <span class="days-badge">@daysUntil days</span>
+                                    }
+                                </span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="@GetColumnWidth("name")" />
+                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="@GetColumnWidth("id")" />
+                    <GridColumn Field="@nameof(PaymentRecord.AmountDue)" Title="Amount Due" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentFrequency)" Title="Frequency" Width="@GetColumnWidth("text")" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentMethod)" Title="Method" Width="@GetColumnWidth("text")" />
+                    <GridColumn Field="@nameof(PaymentRecord.Phone)" Title="Phone" Width="@GetColumnWidth("phone")" />
+                    <GridColumn Title="Actions" Width="@GetColumnWidth("actions")">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <div class="action-buttons">
+                                    <TelerikButton Icon="@SvgIcon.Dollar"
+                                                   OnClick="@(() => RecordPayment(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Record Payment">
+                                    </TelerikButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    };
+
+    private RenderFragment RenderHistoryGrid() => __builder =>
+    {
+        <div class="grid-container">
+            <TelerikGrid Data="@_paymentHistory"
+                         Height="@GetGridHeight()"
+                         Pageable="true"
+                         PageSize="@GetPageSize()"
+                         Sortable="true"
+                         FilterMode="GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         SelectionMode="GridSelectionMode.Single"
+                         @bind-SelectedItems="@_selectedPayments"
+                         OnRowClick="@OnPaymentRowClick">
+                <GridColumns>
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentDate)" Title="Payment Date" Width="@GetColumnWidth("date")" DisplayFormat="{0:MM/dd/yyyy}" />
+                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="@GetColumnWidth("name")" />
+                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="@GetColumnWidth("id")" />
+                    <GridColumn Field="@nameof(PaymentRecord.AmountPaid)" Title="Amount Paid" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentMethod)" Title="Method" Width="@GetColumnWidth("text")" />
+                    <GridColumn Field="@nameof(PaymentRecord.ReferenceNumber)" Title="Reference #" Width="@GetColumnWidth("reference")" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentStatus)" Title="Status" Width="@GetColumnWidth("status")">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <span class="badge badge-@GetStatusBadgeClass(payment.PaymentStatus)">
+                                    @payment.PaymentStatus
+                                </span>
+                            }
+                        </Template>
+                    </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance After" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Title="Actions" Width="@GetColumnWidth("actions-small")">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <div class="action-buttons">
+                                    <TelerikButton Icon="@SvgIcon.Print"
+                                                   OnClick="@(() => PrintReceipt(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Print Receipt">
+                                    </TelerikButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    };
 
     public override void Dispose()
     {

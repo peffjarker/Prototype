@@ -14,7 +14,7 @@ public interface ISearchService
     /// <summary>
     /// Search across all enabled providers
     /// </summary>
-    Task<SearchResponse> SearchAsync(string query, int maxResultsPerProvider = 5);
+    Task<SearchResponse> SearchAsync(string query, string searchType = "All", int maxResultsPerProvider = 5);
 
     /// <summary>
     /// Register a search provider
@@ -50,9 +50,9 @@ public sealed class SearchService : ISearchService
         return _providers.AsReadOnly();
     }
 
-    public async Task<SearchResponse> SearchAsync(string query, int maxResultsPerProvider = 5)
+    public async Task<SearchResponse> SearchAsync(string query, string searchType = "All", int maxResultsPerProvider = 5)
     {
-        Console.WriteLine($"[SearchService] Starting search for: '{query}'");
+        Console.WriteLine($"[SearchService] Starting search for: '{query}' with type: '{searchType}'");
 
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -67,11 +67,13 @@ public sealed class SearchService : ISearchService
 
         var stopwatch = Stopwatch.StartNew();
 
-        // Search all enabled providers in parallel
+        // Get enabled providers and filter by search type
         var enabledProviders = _providers.Where(p => p.IsEnabled).ToList();
-        Console.WriteLine($"[SearchService] Found {enabledProviders.Count} enabled providers: {string.Join(", ", enabledProviders.Select(p => p.ProviderName))}");
+        var filteredProviders = FilterProvidersBySearchType(enabledProviders, searchType);
 
-        var searchTasks = enabledProviders.Select(p => SearchProviderAsync(p, query, maxResultsPerProvider));
+        Console.WriteLine($"[SearchService] Found {filteredProviders.Count} enabled providers matching '{searchType}': {string.Join(", ", filteredProviders.Select(p => p.ProviderName))}");
+
+        var searchTasks = filteredProviders.Select(p => SearchProviderAsync(p, query, maxResultsPerProvider));
         var results = await Task.WhenAll(searchTasks);
 
         Console.WriteLine($"[SearchService] Search completed. Results by provider:");
@@ -104,6 +106,30 @@ public sealed class SearchService : ISearchService
         };
     }
 
+    private List<ISearchProvider> FilterProvidersBySearchType(List<ISearchProvider> providers, string searchType)
+    {
+        if (string.IsNullOrWhiteSpace(searchType) || searchType.Equals("All", StringComparison.OrdinalIgnoreCase))
+        {
+            return providers;
+        }
+
+        var targetTypes = GetResultTypesForSearchType(searchType);
+        return providers.Where(p => targetTypes.Contains(p.ResultType)).ToList();
+    }
+
+    private HashSet<SearchResultType> GetResultTypesForSearchType(string searchType)
+    {
+        return searchType.ToLowerInvariant() switch
+        {
+            "items" => new HashSet<SearchResultType> { SearchResultType.Item },
+            "pos" => new HashSet<SearchResultType> { SearchResultType.PurchaseOrder },
+            "customers" => new HashSet<SearchResultType> { SearchResultType.Customer },
+            "vendors" => new HashSet<SearchResultType> { SearchResultType.Vendor },
+            "receipts" => new HashSet<SearchResultType> { SearchResultType.Receipt },
+            _ => new HashSet<SearchResultType>() // Empty set for unknown types
+        };
+    }
+
     private async Task<(SearchResultType Type, List<SearchResult> Results)> SearchProviderAsync(
         ISearchProvider provider,
         string query,
@@ -133,6 +159,7 @@ public sealed class SearchService : ISearchService
             SearchResultType.PurchaseOrder => "Purchase Orders",
             SearchResultType.Receipt => "Receipts",
             SearchResultType.Customer => "Customers",
+            SearchResultType.Vendor => "Vendors",
             _ => "Other"
         };
     }
@@ -146,6 +173,7 @@ public sealed class SearchService : ISearchService
             SearchResultType.PurchaseOrder => 2,
             SearchResultType.Receipt => 3,
             SearchResultType.Customer => 4,
+            SearchResultType.Vendor => 5,
             _ => 99
         };
     }

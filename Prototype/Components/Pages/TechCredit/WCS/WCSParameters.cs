@@ -1,4 +1,4 @@
-// Pages/Collections/TechCreditBorrowersParameters.cs
+// Pages/techcredit/customerinformationParameters.cs
 using Services;
 
 namespace Prototype.Pages.Collections
@@ -7,9 +7,9 @@ namespace Prototype.Pages.Collections
     {
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
-        public string? FilterStatus { get; set; }
-        public string? SortColumn { get; set; }
-        public string? SortDirection { get; set; }
+        public string Option { get; set; } = "WCS";
+        public string CustomerStatus { get; set; } = "All";
+        public string? SelectedCustomer { get; set; }
 
         // === Factory: read directly from the URL service ===
         public static WCSParameters FromUrl(IUrlState url)
@@ -17,9 +17,9 @@ namespace Prototype.Pages.Collections
             return new WCSParameters
             {
                 Dealer = url.Get("dealer"),
-                FilterStatus = url.Get("filter"),
-                SortColumn = url.Get("sort"),
-                SortDirection = url.Get("dir")
+                Option = url.Get("option") ?? "WCS",
+                CustomerStatus = url.Get("status") ?? "All",
+                SelectedCustomer = url.Get("customer")
             };
         }
 
@@ -28,16 +28,16 @@ namespace Prototype.Pages.Collections
             IReadOnlyDictionary<string, string?> scalars)
         {
             scalars.TryGetValue("dealer", out var dealer);
-            scalars.TryGetValue("filter", out var filter);
-            scalars.TryGetValue("sort", out var sort);
-            scalars.TryGetValue("dir", out var dir);
+            scalars.TryGetValue("option", out var option);
+            scalars.TryGetValue("status", out var status);
+            scalars.TryGetValue("customer", out var customer);
 
             return new WCSParameters
             {
                 Dealer = dealer,
-                FilterStatus = filter,
-                SortColumn = sort,
-                SortDirection = dir
+                Option = !string.IsNullOrWhiteSpace(option) ? option! : "WCS",
+                CustomerStatus = !string.IsNullOrWhiteSpace(status) ? status! : "All",
+                SelectedCustomer = customer
             };
         }
 
@@ -47,9 +47,9 @@ namespace Prototype.Pages.Collections
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["filter"] = FilterStatus,
-                ["sort"] = SortColumn,
-                ["dir"] = SortDirection
+                ["option"] = Option,
+                ["status"] = CustomerStatus,
+                ["customer"] = SelectedCustomer
             };
         }
     }

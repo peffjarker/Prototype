@@ -161,7 +161,8 @@
         font-size: 0.875rem;
         background: var(--hover-bg, #f8f9fa);
         color: var(--text);
-        width: 85px;
+        width: 70px;
+        padding-left: 8px;
     }
 
 /* Link styling */

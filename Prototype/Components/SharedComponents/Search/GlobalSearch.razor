@@ -9,10 +9,17 @@
 
 <div class="global-search-container">
     <div class="global-search-input-wrapper">
+        <TelerikDropDownList Data="@_searchTypes"
+                             @bind-Value="@_selectedSearchType"
+                             Class="global-search-dropdown"
+                             Width="120px"
+                             Size="@ThemeConstants.DropDownList.Size.Small">
+        </TelerikDropDownList>
+        <div class="global-search-divider"></div>
         <TelerikSvgIcon Icon="@SvgIcon.Search" Class="global-search-icon" />
         <input type="text"
                class="global-search-input"
-               placeholder="Search items, POs..."
+               placeholder="@GetPlaceholder()"
                @bind-value="_searchText"
                @bind-value:event="oninput"
                @onfocus="OnSearchFocus"
@@ -54,6 +61,16 @@
     private bool _isSearching;
     private System.Timers.Timer? _debounceTimer;
     private int _selectedIndex = -1;
+    private string _selectedSearchType = "All";
+
+    private List<string> _searchTypes = new()
+    {
+        "All",
+        "Items",
+        "POs",
+        "Customers",
+        "Vendors"
+    };
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -74,6 +91,18 @@
                 OnSearchTextChanged();
             }
         }
+    }
+
+    private string GetPlaceholder()
+    {
+        return _selectedSearchType switch
+        {
+            "Items" => "Search items...",
+            "POs" => "Search purchase orders...",
+            "Customers" => "Search customers...",
+            "Vendors" => "Search vendors...",
+            _ => "Search items, POs..."
+        };
     }
 
     private async void OnSearchTextChanged()
@@ -106,7 +135,8 @@
     {
         try
         {
-            _searchResults = await SearchService.SearchAsync(_searchText, maxResultsPerProvider: 5);
+            // Pass the selected search type to your search service if needed
+            _searchResults = await SearchService.SearchAsync(_searchText, maxResultsPerProvider: 5, searchType: _selectedSearchType);
             _showResults = true;
             _selectedIndex = _searchResults.TotalCount > 0 ? 0 : -1;
         }
@@ -250,7 +280,7 @@
     .global-search-container {
         position: relative;
         width: 100%;
-        max-width: 500px;
+        max-width: 650px;
     }
 
     .global-search-input-wrapper {
@@ -263,6 +293,7 @@
         padding: 0.4rem 0.65rem;
         transition: all 0.2s ease;
         height: 38px;
+        gap: 0.5rem;
     }
 
         .global-search-input-wrapper:hover {
@@ -278,9 +309,37 @@
                 display: none;
             }
 
+    .global-search-dropdown {
+        flex-shrink: 0;
+    }
+
+        .global-search-dropdown .k-input-value-text {
+            padding-left: 8px;
+        }
+
+        /* Remove border and background from dropdown when inside wrapper */
+        .global-search-dropdown .k-input-inner {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            font-size: 0.875rem;
+        }
+
+        .global-search-dropdown .k-input-button {
+            border: none !important;
+            background: transparent !important;
+        }
+
+    .global-search-divider {
+        width: 1px;
+        height: 24px;
+        background: color-mix(in oklab, var(--kendo-color-border, #e5e7eb) 60%, transparent);
+        flex-shrink: 0;
+    }
+
     .global-search-icon {
         color: var(--kendo-color-on-surface-alt, #9ca3af);
-        margin-right: 0.5rem;
         flex-shrink: 0;
         font-size: 1rem;
     }

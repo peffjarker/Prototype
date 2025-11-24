@@ -340,9 +340,10 @@
         // Read raw values from URL
         var rawParams = PurchaseOrdersParameters.FromUrl(Url);
 
-        // Read raw scalars WITHOUT po for dependency validation
+        // Read raw scalars
         var rawScalars = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
         {
+            ["option"] = "Purchase Orders",
             ["dealer"] = rawParams.Dealer,
             ["status"] = PurchaseOrdersParameters.StatusToString(rawParams.Status)
         };

@@ -1,0 +1,486 @@
+﻿﻿ /* ===== Global theme tokens ===== */
+/*:root {
+    --app-bg: #fff;
+    --card-bg: #fff;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #0c5ea8;
+    --accent-weak: #e6f0fb;
+    --row-hover: #f1f5f9;*/ /* can be overridden per page */
+/* Selection tokens fall back to sidebar tokens if present */
+/*--sel-bg: var(--ss-sel-bg, #d9e8ff);
+    --sel-border: var(--ss-sel-border, #a4c8ff);
+    --sel-shadow: var(--ss-sel-shadow, #cfe2ff);
+    --sel-text: var(--ss-sel-text, #0c5ea8);
+    --focus: #0ea5e9;*/ /* focus ring color */
+/*--kendo-color-app-surface: #fff;
+    --kendo-color-on-app-surface: #212732;
+    --kendo-color-surface-alt: #fff;
+    --kendo-color-subtle: #5e6d8c;
+    --kendo-color-border: rgba(166,178,201,.5);
+    --kendo-color-border-alt: rgba(166,178,201,.75);
+    --kendo-color-primary-subtle: #e0ebff;
+    --kendo-color-primary: #1a66ff;
+    --kendo-color-primary-emphasis: #5890ff;
+    --kendo-color-primary-subtle-hover: #c2d6ff;
+    --kendo-color-primary-hover: #0052f5;
+    --kendo-color-on-primary: #fff;
+    --kendo-color-primary-on-surface: #039;
+    --kendo-color-primary-subtle-active: #a3c2ff;
+    --kendo-color-primary-active: #0047d6;
+    --kendo-color-primary-on-subtle: #001f5c;
+    --kendo-color-secondary-subtle: #909abb;
+    --kendo-color-secondary: #ccd1e0;
+    --kendo-color-secondary-emphasis: #55628b;
+    --kendo-color-on-secondary: #2e364c;
+    --kendo-color-secondary-subtle-hover: #8590b4;
+    --kendo-color-secondary-hover: #c0c6d8;
+    --kendo-color-secondary-on-surface: #3e4765;
+    --kendo-color-secondary-subtle-active: #7783ac;
+    --kendo-color-secondary-active: #b3bad0;
+    --kendo-color-secondary-on-subtle: #171b26;
+    --kendo-color-base-subtle: #e0e4ec;
+    --kendo-color-base: #d3d8e4;
+    --kendo-color-base-emphasis: #a6b2c9;
+    --kendo-color-base-subtle-hover: #d3d8e4;
+    --kendo-color-base-hover: #c6cddc;
+    --kendo-color-on-base: #353e4f;
+    --kendo-color-base-on-surface: #525f7a;
+    --kendo-color-base-subtle-active: #c6cddc;
+    --kendo-color-base-active: #b9c2d4;
+    --kendo-color-base-on-subtle: #455168;
+    --kendo-color-light-subtle: #eceef3;
+    --kendo-color-light: #f9fafb;
+    --kendo-color-light-emphasis: #b9c2d4;
+    --kendo-color-light-subtle-hover: #e0e4ec;
+    --kendo-color-light-hover: #eceef3;
+    --kendo-color-on-light: #455168;
+    --kendo-color-light-on-surface: #eceef3;
+    --kendo-color-light-subtle-active: #d3d8e4;
+    --kendo-color-light-active: #e0e4ec;
+    --kendo-color-light-on-subtle: #353e4f;
+    --kendo-color-dark-subtle: #353e4f;
+    --kendo-color-dark: #212732;
+    --kendo-color-dark-emphasis: #6c7d9d;
+    --kendo-color-dark-subtle-hover: #455168;
+    --kendo-color-dark-hover: #353e4f;
+    --kendo-color-on-dark: #f9fafb;
+    --kendo-color-dark-on-surface: #353e4f;
+    --kendo-color-dark-subtle-active: #525f7a;
+    --kendo-color-dark-active: #455168;
+    --kendo-color-dark-on-subtle: #e0e4ec;
+    --kendo-elevation-1: -1px 0px 4px 0px rgba(0,0,0,.02),1px 1px 4px 0px rgba(0,0,0,.02);
+    --kendo-elevation-2: -1px 0px 6px 0px rgba(0,0,0,.03),1px 1px 6px 0px rgba(0,0,0,.03);
+    --kendo-elevation-3: -1px 0px 8px 0px rgba(0,0,0,.04),1px 1px 8px 0px rgba(0,0,0,.04);
+    --kendo-elevation-4: -1px 0px 10px 0px rgba(0,0,0,.05),1px 1px 10px 0px rgba(0,0,0,.05);
+    --kendo-elevation-5: -1px 0px 12px 0px rgba(0,0,0,.06),1px 1px 12px 0px rgba(0,0,0,.06);
+    --kendo-elevation-6: -1px 0px 14px 0px rgba(0,0,0,.07),1px 1px 14px 0px rgba(0,0,0,.07);
+    --kendo-elevation-7: -1px 0px 16px 0px rgba(0,0,0,.08),1px 1px 16px 0px rgba(0,0,0,.08);
+    --kendo-elevation-8: -1px 0px 18px 0px rgba(0,0,0,.09),1px 1px 18px 0px rgba(0,0,0,.09);
+    --kendo-elevation-9: -1px 0px 20px 0px rgba(0,0,0,.1),1px 1px 20px 0px rgba(0,0,0,.1);
+    --kendo-spacing-0 .5: 2px;
+    --kendo-spacing-1: 4px;
+    --kendo-spacing-1 .5: 6px;
+    --kendo-spacing-2: 8px;
+    --kendo-spacing-2 .5: 10px;
+    --kendo-spacing-3: 12px;
+    --kendo-spacing-3 .5: 14px;
+    --kendo-spacing-4: 16px;
+    --kendo-spacing-4 .5: 18px;
+    --kendo-spacing-5: 20px;
+    --kendo-spacing-5 .5: 22px;
+    --kendo-spacing-6: 24px;
+    --kendo-spacing-6 .5: 26px;
+    --kendo-spacing-7: 28px;
+    --kendo-spacing-7 .5: 30px;
+    --kendo-spacing-8: 32px;
+    --kendo-spacing-9: 34px;
+    --kendo-spacing-10: 36px;
+    --kendo-spacing-11: 38px;
+    --kendo-spacing-12: 40px;
+    --kendo-spacing-13: 42px;
+    --kendo-spacing-14: 44px;
+    --kendo-spacing-15: 46px;
+    --kendo-spacing-16: 48px;
+    --kendo-spacing-17: 50px;
+    --kendo-spacing-18: 52px;
+    --kendo-spacing-19: 54px;
+    --kendo-spacing-20: 56px;
+    --kendo-spacing-21: 58px;
+    --kendo-spacing-22: 60px;
+    --kendo-spacing-23: 62px;
+    --kendo-spacing-24: 64px;
+    --kendo-spacing-25: 66px;
+    --kendo-spacing-26: 68px;
+    --kendo-spacing-27: 70px;
+    --kendo-spacing-28: 72px;
+    --kendo-spacing-29: 74px;
+    --kendo-spacing-30: 76px;
+}*/
+
+/* ===== Base / Utilities ===== */
+/*html, body {
+    color: var(--text);
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.link {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 13px;
+}
+
+    .link:hover {
+        text-decoration: underline;
+    }
+
+.title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: .2px;
+}*/
+
+/* Width helpers (shared across tables) */
+/*.num {
+    text-align: right;
+}
+
+.w-item {
+    width: 140px;
+}
+
+.w-po {
+    width: 150px;
+}
+
+.w-ln {
+    width: 64px;
+}
+
+.w-so {
+    width: 140px;
+}
+
+.w-date {
+    width: 120px;
+}
+
+.w-status {
+    width: 120px;
+}
+
+.w-cancel {
+    width: 110px;
+}*/
+
+/* ===== Card ===== */
+/*.card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}*/
+
+/* ===== Table (shared) ===== */
+/*.table-wrap {
+    overflow: auto;
+}
+
+.tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .95rem;
+    table-layout: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+    .tbl thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border-bottom: 1px solid var(--border-strong);
+    }
+
+    .tbl tbody td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        background: #fff;
+        vertical-align: middle;
+    }
+
+    .tbl tbody tr:nth-child(even) td {
+        background: #fafafa;
+    }*/
+
+/* Hover + keyboard focus for clickable rows (opt-in with .row-clickable) */
+/*.tbl tbody tr.row-clickable:hover td,
+    .tbl tbody tr.row-clickable:focus-within td {
+        background: var(--row-hover);
+    }*/
+
+/* Totals rows (optional) */
+/*.tbl tfoot .totals td {
+        background: #f5f5f5;
+        font-weight: 600;
+        border-top: 1px solid var(--border-strong);
+    }
+
+    .tbl tfoot .totals-sub td {
+        color: var(--muted);
+        background: #fbfbfb;
+    }*/
+
+/* Selection visuals (match sidebar selection when tokens provided) */
+/*.row-selected td {
+    background: var(--sel-bg);
+    border: 1px solid var(--sel-border);
+    box-shadow: 0 0 0 3px var(--sel-shadow) inset;
+    color: var(--sel-text);
+    border-radius: 6px;
+}*/
+
+/* Keep selection styling on hover/focus */
+/*.tbl tbody tr.row-clickable.row-selected:hover td,
+.tbl tbody tr.row-clickable.row-selected:focus-within td {
+    background: var(--sel-bg) !important;
+}*/
+
+/* ===== Buttons (shared) ===== */
+/*.btn {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .03s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+    .btn:hover {
+        background: #f3f4f6;
+    }
+
+    .btn:active {
+        transform: translateY(0.5px);
+    }
+
+    .btn:disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+
+    .btn.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+    }
+
+        .btn.primary:hover {
+            filter: brightness(.95);
+        }
+
+    .btn.success {
+        background: #19a974;
+        color: #fff;
+        border-color: #19a974;
+    }
+
+    .btn.danger {
+        background: #ef4444;
+        color: #fff;
+        border-color: #ef4444;
+    }
+
+    .btn.outline {
+        background: #fff;
+        color: var(--text);
+    }*/
+
+/* Link-look button */
+/*.link-button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+    .link-button:hover {
+        text-decoration: underline;
+    }
+
+    .link-button:focus-visible,
+    .btn:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+    }*/
+
+/* ===== Chips (reusable) ===== */
+/*.chips-row {
+    padding: 8px 0;
+}
+
+.chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+    .chips.compact {
+        padding: 8px 16px 0 16px;
+    }
+
+.chips-label {
+    color: var(--muted);
+    font-size: .9rem;
+    margin-right: 4px;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f3f4f6;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    line-height: 1.1;
+}
+
+    .chip strong {
+        font-weight: 700;
+        letter-spacing: .2px;
+    }
+
+.chip-x {
+    appearance: none;
+    border: none;
+    background: transparent;
+    padding: 2px 6px;
+    margin-left: 2px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: #6b7280;
+    border-radius: 4px;
+}
+
+    .chip-x:hover {
+        color: #111827;
+        background: #eef2ff;
+    }
+
+    .chip-x:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 1px;
+    }
+
+.chip-clear {
+    padding: 4px 10px;
+    font-size: .85rem;
+    background: var(--accent-weak);
+    color: var(--accent);
+    border: 1px solid #d6e6fb;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+    .chip-clear:hover {
+        background: #dfeafc;
+    }
+
+    .chip-clear:focus-visible {
+        outline: 2px solid var(--focus);
+        outline-offset: 2px;
+    }*/
+
+/* ===== Accessibility ===== */
+/*@media (prefers-contrast: more) {
+    :root {
+        --row-hover: #e5f1ff;
+        --sel-bg: #cfe3ff;
+        --sel-border: #5fa8ff;
+        --sel-shadow: #b7d5ff;
+        --focus: #005fcc;
+    }
+
+    .tbl tbody td {
+        border-bottom-color: #cbd5e1;
+    }
+
+    .row-selected td {
+        background: var(--sel-bg);
+        border: 1px solid var(--sel-border);
+        box-shadow: 0 0 0 3px var(--sel-shadow) inset;
+        color: var(--sel-text);
+    }
+}*/
+
+/* Windows High Contrast / forced-colors */
+/*@media (forced-colors: active) {
+    .row-selected td {
+        background: Highlight !important;
+        color: HighlightText;
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+        box-shadow: none;
+        forced-color-adjust: none;
+    }
+
+    .link-button:focus-visible,
+    .chip-x:focus-visible,
+    .chip-clear:focus-visible,
+    .btn:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+    }
+}*/
+
+/* Screen-reader only helper */
+/*.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+
+.title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: .2px;
+}
+
+.header {
+    display: grid;
+    gap: 12px;
+}
+
+.wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}*/

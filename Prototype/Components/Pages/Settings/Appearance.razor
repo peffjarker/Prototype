@@ -222,7 +222,7 @@
                             <span class="slider-label">A</span>
                             <TelerikSlider @bind-Value="@fontSize"
                                            Min="12"
-                                           Max="18"
+                                           Max="72"
                                            SmallStep="1"
                                            LargeStep="2"
                                            Class="font-slider">
@@ -250,7 +250,7 @@
         </section>
 
         <!-- Additional Options -->
-        <section class="settings-section">
+@*         <section class="settings-section">
             <div class="section-header">
                 <TelerikSvgIcon Icon="@SvgIcon.Gear" />
                 <div class="section-title-group">
@@ -301,7 +301,7 @@
                     </label>
                 </div>
             </div>
-        </section>
+        </section> *@
 
         <!-- Action Buttons -->
         <div class="settings-actions">
@@ -437,8 +437,8 @@
             // Show success message (optional)
             await JS.InvokeVoidAsync("console.log", "Settings saved successfully");
 
-            // Navigate back
-            Nav.NavigateTo("/settings");
+            // Navigate home
+            Nav.NavigateTo("/");
         }
         catch (Exception ex)
         {
@@ -485,7 +485,6 @@
         max-width: 1200px;
         margin: 0 auto;
         padding: 2rem;
-        background: var(--page-bg);
         color: var(--text);
     }
 

@@ -1,61 +1,39 @@
-// Pages/Collections/TechCreditPaymentsParameters.cs
+// Pages/techcredit/customerinformationParameters.cs
 using Services;
 
 namespace Prototype.Pages.Collections
 {
-    public sealed class TechCreditPaymentsParameters
+    public sealed class TechCreditPaymentParameters
     {
         // === URL-backed scalars ===
         public string? Dealer { get; set; }
-        public string View { get; set; } = "PastDue"; // PastDue, Scheduled, History
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
+        public string Option { get; set; } = "Payments";
+        public string? SelectedCustomer { get; set; }
 
         // === Factory: read directly from the URL service ===
-        public static TechCreditPaymentsParameters FromUrl(IUrlState url)
+        public static TechCreditPaymentParameters FromUrl(IUrlState url)
         {
-            DateTime? startDate = null;
-            DateTime? endDate = null;
-
-            if (DateTime.TryParse(url.Get("startDate"), out var parsedStart))
-                startDate = parsedStart;
-            
-            if (DateTime.TryParse(url.Get("endDate"), out var parsedEnd))
-                endDate = parsedEnd;
-
-            return new TechCreditPaymentsParameters
+            return new TechCreditPaymentParameters
             {
                 Dealer = url.Get("dealer"),
-                View = url.Get("view") ?? "PastDue",
-                StartDate = startDate,
-                EndDate = endDate
+                Option = url.Get("option") ?? "Payments",
+                SelectedCustomer = url.Get("customer")
             };
         }
 
         // === Factory: rebuild from validated scalars ===
-        public static TechCreditPaymentsParameters FromScalars(
+        public static TechCreditPaymentParameters FromScalars(
             IReadOnlyDictionary<string, string?> scalars)
         {
             scalars.TryGetValue("dealer", out var dealer);
-            scalars.TryGetValue("view", out var view);
-            scalars.TryGetValue("startDate", out var startDateStr);
-            scalars.TryGetValue("endDate", out var endDateStr);
+            scalars.TryGetValue("option", out var option);
+            scalars.TryGetValue("customer", out var customer);
 
-            DateTime? startDate = null;
-            DateTime? endDate = null;
-
-            if (DateTime.TryParse(startDateStr, out var parsedStart))
-                startDate = parsedStart;
-            
-            if (DateTime.TryParse(endDateStr, out var parsedEnd))
-                endDate = parsedEnd;
-
-            return new TechCreditPaymentsParameters
+            return new TechCreditPaymentParameters
             {
                 Dealer = dealer,
-                View = !string.IsNullOrWhiteSpace(view) ? view! : "PastDue",
-                StartDate = startDate,
-                EndDate = endDate
+                Option = !string.IsNullOrWhiteSpace(option) ? option! : "Payments",
+                SelectedCustomer = customer
             };
         }
 
@@ -65,9 +43,8 @@ namespace Prototype.Pages.Collections
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["view"] = View,
-                ["startDate"] = StartDate?.ToString("yyyy-MM-dd"),
-                ["endDate"] = EndDate?.ToString("yyyy-MM-dd")
+                ["option"] = Option,
+                ["customer"] = SelectedCustomer
             };
         }
     }

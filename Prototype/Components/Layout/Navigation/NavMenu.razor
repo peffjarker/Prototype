@@ -246,7 +246,7 @@
     [
         new("PO Transfer", "/po-transfer/items-on-order?status=All", SvgIcon.ArrowsSwap),
         new("Product", "/product/webcat?class=All Items", SvgIcon.EditTools),
-        new("Tech Credit", "/techcredit/customerinformation?option=Information&status=All", SvgIcon.Dollar)
+        new("Tech Credit", "/techcredit/customerinformation?status=All", SvgIcon.Dollar)
     ];
 
     protected override void OnInitialized()
@@ -311,15 +311,12 @@
     {
         if (string.IsNullOrWhiteSpace(currentPath)) return href == "/";
 
-        // Remove query string from current path for comparison
-        var currentPathWithoutQuery = currentPath.Split('?')[0];
-        var rel = "/" + currentPathWithoutQuery.TrimStart('/');
+        // Compare by module (first path segment)
+        var currentModule = GetModuleFromPath("/" + currentPath.TrimStart('/'));
+        var hrefModule = GetModuleFromPath(href);
 
-        // Remove query string from href for comparison
-        var hrefWithoutQuery = href.Split('?')[0];
-
-        return string.Equals(rel, hrefWithoutQuery, StringComparison.OrdinalIgnoreCase)
-               || (hrefWithoutQuery != "/" && rel.StartsWith(hrefWithoutQuery + "/", StringComparison.OrdinalIgnoreCase));
+        return !string.IsNullOrEmpty(hrefModule) &&
+               string.Equals(currentModule, hrefModule, StringComparison.OrdinalIgnoreCase);
     }
 
     private void ToggleDrawer() => drawerOpen = !drawerOpen;
@@ -530,7 +527,7 @@
         background: transparent;
         border: 0;
         border-radius: var(--border-radius);
-        color: var(--text-muted);
+        color: var(--muted);
         cursor: pointer;
         transition: all 0.15s ease;
     }
