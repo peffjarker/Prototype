@@ -13,12 +13,15 @@ namespace Prototype.Components.Pages.Collections.TechCredit
 
             // Past Due Payments
             payments.AddRange(GeneratePastDuePayments());
-            
+
             // Scheduled Payments
             payments.AddRange(GenerateScheduledPayments());
-            
+
             // Payment History
             payments.AddRange(GeneratePaymentHistory());
+
+            // Remitted Payments
+            payments.AddRange(GenerateRemittedPayments());
 
             return payments;
         }
@@ -466,6 +469,194 @@ namespace Prototype.Components.Pages.Collections.TechCredit
             };
         }
 
+        private static List<PaymentRecord> GenerateRemittedPayments()
+        {
+            var today = DateTime.Today;
+            return new List<PaymentRecord>
+            {
+                new PaymentRecord
+                {
+                    PaymentId = "REM001",
+                    CustomerName = "MARTINEZ, CARLOS",
+                    BorrowerId = "0000801234",
+                    PaymentDate = today.AddDays(-2),
+                    AmountPaid = 450.00m,
+                    CurrentBalance = 3250.00m,
+                    PaymentMethod = "Wire Transfer",
+                    ReferenceNumber = "WIRE20241115001",
+                    ProcessedBy = "Sarah M.",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today,
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 450.00m,
+                    RemittedBatchNumber = "BATCH2024-1125-001",
+                    Notes = "Payment remitted to corporate - wire transfer"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM002",
+                    CustomerName = "ANDERSON, JENNIFER",
+                    BorrowerId = "0000812567",
+                    PaymentDate = today.AddDays(-3),
+                    AmountPaid = 825.50m,
+                    CurrentBalance = 8750.25m,
+                    PaymentMethod = "ACH",
+                    ReferenceNumber = "ACH202411140125",
+                    ProcessedBy = "System",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today,
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 825.50m,
+                    RemittedBatchNumber = "BATCH2024-1125-001",
+                    Notes = "Automatic ACH payment remitted"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM003",
+                    CustomerName = "THOMPSON, ROBERT",
+                    BorrowerId = "0000798543",
+                    PaymentDate = today.AddDays(-5),
+                    AmountPaid = 375.25m,
+                    CurrentBalance = 4125.80m,
+                    PaymentMethod = "Check",
+                    ReferenceNumber = "CHK8912",
+                    ProcessedBy = "John D.",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-1),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 375.25m,
+                    RemittedBatchNumber = "BATCH2024-1124-002",
+                    Notes = "Check payment remitted to corporate"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM004",
+                    CustomerName = "WILSON, PATRICIA",
+                    BorrowerId = "0000815678",
+                    PaymentDate = today.AddDays(-6),
+                    AmountPaid = 550.00m,
+                    CurrentBalance = 6200.00m,
+                    PaymentMethod = "Auto-Pay ACH",
+                    ReferenceNumber = "ACH202411110089",
+                    ProcessedBy = "System",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-1),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 550.00m,
+                    RemittedBatchNumber = "BATCH2024-1124-002",
+                    Notes = "Automatic payment remitted"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM005",
+                    CustomerName = "GARCIA, MIGUEL",
+                    BorrowerId = "0000823456",
+                    PaymentDate = today.AddDays(-7),
+                    AmountPaid = 1250.75m,
+                    CurrentBalance = 12500.00m,
+                    PaymentMethod = "Wire Transfer",
+                    ReferenceNumber = "WIRE20241110002",
+                    ProcessedBy = "Sarah M.",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-3),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 1250.75m,
+                    RemittedBatchNumber = "BATCH2024-1122-001",
+                    Notes = "Large wire payment remitted"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM006",
+                    CustomerName = "JOHNSON, MICHELLE",
+                    BorrowerId = "0000807821",
+                    PaymentDate = today.AddDays(-8),
+                    AmountPaid = 295.40m,
+                    CurrentBalance = 3850.60m,
+                    PaymentMethod = "Check",
+                    ReferenceNumber = "CHK5634",
+                    ProcessedBy = "John D.",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-3),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 295.40m,
+                    RemittedBatchNumber = "BATCH2024-1122-001",
+                    Notes = "Check payment remitted"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM007",
+                    CustomerName = "BROWN, DAVID",
+                    BorrowerId = "0000819234",
+                    PaymentDate = today.AddDays(-10),
+                    AmountPaid = 680.00m,
+                    CurrentBalance = 7450.00m,
+                    PaymentMethod = "ACH",
+                    ReferenceNumber = "ACH202411070156",
+                    ProcessedBy = "System",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-5),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 680.00m,
+                    RemittedBatchNumber = "BATCH2024-1120-003",
+                    Notes = "ACH payment remitted to corporate"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM008",
+                    CustomerName = "DAVIS, AMANDA",
+                    BorrowerId = "0000826789",
+                    PaymentDate = today.AddDays(-12),
+                    AmountPaid = 425.80m,
+                    CurrentBalance = 5100.20m,
+                    PaymentMethod = "Auto-Pay Card",
+                    ReferenceNumber = "CC202411050234",
+                    ProcessedBy = "System",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-5),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 425.80m,
+                    RemittedBatchNumber = "BATCH2024-1120-003",
+                    Notes = "Credit card payment remitted"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM009",
+                    CustomerName = "MILLER, JAMES",
+                    BorrowerId = "0000813567",
+                    PaymentDate = today.AddDays(-14),
+                    AmountPaid = 890.25m,
+                    CurrentBalance = 9250.75m,
+                    PaymentMethod = "Check",
+                    ReferenceNumber = "CHK7845",
+                    ProcessedBy = "Sarah M.",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-7),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 890.25m,
+                    RemittedBatchNumber = "BATCH2024-1118-001",
+                    Notes = "Large check payment remitted"
+                },
+                new PaymentRecord
+                {
+                    PaymentId = "REM010",
+                    CustomerName = "RODRIGUEZ, MARIA",
+                    BorrowerId = "0000829123",
+                    PaymentDate = today.AddDays(-15),
+                    AmountPaid = 325.00m,
+                    CurrentBalance = 3900.00m,
+                    PaymentMethod = "ACH",
+                    ReferenceNumber = "ACH202411020187",
+                    ProcessedBy = "System",
+                    PaymentStatus = "Remitted",
+                    RemittedDate = today.AddDays(-7),
+                    RemittedTo = "Corporate Account",
+                    RemittedAmount = 325.00m,
+                    RemittedBatchNumber = "BATCH2024-1118-001",
+                    Notes = "ACH payment remitted"
+                }
+            };
+        }
+
         public sealed class PaymentRecord
         {
             // Common fields
@@ -501,6 +692,12 @@ namespace Prototype.Components.Pages.Collections.TechCredit
             public string ProcessedBy { get; set; } = "";
             public string PaymentStatus { get; set; } = "";
             public string Notes { get; set; } = "";
+
+            // Remitted fields
+            public DateTime? RemittedDate { get; set; }
+            public string RemittedTo { get; set; } = "";
+            public decimal RemittedAmount { get; set; }
+            public string RemittedBatchNumber { get; set; } = "";
         }
     }
 }

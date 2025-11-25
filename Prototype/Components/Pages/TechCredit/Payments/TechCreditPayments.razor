@@ -15,7 +15,7 @@
     <div class="page-header">
         <div class="header-main">
             <div class="header-left">
-                <h1>TechCredit Payments</h1>
+                <h3 class="title">TechCredit Payments</h3>
             </div>
 
             <!-- Tabs (only show in tabbed mode AND when density is not compact) -->
@@ -36,6 +36,11 @@
                             @onclick='() => ChangeView("History")'>
                         <span class="k-icon k-i-file-txt"></span>
                         History
+                    </button>
+                    <button class="view-tab @(_view == "Remitted" ? "active" : "")"
+                            @onclick='() => ChangeView("Remitted")'>
+                        <span class="k-icon k-i-check-circle"></span>
+                        Remitted (@_remittedPayments.Count)
                     </button>
                 </div>
             }
@@ -127,6 +132,10 @@
         else if (_view == "History")
         {
             @RenderHistoryGrid()
+        }
+        else if (_view == "Remitted")
+        {
+            @RenderRemittedGrid()
         }
     }
     else if (_displayMode == "tabbed" && _currentDensity == "compact")
@@ -242,6 +251,37 @@
                 @RenderHistoryGrid()
             }
         </div>
+
+        <div class="data-section compact-remitted-section">
+            <div class="section-title">
+                <div class="section-title-content" @onclick="@(() => _showRemitted = !_showRemitted)">
+                    <span class="k-icon @(_showRemitted ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-check-circle"></span>
+                    <h2>Remitted Payments (@_remittedPayments.Count)</h2>
+                </div>
+
+                <div class="section-actions">
+                    <TelerikButton Icon="@SvgIcon.FileExcel"
+                                   OnClick="@ExportToExcel"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Success"
+                                   Title="Export">
+                    </TelerikButton>
+
+                    <TelerikButton Icon="@SvgIcon.Print"
+                                   OnClick="@PrintPayments"
+                                   Size="@ThemeConstants.Button.Size.Small"
+                                   ThemeColor="@ThemeConstants.Button.ThemeColor.Base"
+                                   Title="Print">
+                    </TelerikButton>
+                </div>
+            </div>
+
+            @if (_showRemitted)
+            {
+                @RenderRemittedGrid()
+            }
+        </div>
     }
     else if (_displayMode == "sections")
     {
@@ -287,6 +327,20 @@
                 @RenderHistoryGrid()
             }
         </div>
+
+        <div class="data-section remitted-section">
+            <div class="section-title" @onclick="@(() => _showRemitted = !_showRemitted)">
+                <div class="section-title-content">
+                    <span class="k-icon @(_showRemitted ? "k-i-arrow-chevron-down" : "k-i-arrow-chevron-right")"></span>
+                    <span class="k-icon k-i-check-circle"></span>
+                    <h2>Remitted Payments (@_remittedPayments.Count)</h2>
+                </div>
+            </div>
+            @if (_showRemitted)
+            {
+                @RenderRemittedGrid()
+            }
+        </div>
     }
     else if (_displayMode == "alldata")
     {
@@ -314,6 +368,14 @@
             </div>
             @RenderHistoryGrid()
         </div>
+
+        <div class="data-section remitted-section">
+            <div class="section-title-static">
+                <span class="k-icon k-i-check-circle"></span>
+                <h2>Remitted Payments (@_remittedPayments.Count)</h2>
+            </div>
+            @RenderRemittedGrid()
+        </div>
     }
 </div>
 
@@ -330,6 +392,7 @@
     private bool _showPastDue = true;
     private bool _showScheduled = true;
     private bool _showHistory = false;
+    private bool _showRemitted = false;
 
     // Centralized parameters
     private TechCreditPaymentParameters Params = new();
@@ -386,6 +449,7 @@
     private List<PaymentRecord> _pastDuePayments = new();
     private List<PaymentRecord> _scheduledPayments = new();
     private List<PaymentRecord> _paymentHistory = new();
+    private List<PaymentRecord> _remittedPayments = new();
     private IEnumerable<PaymentRecord> _selectedPayments = new List<PaymentRecord>();
 
     // Statistics
@@ -467,8 +531,17 @@
         _paymentHistory = allPayments
             .Where(p => p.PaymentDate.HasValue &&
                        p.PaymentDate.Value >= _startDate &&
-                       p.PaymentDate.Value <= _endDate)
+                       p.PaymentDate.Value <= _endDate &&
+                       p.PaymentStatus != "Remitted")
             .OrderByDescending(p => p.PaymentDate)
+            .ToList();
+
+        _remittedPayments = allPayments
+            .Where(p => p.PaymentStatus == "Remitted" &&
+                       p.PaymentDate.HasValue &&
+                       p.PaymentDate.Value >= _startDate &&
+                       p.PaymentDate.Value <= _endDate)
+            .OrderByDescending(p => p.RemittedDate)
             .ToList();
 
         await Task.CompletedTask;
@@ -790,6 +863,50 @@
                             }
                         </Template>
                     </GridColumn>
+                    <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance After" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Title="Actions" Width="@GetColumnWidth("actions-small")">
+                        <Template>
+                            @{
+                                var payment = (PaymentRecord)context;
+                                <div class="action-buttons">
+                                    <TelerikButton Icon="@SvgIcon.Print"
+                                                   OnClick="@(() => PrintReceipt(payment))"
+                                                   Size="@ThemeConstants.Button.Size.Small"
+                                                   Title="Print Receipt">
+                                    </TelerikButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </TelerikGrid>
+        </div>
+    };
+
+    private RenderFragment RenderRemittedGrid() => __builder =>
+    {
+        <div class="grid-container">
+            <TelerikGrid Data="@_remittedPayments"
+                         Height="@GetGridHeight()"
+                         Pageable="true"
+                         PageSize="@GetPageSize()"
+                         Sortable="true"
+                         FilterMode="GridFilterMode.FilterRow"
+                         Resizable="true"
+                         Reorderable="true"
+                         SelectionMode="GridSelectionMode.Single"
+                         @bind-SelectedItems="@_selectedPayments"
+                         OnRowClick="@OnPaymentRowClick">
+                <GridColumns>
+                    <GridColumn Field="@nameof(PaymentRecord.RemittedDate)" Title="Remitted Date" Width="@GetColumnWidth("date")" DisplayFormat="{0:MM/dd/yyyy}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentDate)" Title="Payment Date" Width="@GetColumnWidth("date")" DisplayFormat="{0:MM/dd/yyyy}" />
+                    <GridColumn Field="@nameof(PaymentRecord.CustomerName)" Title="Customer" Width="@GetColumnWidth("name")" />
+                    <GridColumn Field="@nameof(PaymentRecord.BorrowerId)" Title="Borrower ID" Width="@GetColumnWidth("id")" />
+                    <GridColumn Field="@nameof(PaymentRecord.RemittedAmount)" Title="Remitted Amount" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
+                    <GridColumn Field="@nameof(PaymentRecord.PaymentMethod)" Title="Method" Width="@GetColumnWidth("text")" />
+                    <GridColumn Field="@nameof(PaymentRecord.ReferenceNumber)" Title="Reference #" Width="@GetColumnWidth("reference")" />
+                    <GridColumn Field="@nameof(PaymentRecord.RemittedBatchNumber)" Title="Batch #" Width="@GetColumnWidth("reference")" />
+                    <GridColumn Field="@nameof(PaymentRecord.RemittedTo)" Title="Remitted To" Width="@GetColumnWidth("text")" />
                     <GridColumn Field="@nameof(PaymentRecord.CurrentBalance)" Title="Balance After" Width="@GetColumnWidth("currency")" DisplayFormat="{0:C2}" />
                     <GridColumn Title="Actions" Width="@GetColumnWidth("actions-small")">
                         <Template>
