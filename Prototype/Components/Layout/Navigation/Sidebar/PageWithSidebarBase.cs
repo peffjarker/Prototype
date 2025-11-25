@@ -254,14 +254,14 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
             {
                 Console.WriteLine($"   [{_pageTypeName}] Not my path, cleaning up and ignoring");
 
-                // 🔧 NEW: Unsubscribe from location changes to prevent further interference
+                // Unsubscribe from location changes to prevent further interference
                 if (_locationChangedHandler is not null)
                 {
                     Nav.LocationChanged -= _locationChangedHandler;
                     _locationChangedHandler = null;
                 }
 
-                // 🔧 NEW: Clear sidebar handler if we still own it
+                // Clear sidebar handler if we still own it
                 if (ReferenceEquals(Sidebar.ItemSelectedHandler, _itemSelectedHandler))
                 {
                     Sidebar.ItemSelectedHandler = null;
@@ -270,6 +270,37 @@ public abstract class PageWithSidebarBase : ComponentBase, IDisposable
                 _isDisposed = true; // Mark as disposed to prevent further processing
                 return;
             }
+
+            Console.WriteLine($"   [{_pageTypeName}] Path matches - refreshing state");
+
+            // Check if we actually need to process (avoid duplicate processing)
+            if (_lastProcessedPath == currentPath && Nav.Uri == _lastProcessedPath)
+            {
+                Console.WriteLine($"   [{_pageTypeName}] Same path as last processed, checking query params");
+            }
+
+            // Use InvokeAsync to ensure we're on the UI thread
+            await InvokeAsync(() =>
+            {
+                if (_isDisposed)
+                {
+                    Console.WriteLine($"   [{_pageTypeName}] Disposed during InvokeAsync");
+                    return;
+                }
+
+                Console.WriteLine($"   [{_pageTypeName}] Reading URL parameters");
+                ReadFromUrl();
+
+                Console.WriteLine($"   [{_pageTypeName}] Rebuilding sidebar with new selections");
+                RebuildSidebar();
+
+                Console.WriteLine($"   [{_pageTypeName}] Triggering state update");
+                StateHasChanged();
+
+                _lastProcessedPath = currentPath;
+            });
+
+            Console.WriteLine($"   [{_pageTypeName}] Location change handled successfully");
         }
         catch (OperationCanceledException)
         {
