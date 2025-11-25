@@ -7,318 +7,233 @@
 
 <PageTitle>Appearance - IBN Dealer Suite</PageTitle>
 
-<main class="main-content appearance-page">
-    <div class="page-header">
-        <div class="header-content">
-            <h1 class="title">Appearance</h1>
-            <p class="subtitle">Customize how IBN Dealer Suite looks and feels</p>
+<div class="appearance-wrapper">
+    <main class="main-content appearance-page">
+        <div class="page-header">
+            <div class="header-content">
+                <h1 class="title">Appearance</h1>
+                <p class="subtitle">Customize how IBN Dealer Suite looks and feels</p>
+            </div>
         </div>
-    </div>
 
-    <div class="settings-container">
-        <!-- Theme Selection -->
-        <section class="settings-section">
-            <div class="section-header">
-                <TelerikSvgIcon Icon="@SvgIcon.Palette" />
-                <div class="section-title-group">
-                    <h2>Theme</h2>
-                    <p class="section-description">Choose your preferred color scheme</p>
+        <div class="settings-container">
+            <!-- Theme Selection -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.Palette" />
+                    <div class="section-title-group">
+                        <h2>Theme</h2>
+                        <p class="section-description">Choose your preferred color scheme</p>
+                    </div>
                 </div>
-            </div>
-            <div class="section-content">
-                <div class="theme-grid">
-                    <div class="theme-card @(selectedTheme == "light" ? "active" : "")"
-                         @onclick="@(() => SelectTheme("light"))">
-                        <div class="theme-preview light-preview">
-                            <div class="preview-header"></div>
-                            <div class="preview-content">
-                                <div class="preview-sidebar"></div>
-                                <div class="preview-main">
-                                    <div class="preview-bar"></div>
-                                    <div class="preview-bar short"></div>
-                                    <div class="preview-bar"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="theme-info">
-                            <h3>Light</h3>
-                            <p>Clean and bright interface</p>
-                        </div>
-                        @if (selectedTheme == "light")
-                        {
-                            <div class="theme-check">
-                                <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
-                            </div>
-                        }
-                    </div>
-
-                    <div class="theme-card @(selectedTheme == "dark" ? "active" : "")"
-                         @onclick="@(() => SelectTheme("dark"))">
-                        <div class="theme-preview dark-preview">
-                            <div class="preview-header"></div>
-                            <div class="preview-content">
-                                <div class="preview-sidebar"></div>
-                                <div class="preview-main">
-                                    <div class="preview-bar"></div>
-                                    <div class="preview-bar short"></div>
-                                    <div class="preview-bar"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="theme-info">
-                            <h3>Dark</h3>
-                            <p>Easy on the eyes in low light</p>
-                        </div>
-                        @if (selectedTheme == "dark")
-                        {
-                            <div class="theme-check">
-                                <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
-                            </div>
-                        }
-                    </div>
-
-                    <div class="theme-card @(selectedTheme == "auto" ? "active" : "")"
-                         @onclick="@(() => SelectTheme("auto"))">
-                        <div class="theme-preview auto-preview">
-                            <div class="preview-split">
-                                <div class="preview-half light-preview">
-                                    <div class="preview-header"></div>
-                                    <div class="preview-content">
-                                        <div class="preview-sidebar"></div>
-                                        <div class="preview-main">
-                                            <div class="preview-bar"></div>
-                                            <div class="preview-bar short"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="preview-half dark-preview">
-                                    <div class="preview-header"></div>
-                                    <div class="preview-content">
-                                        <div class="preview-sidebar"></div>
-                                        <div class="preview-main">
-                                            <div class="preview-bar"></div>
-                                            <div class="preview-bar short"></div>
-                                        </div>
+                <div class="section-content">
+                    <div class="theme-grid">
+                        <div class="theme-card @(selectedTheme == "light" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("light"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview light-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="theme-info">
-                            <h3>Auto</h3>
-                            <p>Match your system preferences</p>
-                        </div>
-                        @if (selectedTheme == "auto")
-                        {
-                            <div class="theme-check">
-                                <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                            <div class="theme-info">
+                                <h3>Light</h3>
+                                <p>Clean and bright interface</p>
                             </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Accent Color -->
-        <section class="settings-section">
-            <div class="section-header">
-                <TelerikSvgIcon Icon="@SvgIcon.DropletSlash" />
-                <div class="section-title-group">
-                    <h2>Accent Color</h2>
-                    <p class="section-description">Choose your preferred accent color for buttons and highlights</p>
-                </div>
-            </div>
-            <div class="section-content">
-                <div class="color-grid">
-                    @foreach (var color in accentColors)
-                    {
-                        <button class="color-swatch @(selectedAccent == color.Value ? "active" : "")"
-                                style="background: @color.Color;"
-                                @onclick="@(() => SelectAccent(color.Value))"
-                                title="@color.Name"
-                                aria-label="@color.Name">
-                            @if (selectedAccent == color.Value)
+                            @if (selectedTheme == "light")
                             {
-                                <TelerikSvgIcon Icon="@SvgIcon.Check" Class="check-icon" />
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
                             }
-                        </button>
-                    }
-                </div>
-            </div>
-        </section>
-
-        <!-- Display Density -->
-        <section class="settings-section">
-            <div class="section-header">
-                <TelerikSvgIcon Icon="@SvgIcon.Grid" />
-                <div class="section-title-group">
-                    <h2>Display Density</h2>
-                    <p class="section-description">Adjust spacing and element sizing</p>
-                </div>
-            </div>
-            <div class="section-content">
-                <div class="density-options">
-                    <label class="density-option @(density == "compact" ? "active" : "")">
-                        <input type="radio"
-                               name="density"
-                               value="compact"
-                               checked="@(density == "compact")"
-                               @onchange="@(() => SelectDensity("compact"))" />
-                        <div class="option-content">
-                            <TelerikSvgIcon Icon="@SvgIcon.LayoutStacked" />
-                            <div class="option-info">
-                                <h3>Compact</h3>
-                                <p>More content, less space</p>
-                            </div>
                         </div>
-                    </label>
 
-                    <label class="density-option @(density == "comfortable" ? "active" : "")">
-                        <input type="radio"
-                               name="density"
-                               value="comfortable"
-                               checked="@(density == "comfortable")"
-                               @onchange="@(() => SelectDensity("comfortable"))" />
-                        <div class="option-content">
-                            <TelerikSvgIcon Icon="@SvgIcon.Grid" />
-                            <div class="option-info">
-                                <h3>Comfortable</h3>
-                                <p>Balanced spacing (recommended)</p>
+                        <div class="theme-card @(selectedTheme == "dark" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("dark"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview dark-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </label>
-
-                    <label class="density-option @(density == "spacious" ? "active" : "")">
-                        <input type="radio"
-                               name="density"
-                               value="spacious"
-                               checked="@(density == "spacious")"
-                               @onchange="@(() => SelectDensity("spacious"))" />
-                        <div class="option-content">
-                            <TelerikSvgIcon Icon="@SvgIcon.Layout" />
-                            <div class="option-info">
-                                <h3>Spacious</h3>
-                                <p>Maximum breathing room</p>
+                            <div class="theme-info">
+                                <h3>Dark</h3>
+                                <p>Easy on the eyes in low light</p>
                             </div>
+                            @if (selectedTheme == "dark")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
                         </div>
-                    </label>
-                </div>
-            </div>
-        </section>
 
-        <!-- Typography -->
-@*         <section class="settings-section">
-            <div class="section-header">
-                <TelerikSvgIcon Icon="@SvgIcon.Textbox" />
-                <div class="section-title-group">
-                    <h2>Typography</h2>
-                    <p class="section-description">Customize text size and font</p>
-                </div>
-            </div>
-            <div class="section-content">
-                <div class="typography-controls">
-                    <div class="control-group">
-                        <label>Font Size</label>
-                        <div class="slider-control">
-                            <span class="slider-label">A</span>
-                            <TelerikSlider @bind-Value="@fontSize"
-                                           Min="12"
-                                           Max="72"
-                                           SmallStep="1"
-                                           LargeStep="2"
-                                           Class="font-slider">
-                            </TelerikSlider>
-                            <span class="slider-label large">A</span>
-                            <span class="slider-value">@fontSize px</span>
+                        <div class="theme-card @(selectedTheme == "auto" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("auto"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview auto-preview">
+                                <div class="preview-split">
+                                    <div class="preview-half light-preview">
+                                        <div class="preview-header"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-sidebar"></div>
+                                            <div class="preview-main">
+                                                <div class="preview-bar"></div>
+                                                <div class="preview-bar short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="preview-half dark-preview">
+                                        <div class="preview-header"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-sidebar"></div>
+                                            <div class="preview-main">
+                                                <div class="preview-bar"></div>
+                                                <div class="preview-bar short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Auto</h3>
+                                <p>Match your system preferences</p>
+                            </div>
+                            @if (selectedTheme == "auto")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    <div class="control-group">
-                        <label>Font Family</label>
-                        <TelerikDropDownList Data="@fontFamilies"
-                                             @bind-Value="@selectedFont"
-                                             Class="font-dropdown">
-                        </TelerikDropDownList>
+            <!-- Accent Color -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.DropletSlash" />
+                    <div class="section-title-group">
+                        <h2>Accent Color</h2>
+                        <p class="section-description">Choose your preferred accent color for buttons and highlights</p>
                     </div>
                 </div>
-
-                <div class="typography-preview">
-                    <p style="font-size: @(fontSize)px; font-family: @GetFontFamily();">
-                        The quick brown fox jumps over the lazy dog. 0123456789
-                    </p>
+                <div class="section-content">
+                    <div class="color-grid">
+                        @foreach (var color in accentColors)
+                        {
+                            <button class="color-swatch @(selectedAccent == color.Value ? "active" : "")"
+                                    style="background: @color.Color;"
+                                    @onclick="@(() => SelectAccent(color.Value))"
+                                    @onclick:stopPropagation="true"
+                                    title="@color.Name"
+                                    aria-label="@color.Name"
+                                    type="button">
+                                @if (selectedAccent == color.Value)
+                                {
+                                    <TelerikSvgIcon Icon="@SvgIcon.Check" Class="check-icon" />
+                                }
+                            </button>
+                        }
+                    </div>
                 </div>
-            </div>
-        </section> *@
+            </section>
 
-        <!-- Additional Options -->
-@*         <section class="settings-section">
-            <div class="section-header">
-                <TelerikSvgIcon Icon="@SvgIcon.Gear" />
-                <div class="section-title-group">
-                    <h2>Additional Options</h2>
-                    <p class="section-description">Fine-tune your experience</p>
+            <!-- Display Density -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.Grid" />
+                    <div class="section-title-group">
+                        <h2>Display Density</h2>
+                        <p class="section-description">Adjust spacing and element sizing</p>
+                    </div>
                 </div>
-            </div>
-            <div class="section-content">
-                <div class="options-list">
-                    <label class="option-item">
-                        <div class="option-left">
-                            <TelerikCheckBox @bind-Value="@animations" Id="animations" />
-                            <div class="option-text">
-                                <h3>Enable Animations</h3>
-                                <p>Smooth transitions and effects</p>
+                <div class="section-content">
+                    <div class="density-options">
+                        <label class="density-option @(density == "compact" ? "active" : "")"
+                               @onclick="@(() => SelectDensity("compact"))"
+                               @onclick:stopPropagation="true">
+                            <input type="radio"
+                                   name="density"
+                                   value="compact"
+                                   checked="@(density == "compact")"
+                                   @onchange="@(() => SelectDensity("compact"))" />
+                            <div class="option-content">
+                                <TelerikSvgIcon Icon="@SvgIcon.LayoutStacked" />
+                                <div class="option-info">
+                                    <h3>Compact</h3>
+                                    <p>More content, less space</p>
+                                </div>
                             </div>
-                        </div>
-                    </label>
+                        </label>
 
-                    <label class="option-item">
-                        <div class="option-left">
-                            <TelerikCheckBox @bind-Value="@reducedMotion" Id="reducedMotion" />
-                            <div class="option-text">
-                                <h3>Reduce Motion</h3>
-                                <p>Minimize movement for accessibility</p>
+                        <label class="density-option @(density == "comfortable" ? "active" : "")"
+                               @onclick="@(() => SelectDensity("comfortable"))"
+                               @onclick:stopPropagation="true">
+                            <input type="radio"
+                                   name="density"
+                                   value="comfortable"
+                                   checked="@(density == "comfortable")"
+                                   @onchange="@(() => SelectDensity("comfortable"))" />
+                            <div class="option-content">
+                                <TelerikSvgIcon Icon="@SvgIcon.Grid" />
+                                <div class="option-info">
+                                    <h3>Comfortable</h3>
+                                    <p>Balanced spacing (recommended)</p>
+                                </div>
                             </div>
-                        </div>
-                    </label>
+                        </label>
 
-                    <label class="option-item">
-                        <div class="option-left">
-                            <TelerikCheckBox @bind-Value="@highContrast" Id="highContrast" />
-                            <div class="option-text">
-                                <h3>High Contrast</h3>
-                                <p>Stronger colors for better visibility</p>
+                        <label class="density-option @(density == "spacious" ? "active" : "")"
+                               @onclick="@(() => SelectDensity("spacious"))"
+                               @onclick:stopPropagation="true">
+                            <input type="radio"
+                                   name="density"
+                                   value="spacious"
+                                   checked="@(density == "spacious")"
+                                   @onchange="@(() => SelectDensity("spacious"))" />
+                            <div class="option-content">
+                                <TelerikSvgIcon Icon="@SvgIcon.Layout" />
+                                <div class="option-info">
+                                    <h3>Spacious</h3>
+                                    <p>Maximum breathing room</p>
+                                </div>
                             </div>
-                        </div>
-                    </label>
-
-                    <label class="option-item">
-                        <div class="option-left">
-                            <TelerikCheckBox @bind-Value="@showGridLines" Id="gridLines" />
-                            <div class="option-text">
-                                <h3>Show Grid Lines</h3>
-                                <p>Display borders in tables and grids</p>
-                            </div>
-                        </div>
-                    </label>
+                        </label>
+                    </div>
                 </div>
-            </div>
-        </section> *@
+            </section>
 
-        <!-- Action Buttons -->
-        <div class="settings-actions">
-            <button class="btn outline" @onclick="ResetToDefaults">
-                <TelerikSvgIcon Icon="@SvgIcon.ArrowRotateCcw" />
-                Reset to Defaults
-            </button>
-            <div class="action-right">
-                <button class="btn" @onclick="Cancel">Cancel</button>
-                <button class="btn primary" @onclick="SaveChanges">
-                    <TelerikSvgIcon Icon="@SvgIcon.Save" />
-                    Save Changes
+            <!-- Action Buttons -->
+            <div class="settings-actions">
+                <button class="btn outline" @onclick="ResetToDefaults" type="button">
+                    <TelerikSvgIcon Icon="@SvgIcon.ArrowRotateCcw" />
+                    Reset to Defaults
                 </button>
+                <div class="action-right">
+                    <button class="btn" @onclick="Cancel" type="button">Cancel</button>
+                    <button class="btn primary" @onclick="SaveChanges" type="button">
+                        <TelerikSvgIcon Icon="@SvgIcon.Save" />
+                        Save Changes
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-</main>
+    </main>
+</div>
 
 @code {
     private string selectedTheme = "light";
@@ -360,6 +275,21 @@
         await LoadSettings();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("console.log", "Appearance page rendered");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"OnAfterRenderAsync error: {ex.Message}");
+            }
+        }
+    }
+
     private async Task LoadSettings()
     {
         try
@@ -381,6 +311,8 @@
             {
                 density = densityJson.Trim('"');
             }
+
+            Console.WriteLine($"Loaded settings - Theme: {selectedTheme}, Accent: {selectedAccent}, Density: {density}");
         }
         catch (Exception ex)
         {
@@ -388,19 +320,47 @@
         }
     }
 
-    private void SelectTheme(string theme)
+    private async Task SelectTheme(string theme)
     {
-        selectedTheme = theme;
+        try
+        {
+            Console.WriteLine($"SelectTheme called: {theme}");
+            selectedTheme = theme;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SelectTheme error: {ex.Message}");
+        }
     }
 
-    private void SelectAccent(string accent)
+    private async Task SelectAccent(string accent)
     {
-        selectedAccent = accent;
+        try
+        {
+            Console.WriteLine($"SelectAccent called: {accent}");
+            selectedAccent = accent;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SelectAccent error: {ex.Message}");
+        }
     }
 
-    private void SelectDensity(string value)
+    private async Task SelectDensity(string value)
     {
-        density = value;
+        try
+        {
+            Console.WriteLine($"SelectDensity called: {value}");
+            density = value;
+            await InvokeAsync(StateHasChanged);
+            Console.WriteLine($"SelectDensity completed, new density: {density}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SelectDensity error: {ex.Message}");
+        }
     }
 
     private string GetFontFamily()
@@ -420,24 +380,19 @@
     {
         try
         {
-            // Save as JSON strings (with quotes)
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-theme", System.Text.Json.JsonSerializer.Serialize(selectedTheme));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-accent", System.Text.Json.JsonSerializer.Serialize(selectedAccent));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-density", System.Text.Json.JsonSerializer.Serialize(density));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-fontSize", System.Text.Json.JsonSerializer.Serialize(fontSize));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-font", System.Text.Json.JsonSerializer.Serialize(selectedFont));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animations", System.Text.Json.JsonSerializer.Serialize(animations));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-reducedMotion", System.Text.Json.JsonSerializer.Serialize(reducedMotion));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-highContrast", System.Text.Json.JsonSerializer.Serialize(highContrast));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-gridLines", System.Text.Json.JsonSerializer.Serialize(showGridLines));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-theme", JsonSerializer.Serialize(selectedTheme));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-accent", JsonSerializer.Serialize(selectedAccent));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-density", JsonSerializer.Serialize(density));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-fontSize", JsonSerializer.Serialize(fontSize));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-font", JsonSerializer.Serialize(selectedFont));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animations", JsonSerializer.Serialize(animations));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-reducedMotion", JsonSerializer.Serialize(reducedMotion));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-highContrast", JsonSerializer.Serialize(highContrast));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-gridLines", JsonSerializer.Serialize(showGridLines));
 
-            // Refresh the appearance immediately
             await JS.InvokeVoidAsync("eval", "window.refreshAppearance?.()");
-
-            // Show success message (optional)
             await JS.InvokeVoidAsync("console.log", "Settings saved successfully");
 
-            // Navigate home
             Nav.NavigateTo("/");
         }
         catch (Exception ex)
@@ -462,7 +417,7 @@
         reducedMotion = false;
         highContrast = false;
         showGridLines = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     public class AccentColor
@@ -481,30 +436,38 @@
 }
 
 <style>
+    /* Wrapper to ensure proper layout */
+    .appearance-wrapper {
+        min-height: 100vh;
+        width: 100%;
+        position: relative;
+    }
+
     .appearance-page {
         max-width: 1200px;
         margin: 0 auto;
         padding: 2rem;
-        color: var(--text);
+        color: var(--text, #111827);
+        min-height: 100vh;
     }
 
     .page-header {
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
-        border-bottom: 2px solid var(--border);
+        border-bottom: 2px solid var(--nav-border);
     }
 
     .header-content .title {
         margin: 0 0 0.5rem 0;
         font-size: 2rem;
         font-weight: 700;
-        color: var(--text);
+        color: var(--text, #111827);
     }
 
     .subtitle {
         margin: 0;
         font-size: 1rem;
-        color: var(--muted);
+        color: var(--muted, #6b7280);
     }
 
     .settings-container {
@@ -515,8 +478,8 @@
 
     /* Section Styling */
     .settings-section {
-        background: var(--card-bg);
-        border: 1px solid var(--border);
+        background: var(--card-bg, #f9fafb);
+        border: 1px solid var(--nav-border);
         border-radius: 12px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         overflow: hidden;
@@ -527,11 +490,11 @@
         align-items: flex-start;
         gap: 1rem;
         padding: 1.5rem;
-        border-bottom: 1px solid var(--border);
+        border-bottom: 1px solid var(--nav-border);
     }
 
         .section-header .k-svg-icon {
-            color: var(--accent);
+            color: var(--accent, #0c5ea8);
             flex-shrink: 0;
             margin-top: 2px;
         }
@@ -540,13 +503,13 @@
         margin: 0 0 0.25rem 0;
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--text);
+        color: var(--text, #111827);
     }
 
     .section-description {
         margin: 0;
         font-size: 0.875rem;
-        color: var(--muted);
+        color: var(--muted, #6b7280);
     }
 
     .section-content {
@@ -562,24 +525,24 @@
 
     .theme-card {
         position: relative;
-        border: 2px solid var(--border);
+        border: 2px solid var(--border, #e5e7eb);
         border-radius: 12px;
         overflow: hidden;
         cursor: pointer;
         transition: all 0.2s ease;
-        background: var(--card-bg);
+        background: var(--card-bg, #f9fafb);
     }
 
         .theme-card:hover {
-            border-color: var(--accent);
+            border-color: var(--accent, #0c5ea8);
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
 
         .theme-card.active {
-            border-color: var(--accent);
+            border-color: var(--accent, #0c5ea8);
             border-width: 3px;
-            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2);
+            box-shadow: 0 0 0 3px rgba(12, 94, 168, 0.2);
         }
 
     .theme-preview {
@@ -659,20 +622,20 @@
 
     .theme-info {
         padding: 1rem 1.25rem;
-        background: var(--card-bg);
+        background: var(--card-bg, #f9fafb);
     }
 
         .theme-info h3 {
             margin: 0 0 0.25rem 0;
             font-size: 1rem;
             font-weight: 600;
-            color: var(--text);
+            color: var(--text, #111827);
         }
 
         .theme-info p {
             margin: 0;
             font-size: 0.875rem;
-            color: var(--muted);
+            color: var(--muted, #6b7280);
         }
 
     .theme-check {
@@ -681,7 +644,7 @@
         right: 12px;
         width: 32px;
         height: 32px;
-        background: var(--accent);
+        background: var(--accent, #0c5ea8);
         color: white;
         border-radius: 50%;
         display: grid;
@@ -716,7 +679,7 @@
 
         .color-swatch.active {
             border-color: white;
-            box-shadow: 0 0 0 3px var(--accent), 0 4px 12px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 3px var(--accent, #0c5ea8), 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
     .check-icon {
@@ -735,22 +698,22 @@
     .density-option {
         display: block;
         padding: 1.25rem;
-        border: 2px solid var(--border);
+        border: 2px solid var(--border, #e5e7eb);
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s ease;
-        background: var(--card-bg);
+        background: var(--card-bg, #f9fafb);
     }
 
         .density-option:hover {
-            border-color: var(--accent);
-            background: var(--hover-bg);
+            border-color: var(--accent, #0c5ea8);
+            background: var(--hover-bg, #f3f4f6);
         }
 
         .density-option.active {
-            border-color: var(--accent);
-            background: rgba(var(--accent-rgb), 0.08);
-            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+            border-color: var(--accent, #0c5ea8);
+            background: rgba(12, 94, 168, 0.08);
+            box-shadow: 0 0 0 3px rgba(12, 94, 168, 0.15);
         }
 
         .density-option input[type="radio"] {
@@ -766,7 +729,7 @@
     }
 
         .option-content .k-svg-icon {
-            color: var(--accent);
+            color: var(--accent, #0c5ea8);
             font-size: 32px;
         }
 
@@ -774,121 +737,13 @@
         margin: 0 0 0.25rem 0;
         font-size: 1rem;
         font-weight: 600;
-        color: var(--text);
+        color: var(--text, #111827);
     }
 
     .option-info p {
         margin: 0;
         font-size: 0.875rem;
-        color: var(--muted);
-    }
-
-    /* Typography Controls */
-    .typography-controls {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    .control-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-    }
-
-        .control-group > label {
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-    .slider-control {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .slider-label {
-        font-size: 0.875rem;
-        color: var(--muted);
-        font-weight: 600;
-    }
-
-        .slider-label.large {
-            font-size: 1.25rem;
-        }
-
-    .font-slider {
-        flex: 1;
-    }
-
-    .slider-value {
-        min-width: 50px;
-        text-align: right;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: var(--accent);
-    }
-
-    .font-dropdown {
-        max-width: 300px;
-    }
-
-    .typography-preview {
-        padding: 1.5rem;
-        background: var(--hover-bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-    }
-
-        .typography-preview p {
-            margin: 0;
-            color: var(--text);
-        }
-
-    /* Options List */
-    .options-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .option-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1rem;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        background: var(--card-bg);
-    }
-
-        .option-item:hover {
-            background: var(--hover-bg);
-            border-color: var(--accent);
-        }
-
-    .option-left {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex: 1;
-    }
-
-    .option-text h3 {
-        margin: 0 0 0.25rem 0;
-        font-size: 0.9375rem;
-        font-weight: 600;
-        color: var(--text);
-    }
-
-    .option-text p {
-        margin: 0;
-        font-size: 0.8125rem;
-        color: var(--muted);
+        color: var(--muted, #6b7280);
     }
 
     /* Settings Actions */
@@ -897,9 +752,10 @@
         align-items: center;
         justify-content: space-between;
         padding: 1.5rem;
-        border: 1px solid var(--border);
+        border: 1px solid var(--border, #e5e7eb);
         border-radius: 12px;
         gap: 1rem;
+        background: var(--card-bg, #f9fafb);
     }
 
     .action-right {
@@ -912,9 +768,9 @@
         align-items: center;
         gap: 0.5rem;
         padding: 0.625rem 1.25rem;
-        border: 1px solid var(--border);
-        background: var(--card-bg);
-        color: var(--text);
+        border: 1px solid var(--border, #e5e7eb);
+        background: var(--card-bg, #f9fafb);
+        color: var(--text, #111827);
         font-size: 0.875rem;
         font-weight: 600;
         border-radius: 8px;
@@ -923,157 +779,56 @@
     }
 
         .btn:hover {
-            background: var(--hover-bg);
-            border-color: var(--border);
+            background: var(--hover-bg, #f3f4f6);
+            border-color: var(--border, #e5e7eb);
         }
 
         .btn.primary {
-            background: var(--accent);
+            background: var(--accent, #0c5ea8);
             color: white;
-            border-color: var(--accent);
+            border-color: var(--accent, #0c5ea8);
         }
 
             .btn.primary:hover {
-                background: var(--accent-hover);
-                border-color: var(--accent-hover);
+                background: var(--accent-hover, #0d6bb6);
+                border-color: var(--accent-hover, #0d6bb6);
             }
 
         .btn.outline {
             background: transparent;
-            color: var(--text);
+            color: var(--text, #111827);
         }
 
             .btn.outline:hover {
-                background: var(--hover-bg);
+                background: var(--hover-bg, #f3f4f6);
             }
-
-    /* Light Mode (Default) */
-    :root {
-        --page-bg: #ffffff;
-        --text: #111827;
-        --muted: #6b7280;
-        --border: #e5e7eb;
-        --card-bg: #f9fafb;
-        --header-bg: #f3f4f6;
-        --hover-bg: #f3f4f6;
-        --accent: #0c5ea8;
-        --accent-hover: #0d6bb6;
-        --accent-rgb: 12, 94, 168;
-    }
-
-    /* Dark Mode */
-    @@media (prefers-color-scheme: dark) {
-        : root
-
-    {
-        --page-bg: #0f172a;
-        --text: #f1f5f9;
-        --muted: #94a3b8;
-        --border: #2d3748;
-        --card-bg: #1a1f2e;
-        --header-bg: #151d2c;
-        --header-bg: #151d2c;
-        --hover-bg: #1f2937;
-        --accent: #3b82f6;
-        --accent-hover: #1e40af;
-        --accent-rgb: 59, 130, 246;
-    }
-
-    .appearance-page {
-        background: var(--app-bg);
-        color: var(--text);
-    }
-
-    .settings-section {
-        background: var(--card-bg);
-        border-color: var(--border);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-    }
-
-    .theme-card {
-        background: var(--card-bg);
-        border-color: var(--border);
-    }
-
-        .theme-card:hover {
-            background: var(--hover-bg);
-        }
-
-    .theme-info {
-        background: var(--header-bg);
-    }
-
-    .color-swatch {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-    }
-
-        .color-swatch:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-        }
-
-    .density-option {
-        background: var(--card-bg);
-        border-color: var(--border);
-    }
-
-        .density-option:hover {
-            background: var(--hover-bg);
-        }
-
-    .typography-preview {
-        background: var(--hover-bg);
-        border-color: var(--border);
-    }
-
-    .option-item {
-        background: var(--card-bg);
-        border-color: var(--border);
-    }
-
-        .option-item:hover {
-            background: var(--hover-bg);
-        }
-
-    .btn {
-        background: var(--card-bg);
-        color: var(--text);
-        border-color: var(--border);
-    }
-
-        .btn:hover {
-            background: var(--hover-bg);
-        }
-
-    }
 
     /* Responsive */
     @@media (max-width: 768px) {
-        .appearance-page
+        .appearance-page {
+            padding: 1rem;
+        }
 
-    {
-        padding: 1rem;
+        .theme-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .color-grid {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .settings-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .action-right {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
-
-    .theme-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .color-grid {
-        grid-template-columns: repeat(5, 1fr);
-    }
-
-    .settings-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .action-right {
-        flex-direction: column;
-    }
-
-    .btn {
-        width: 100%;
-        justify-content: center;
-    }
-
-    }</style>
+</style>
