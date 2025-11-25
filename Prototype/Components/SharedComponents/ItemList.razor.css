@@ -6,7 +6,7 @@
 
 .list-header {
     padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--nav-border);
     background: var(--app-bg);
 }
 

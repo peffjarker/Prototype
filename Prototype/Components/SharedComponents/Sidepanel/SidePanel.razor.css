@@ -44,7 +44,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1.25rem 1.5rem;
-    border-bottom: 2px solid #dee2e6;
+    border-bottom: 1px solid var(--nav-border);
     background: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -89,7 +89,7 @@
 /* Side Panel Footer */
 .side-panel-footer {
     padding: 1.25rem 1.5rem;
-    border-top: 2px solid #dee2e6;
+    border-top: 1px solid var(--nav-border);
     background: #ffffff;
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
 }

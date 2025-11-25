@@ -38,7 +38,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-top: 1px solid #dee2e6;
+    border-top: 1px solid var(--nav-border);
     background: var(--app-bg);
 }
 

@@ -174,7 +174,7 @@
     display: flex;
     gap: 1rem;
     padding-top: 1.5rem;
-    border-top: 2px solid var(--kendo-color-border, #e5e7eb);
+    border-top: 1px solid var(--nav-border);
     margin-top: 1rem;
 }
 
