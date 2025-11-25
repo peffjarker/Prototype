@@ -453,55 +453,38 @@
 
 <style>
     /* ===== Base CSS Variables ===== */
+    /* Note: Main theme variables are set by appearance-manager.js */
+    /* We only define home-page-specific variables here */
+
     :root {
-        /* Light Mode (Default) */
-        --home-bg: #ffffff;
-        --home-text: #111827;
-        --home-text-secondary: #6b7280;
-        --home-text-muted: #9ca3af;
-        --home-border: #e5e7eb;
-        --home-card-bg: #ffffff;
-        --home-card-hover: #f9fafb;
-        --home-accent: #0c5ea8;
-        --home-accent-hover: #0a4d8a;
-        --home-accent-light: #e6f0fb;
-        --home-favorite-bg-start: #fffbdb;
-        --home-favorite-bg-end: #fff9c4;
-        --home-favorite-border: #ffd966;
-        --home-favorite-text: #856404;
+        /* Light mode favorites (gold) */
+        --home-favorite-bg-light-start: #fffbdb;
+        --home-favorite-bg-light-end: #fff9c4;
+        --home-favorite-border-light: #ffd966;
+        --home-favorite-text-light: #856404;
+        /* Dark mode favorites (gray) */
+        --home-favorite-bg-dark: var(--nav-bg);
+        --home-favorite-border-dark: var(--border);
+        --home-favorite-text-dark: var(--muted);
+        /* Shadows - will be overridden by appearance manager based on theme */
         --home-shadow-sm: 0 0.5px 1px rgba(0, 0, 0, 0.02);
         --home-shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08);
         --home-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.12);
     }
 
-    /* Dark Mode */
-    @@media (prefers-color-scheme: dark) {
-        :root {
-            --home-bg: #0f172a;
-            --home-text: #f1f5f9;
-            --home-text-secondary: #cbd5e0;
-            --home-text-muted: #94a3b8;
-            --home-border: #2d3748;
-            --home-card-bg: #1a2332;
-            --home-card-hover: #222d3d;
-            --home-accent: #3b82f6;
-            --home-accent-hover: #2563eb;
-            --home-accent-light: rgba(59, 130, 246, 0.15);
-            --home-favorite-bg-start: #2d2411;
-            --home-favorite-bg-end: #3a2f15;
-            --home-favorite-border: #5a4a2a;
-            --home-favorite-text: #fbbf24;
-            --home-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
-            --home-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-            --home-shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.6);
-        }
+    /* ===== Theme-Aware Favorites Section ===== */
+    /* Use data attribute set by appearance manager to detect theme */
+    [data-theme="dark"] {
+        --home-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+        --home-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+        --home-shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.6);
     }
 
     /* ===== Base Layout ===== */
     .home-page {
         margin: 0 auto;
         max-width: 1600px;
-        color: var(--home-text);
+        color: var(--text);
         transition: all 0.2s ease;
     }
 
@@ -524,20 +507,20 @@
         align-items: center;
         gap: 0.75rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--home-border);
+        border-bottom: 1px solid var(--border);
         letter-spacing: 0.3px;
     }
 
         .section-header h2 {
             margin: 0;
             font-weight: 600;
-            color: var(--home-text);
+            color: var(--text);
             letter-spacing: 0.2px;
             line-height: 1.3;
         }
 
         .section-header .k-svg-icon {
-            color: var(--home-accent);
+            color: var(--accent);
         }
 
     /* Density-specific section header spacing */
@@ -582,11 +565,17 @@
     /* ===== Favorites Section ===== */
     .favorites-section {
         padding: 1.5rem;
-        background: linear-gradient(180deg, var(--home-favorite-bg-start) 0%, var(--home-favorite-bg-end) 100%);
+        /* Light mode: gold gradient */
+        background: linear-gradient(180deg, var(--home-favorite-bg-light-start) 0%, var(--home-favorite-bg-light-end) 100%);
         border-radius: 12px;
         border: none;
         box-shadow: var(--home-shadow-sm);
         animation: fadeIn 0.3s ease-in-out;
+    }
+
+    /* Dark mode: gray background */
+    [data-theme="dark"] .favorites-section {
+        background: var(--home-favorite-bg-dark);
     }
 
     .home-page[data-density="compact"] .favorites-section {
@@ -605,15 +594,29 @@
     }
 
     .favorites-section .section-header {
-        border-bottom-color: var(--home-favorite-border);
+        /* Light mode: gold border and text */
+        border-bottom-color: var(--home-favorite-border-light);
     }
 
         .favorites-section .section-header h2 {
-            color: var(--home-favorite-text);
+            color: var(--home-favorite-text-light);
         }
 
         .favorites-section .section-header .k-svg-icon {
-            color: var(--home-favorite-text);
+            color: var(--home-favorite-text-light);
+        }
+
+    /* Dark mode: gray border and text */
+    [data-theme="dark"] .favorites-section .section-header {
+        border-bottom-color: var(--home-favorite-border-dark);
+    }
+
+        [data-theme="dark"] .favorites-section .section-header h2 {
+            color: var(--home-favorite-text-dark);
+        }
+
+        [data-theme="dark"] .favorites-section .section-header .k-svg-icon {
+            color: var(--home-favorite-text-dark);
         }
 
     /* ===== Modules Section ===== */
@@ -654,22 +657,22 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        background: var(--home-accent-light);
+        background: var(--accent-weak);
         border-radius: 8px;
-        border-left: 4px solid var(--home-accent);
+        border-left: 4px solid var(--accent);
         transition: all 0.2s ease-in-out;
     }
 
         .module-title h3 {
             margin: 0;
             font-weight: 600;
-            color: var(--home-accent);
+            color: var(--accent);
             letter-spacing: 0.3px;
             line-height: 1.3;
         }
 
         .module-title .k-svg-icon {
-            color: var(--home-accent);
+            color: var(--accent);
         }
 
     .home-page[data-density="compact"] .module-title {
@@ -725,16 +728,16 @@
         align-items: center;
         gap: 0.75rem;
         padding: 0.75rem 1rem;
-        background: var(--home-card-bg);
-        border: 1px solid var(--home-border);
+        background: var(--card-bg);
+        border: 1px solid var(--border);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.15s ease;
     }
 
         .compact-item:hover {
-            background: var(--home-card-hover);
-            border-color: var(--home-accent);
+            background: var(--hover-bg);
+            border-color: var(--accent);
             box-shadow: var(--home-shadow-sm);
         }
 
@@ -745,8 +748,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--home-accent-light);
-        color: var(--home-accent);
+        background: var(--accent-weak);
+        color: var(--accent);
         border-radius: 6px;
         font-size: 1rem;
     }
@@ -765,7 +768,7 @@
             margin: 0;
             font-size: 0.9375rem;
             font-weight: 600;
-            color: var(--home-text);
+            color: var(--text);
             letter-spacing: 0.2px;
             line-height: 1.3;
             white-space: nowrap;
@@ -776,7 +779,7 @@
     .compact-category {
         display: inline-block;
         font-size: 0.75rem;
-        color: var(--home-text-muted);
+        color: var(--muted);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-weight: 600;
@@ -803,8 +806,8 @@
     /* ===== Page Cards ===== */
     .page-card {
         position: relative;
-        background: var(--nav-bg);
-        border: 1px solid var(--nav-border);
+        background: var(--card-bg);
+        border: 1px solid var(--border);
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s ease-in-out;
@@ -831,8 +834,8 @@
         .page-card:hover {
             transform: translateY(-2px);
             box-shadow: var(--home-shadow-lg);
-            background: var(--home-card-hover);
-            border-color: var(--home-accent);
+            background: var(--hover-bg);
+            border-color: var(--accent);
         }
 
         .page-card.favorite {
@@ -876,9 +879,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--home-accent-light);
+        background: var(--accent-weak);
         border-radius: 12px;
-        color: var(--home-accent);
+        color: var(--accent);
         transition: all 0.2s ease-in-out;
     }
 
@@ -908,7 +911,7 @@
         background: transparent;
         border: none;
         cursor: pointer;
-        color: var(--home-text-muted);
+        color: var(--muted);
         transition: all 0.2s ease-in-out;
         border-radius: 6px;
         display: flex;
@@ -938,7 +941,7 @@
     .page-card h3 {
         margin: 0;
         font-weight: 600;
-        color: var(--home-text);
+        color: var(--text);
         letter-spacing: 0.2px;
         line-height: 1.3;
     }
@@ -955,7 +958,7 @@
 
     .card-description {
         margin: 0;
-        color: var(--home-text-secondary);
+        color: var(--muted);
         line-height: 1.6;
         letter-spacing: 0.3px;
     }
@@ -982,7 +985,7 @@
         display: inline-block;
         padding: 0.35rem 0.75rem;
         background: rgba(0, 0, 0, 0.05);
-        color: var(--home-text);
+        color: var(--text);
         border-radius: 6px;
         font-size: 0.75rem;
         font-weight: 600;
@@ -991,10 +994,8 @@
         transition: all 0.2s ease-in-out;
     }
 
-    @@media (prefers-color-scheme: dark) {
-        .badge {
-            background: rgba(255, 255, 255, 0.08);
-        }
+    [data-theme="dark"] .badge {
+        background: rgba(255, 255, 255, 0.08);
     }
 
     /* ===== Animations ===== */
@@ -1136,3 +1137,45 @@
         }
     }
 </style>
+
+<script>
+    // Set data-theme attribute on document element for theme-aware CSS
+    (function() {
+        function updateThemeAttribute() {
+            try {
+                const themeJson = localStorage.getItem('ibn-theme');
+                let theme = themeJson ? JSON.parse(themeJson) : 'light';
+
+                // Handle 'auto' theme by checking system preference
+                if (theme === 'auto') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    theme = prefersDark ? 'dark' : 'light';
+                }
+
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                console.error('Error setting theme attribute:', e);
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        }
+
+        // Update immediately
+        updateThemeAttribute();
+
+        // Listen for storage changes (theme updates)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'ibn-theme') {
+                updateThemeAttribute();
+            }
+        });
+
+        // Listen for system theme changes when using 'auto'
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            const themeJson = localStorage.getItem('ibn-theme');
+            const theme = themeJson ? JSON.parse(themeJson) : 'light';
+            if (theme === 'auto') {
+                updateThemeAttribute();
+            }
+        });
+    })();
+</script>
