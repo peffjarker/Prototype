@@ -122,8 +122,10 @@
     }
 
     .form-field input:read-only {
-        background: #e9ecef;
+        background: transparent;
         cursor: default;
+        border: 1px solid var(--nav-border);
+        color: var(--muted);
     }
 
 .required {
