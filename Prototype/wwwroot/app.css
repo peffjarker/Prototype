@@ -18,7 +18,6 @@ a, .btn-link {
 
 .card {
     padding: 0;
-    overflow: hidden; /* Prevent content from breaking out */
 }
 
 .title {
@@ -147,7 +146,6 @@ h1:focus {
 
 .card {
     background: transparent;
-    border: 1px solid var(--nav-border);
 }
 
 .rop-detail {
