@@ -187,7 +187,7 @@
             </div>
         }
 
-        <div style="padding: 1rem; background: #fff; border-top: 1px solid #dee2e6; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.875rem;">
+        <div style="padding: 1rem; background: transparent; border: 1px solid var(--nav-border); display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.875rem;">
             <div>
                 <span style="color: #6c757d;">In Transit:</span>
                 <strong style="color: #17a2b8;">@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
@@ -213,7 +213,7 @@
 
     <!-- PO Lines Grid -->
     <section class="panel" id="oplines" @ref="_oplinesSection" style="margin-top: 2rem;">
-        <header class="section-header" style="background: #f8f9fa; padding: 1rem; border-bottom: 2px solid #dee2e6;">
+        <header class="section-header" style="background: transparent; padding: 1rem; border: 1px solid var(--nav-border);">
             <h4 style="margin: 0; display: flex; align-items: center; gap: 1rem;">
                 Open PO Lines
                 <span class="badge" style="background: #007bff; color: white; padding: 0.35em 0.65em;">
