@@ -39,8 +39,6 @@
     flex-direction: column;
     gap: 1.25rem;
     min-width: 0;
-    border: 1px solid var(--nav-border);
-    background: var(--nav-bg);
 }
 
 .form-section {
@@ -59,7 +57,7 @@
 
 .sidebar-section {
     padding: 1.25rem;
-    background: #f8f9fa;
+    background: var(--nav-bg);
     border-radius: 6px;
     border: 1px solid var(--kendo-color-border, #e5e7eb);
 }
@@ -72,8 +70,7 @@
     }
 
 .app-status {
-    background: #e7f3ff;
-    border-color: #007bff;
+    border-color: var(--nav-border);
 }
 
 .form-row {
@@ -160,6 +157,7 @@
     border-radius: 4px;
     font-size: 0.8rem;
     font-style: italic;
+    color: black;
 }
 
     .form-notes div {
