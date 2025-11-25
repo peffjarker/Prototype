@@ -212,8 +212,8 @@
 .po-page-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100vh;
     overflow: hidden;
+    margin-bottom: 1rem;
 }
 
     .po-page-wrapper > .header {
@@ -254,7 +254,7 @@
     border: 1px solid var(--nav-border);
     background: var(--card-bg);
     flex-shrink: 0;
-    margin-bottom: 4vh;
+    margin-bottom: 1rem;
 }
 
     .grid-footer .btn {

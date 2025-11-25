@@ -19,6 +19,7 @@
 
 .items-section {
     padding: 0;
+    margin-bottom: 1rem;
 }
 
 .items-layout {
@@ -30,7 +31,6 @@
 .item-detail {
     padding: 1.5rem;
     overflow-y: auto;
-    max-height: 600px;
 }
 
 .detail-empty {

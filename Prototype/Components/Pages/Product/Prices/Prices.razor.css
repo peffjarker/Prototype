@@ -1,5 +1,6 @@
 ﻿.items-section {
     padding: 0;
+    margin-bottom: 1rem;
 }
 
 .items-layout {
@@ -33,7 +34,7 @@
     flex-direction: column;
     gap: 0.75rem;
     padding: 1rem;
-    background: #f8f9fa;
+    border: 1px solid var(--nav-border);
     border-radius: 0.25rem;
 }
 
@@ -41,7 +42,7 @@
         margin: 0 0 1rem 0;
         padding-bottom: 0.5rem;
         border-bottom: 1px solid var(--nav-border);
-        color: #212529;
+        color: var(--muted);
     }
 
 .field {
@@ -53,7 +54,7 @@
     .field label {
         font-weight: 600;
         font-size: 0.875rem;
-        color: #495057;
+        color: var(--muted);
     }
 
     .field input,
@@ -65,8 +66,7 @@
     }
 
         .field input[readonly] {
-            background-color: #fff;
-            border-color: #ced4da;
+            border-color: var(--nav-border);
         }
 
         .field input.full-width {
