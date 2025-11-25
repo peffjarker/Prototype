@@ -87,7 +87,7 @@
         return settings;
     }
 
-    // Apply theme (light/dark/auto)
+    // Apply theme (light/dark/dim/auto)
     function applyTheme(theme) {
         const root = document.documentElement;
 
@@ -331,6 +331,242 @@
             root.style.setProperty('--kendo-slider-selection-bg', '#3b82f6');
             root.style.setProperty('--kendo-slider-handle-bg', '#f1f5f9');
             root.style.setProperty('--kendo-slider-handle-border', '#2d3748');
+            root.style.setProperty('--kendo-slider-handle-hover-bg', '#ffffff');
+        } else if (theme === 'dim') {
+            // ===== DIM THEME - A softer middle ground between light and dark =====
+            // Custom app variables
+            root.style.setProperty('--app-bg', '#2d3748');
+            root.style.setProperty('--card-bg', '#3d4a5c');
+            root.style.setProperty('--border', '#4a5568');
+            root.style.setProperty('--border-strong', '#606b7d');
+            root.style.setProperty('--text', '#e2e8f0');
+            root.style.setProperty('--muted', '#a0aec0');
+            root.style.setProperty('--row-hover', '#4a5568');
+            root.style.setProperty('--nav-bg', '#3d4a5c');
+            root.style.setProperty('--nav-border', '#4a5568');
+            root.style.setProperty('--hover-bg', '#4a5568');
+
+            // ===== Core Kendo/Telerik Theme Variables =====
+            root.style.setProperty('--kendo-color-base', '#3d4a5c');
+            root.style.setProperty('--kendo-color-base-hover', '#4a5568');
+            root.style.setProperty('--kendo-color-base-active', '#5a6678');
+            root.style.setProperty('--kendo-color-on-base', '#e2e8f0');
+            root.style.setProperty('--kendo-color-surface', '#2d3748');
+            root.style.setProperty('--kendo-color-surface-alt', '#3d4a5c');
+            root.style.setProperty('--kendo-color-border', '#4a5568');
+            root.style.setProperty('--kendo-color-border-alt', '#606b7d');
+
+            // Text colors
+            root.style.setProperty('--kendo-color-on-app-surface', '#e2e8f0');
+            root.style.setProperty('--kendo-color-subtle', '#a0aec0');
+            root.style.setProperty('--kendo-color-disabled', '#718096');
+
+            // Component states
+            root.style.setProperty('--kendo-color-focus', '#63b3ed');
+            root.style.setProperty('--kendo-color-error', '#fc8181');
+            root.style.setProperty('--kendo-color-success', '#68d391');
+            root.style.setProperty('--kendo-color-warning', '#f6ad55');
+            root.style.setProperty('--kendo-color-info', '#63b3ed');
+
+            // ===== Grid Component =====
+            root.style.setProperty('--kendo-grid-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-grid-text', '#e2e8f0');
+            root.style.setProperty('--kendo-grid-border', '#4a5568');
+            root.style.setProperty('--kendo-grid-header-bg', '#2d3748');
+            root.style.setProperty('--kendo-grid-header-text', '#e2e8f0');
+            root.style.setProperty('--kendo-grid-header-border', '#4a5568');
+            root.style.setProperty('--kendo-grid-footer-bg', '#2d3748');
+            root.style.setProperty('--kendo-grid-footer-text', '#e2e8f0');
+            root.style.setProperty('--kendo-grid-footer-border', '#4a5568');
+            root.style.setProperty('--kendo-grid-alt-bg', '#364152');
+            root.style.setProperty('--kendo-grid-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-grid-selected-bg', '#3182ce');
+            root.style.setProperty('--kendo-grid-selected-text', '#ffffff');
+            root.style.setProperty('--kendo-grid-grouping-header-bg', '#2d3748');
+            root.style.setProperty('--kendo-grid-filter-cell-bg', '#3d4a5c');
+
+            // ===== Button Component =====
+            root.style.setProperty('--kendo-button-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-button-text', '#e2e8f0');
+            root.style.setProperty('--kendo-button-border', '#4a5568');
+            root.style.setProperty('--kendo-button-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-button-hover-border', '#5a6678');
+            root.style.setProperty('--kendo-button-active-bg', '#5a6678');
+            root.style.setProperty('--kendo-button-focus-shadow', 'rgba(99, 179, 237, 0.5)');
+            root.style.setProperty('--kendo-button-disabled-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-button-disabled-text', '#718096');
+            root.style.setProperty('--kendo-button-disabled-border', '#4a5568');
+
+            // ===== Input/TextBox Component =====
+            root.style.setProperty('--kendo-input-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-input-text', '#e2e8f0');
+            root.style.setProperty('--kendo-input-border', '#4a5568');
+            root.style.setProperty('--kendo-input-hover-border', '#606b7d');
+            root.style.setProperty('--kendo-input-focus-border', '#63b3ed');
+            root.style.setProperty('--kendo-input-focus-shadow', 'rgba(99, 179, 237, 0.25)');
+            root.style.setProperty('--kendo-input-disabled-bg', '#2d3748');
+            root.style.setProperty('--kendo-input-disabled-text', '#718096');
+            root.style.setProperty('--kendo-input-placeholder-text', '#a0aec0');
+
+            // ===== Dropdown/ComboBox/MultiSelect =====
+            root.style.setProperty('--kendo-picker-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-picker-text', '#e2e8f0');
+            root.style.setProperty('--kendo-picker-border', '#4a5568');
+            root.style.setProperty('--kendo-picker-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-picker-hover-border', '#606b7d');
+            root.style.setProperty('--kendo-picker-focus-border', '#63b3ed');
+            root.style.setProperty('--kendo-list-item-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-list-item-selected-bg', '#3182ce');
+            root.style.setProperty('--kendo-list-item-focus-bg', '#5a6678');
+            root.style.setProperty('--kendo-popup-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-popup-border', '#4a5568');
+            root.style.setProperty('--kendo-popup-shadow', 'rgba(0, 0, 0, 0.25)');
+
+            // ===== DatePicker/TimePicker/DateTimePicker =====
+            root.style.setProperty('--kendo-calendar-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-calendar-text', '#e2e8f0');
+            root.style.setProperty('--kendo-calendar-border', '#4a5568');
+            root.style.setProperty('--kendo-calendar-header-bg', '#2d3748');
+            root.style.setProperty('--kendo-calendar-cell-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-calendar-cell-selected-bg', '#3182ce');
+            root.style.setProperty('--kendo-calendar-weekend-text', '#a0aec0');
+            root.style.setProperty('--kendo-calendar-other-month-text', '#718096');
+
+            // ===== TabStrip Component =====
+            root.style.setProperty('--kendo-tabstrip-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-tabstrip-text', '#e2e8f0');
+            root.style.setProperty('--kendo-tabstrip-border', '#4a5568');
+            root.style.setProperty('--kendo-tabstrip-item-bg', 'transparent');
+            root.style.setProperty('--kendo-tabstrip-item-text', '#a0aec0');
+            root.style.setProperty('--kendo-tabstrip-item-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-tabstrip-item-hover-text', '#e2e8f0');
+            root.style.setProperty('--kendo-tabstrip-item-selected-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-tabstrip-item-selected-text', '#e2e8f0');
+            root.style.setProperty('--kendo-tabstrip-content-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-tabstrip-content-border', '#4a5568');
+
+            // ===== Window/Dialog Component =====
+            root.style.setProperty('--kendo-window-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-window-text', '#e2e8f0');
+            root.style.setProperty('--kendo-window-border', '#4a5568');
+            root.style.setProperty('--kendo-window-shadow', 'rgba(0, 0, 0, 0.35)');
+            root.style.setProperty('--kendo-window-titlebar-bg', '#2d3748');
+            root.style.setProperty('--kendo-window-titlebar-text', '#e2e8f0');
+            root.style.setProperty('--kendo-window-titlebar-border', '#4a5568');
+
+            // ===== Menu/ContextMenu Component =====
+            root.style.setProperty('--kendo-menu-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-menu-text', '#e2e8f0');
+            root.style.setProperty('--kendo-menu-border', '#4a5568');
+            root.style.setProperty('--kendo-menu-item-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-menu-item-hover-text', '#e2e8f0');
+            root.style.setProperty('--kendo-menu-item-active-bg', '#5a6678');
+            root.style.setProperty('--kendo-menu-item-disabled-text', '#718096');
+
+            // ===== TreeView Component =====
+            root.style.setProperty('--kendo-treeview-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-treeview-text', '#e2e8f0');
+            root.style.setProperty('--kendo-treeview-item-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-treeview-item-selected-bg', '#3182ce');
+            root.style.setProperty('--kendo-treeview-item-focus-bg', '#5a6678');
+
+            // ===== Pager Component =====
+            root.style.setProperty('--kendo-pager-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-pager-text', '#e2e8f0');
+            root.style.setProperty('--kendo-pager-border', '#4a5568');
+            root.style.setProperty('--kendo-pager-item-bg', 'transparent');
+            root.style.setProperty('--kendo-pager-item-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-pager-item-selected-bg', '#3182ce');
+
+            // ===== Toolbar Component =====
+            root.style.setProperty('--kendo-toolbar-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-toolbar-text', '#e2e8f0');
+            root.style.setProperty('--kendo-toolbar-border', '#4a5568');
+            root.style.setProperty('--kendo-toolbar-item-hover-bg', '#4a5568');
+
+            // ===== Chip/Badge Component =====
+            root.style.setProperty('--kendo-chip-bg', '#4a5568');
+            root.style.setProperty('--kendo-chip-text', '#e2e8f0');
+            root.style.setProperty('--kendo-chip-border', '#5a6678');
+            root.style.setProperty('--kendo-chip-hover-bg', '#5a6678');
+            root.style.setProperty('--kendo-chip-selected-bg', '#3182ce');
+
+            // ===== Card Component =====
+            root.style.setProperty('--kendo-card-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-card-text', '#e2e8f0');
+            root.style.setProperty('--kendo-card-border', '#4a5568');
+            root.style.setProperty('--kendo-card-shadow', 'rgba(0, 0, 0, 0.15)');
+            root.style.setProperty('--kendo-card-header-bg', '#2d3748');
+            root.style.setProperty('--kendo-card-header-border', '#4a5568');
+
+            // ===== Notification/Alert Component =====
+            root.style.setProperty('--kendo-notification-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-notification-text', '#e2e8f0');
+            root.style.setProperty('--kendo-notification-border', '#4a5568');
+            root.style.setProperty('--kendo-notification-shadow', 'rgba(0, 0, 0, 0.25)');
+
+            // ===== Tooltip Component =====
+            root.style.setProperty('--kendo-tooltip-bg', '#2d3748');
+            root.style.setProperty('--kendo-tooltip-text', '#e2e8f0');
+            root.style.setProperty('--kendo-tooltip-border', '#4a5568');
+            root.style.setProperty('--kendo-tooltip-shadow', 'rgba(0, 0, 0, 0.3)');
+
+            // ===== Splitter Component =====
+            root.style.setProperty('--kendo-splitter-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-splitter-border', '#4a5568');
+            root.style.setProperty('--kendo-splitter-splitbar-bg', '#2d3748');
+            root.style.setProperty('--kendo-splitter-splitbar-hover-bg', '#4a5568');
+
+            // ===== Upload Component =====
+            root.style.setProperty('--kendo-upload-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-upload-text', '#e2e8f0');
+            root.style.setProperty('--kendo-upload-border', '#4a5568');
+            root.style.setProperty('--kendo-upload-dropzone-bg', '#2d3748');
+            root.style.setProperty('--kendo-upload-dropzone-hover-bg', '#4a5568');
+
+            // ===== Editor Component =====
+            root.style.setProperty('--kendo-editor-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-editor-text', '#e2e8f0');
+            root.style.setProperty('--kendo-editor-border', '#4a5568');
+            root.style.setProperty('--kendo-editor-toolbar-bg', '#2d3748');
+            root.style.setProperty('--kendo-editor-content-bg', '#3d4a5c');
+
+            // ===== Scheduler Component =====
+            root.style.setProperty('--kendo-scheduler-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-scheduler-text', '#e2e8f0');
+            root.style.setProperty('--kendo-scheduler-border', '#4a5568');
+            root.style.setProperty('--kendo-scheduler-header-bg', '#2d3748');
+            root.style.setProperty('--kendo-scheduler-cell-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-scheduler-event-bg', '#3182ce');
+            root.style.setProperty('--kendo-scheduler-nonwork-bg', '#283240');
+
+            // ===== Gantt Component =====
+            root.style.setProperty('--kendo-gantt-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-gantt-text', '#e2e8f0');
+            root.style.setProperty('--kendo-gantt-border', '#4a5568');
+            root.style.setProperty('--kendo-gantt-header-bg', '#2d3748');
+            root.style.setProperty('--kendo-gantt-alt-bg', '#364152');
+            root.style.setProperty('--kendo-gantt-task-bg', '#3182ce');
+
+            // ===== PanelBar Component =====
+            root.style.setProperty('--kendo-panelbar-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-panelbar-text', '#e2e8f0');
+            root.style.setProperty('--kendo-panelbar-border', '#4a5568');
+            root.style.setProperty('--kendo-panelbar-header-bg', '#2d3748');
+            root.style.setProperty('--kendo-panelbar-header-hover-bg', '#4a5568');
+
+            // ===== ListView Component =====
+            root.style.setProperty('--kendo-listview-bg', '#3d4a5c');
+            root.style.setProperty('--kendo-listview-text', '#e2e8f0');
+            root.style.setProperty('--kendo-listview-border', '#4a5568');
+            root.style.setProperty('--kendo-listview-item-hover-bg', '#4a5568');
+            root.style.setProperty('--kendo-listview-item-selected-bg', '#3182ce');
+
+            // ===== Slider/RangeSlider Component =====
+            root.style.setProperty('--kendo-slider-track-bg', '#4a5568');
+            root.style.setProperty('--kendo-slider-selection-bg', '#63b3ed');
+            root.style.setProperty('--kendo-slider-handle-bg', '#e2e8f0');
+            root.style.setProperty('--kendo-slider-handle-border', '#4a5568');
             root.style.setProperty('--kendo-slider-handle-hover-bg', '#ffffff');
         } else {
             // Custom app variables (light)

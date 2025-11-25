@@ -54,6 +54,32 @@
                             }
                         </div>
 
+                        <div class="theme-card @(selectedTheme == "dim" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("dim"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview dim-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Dim</h3>
+                                <p>Softer, muted tones</p>
+                            </div>
+                            @if (selectedTheme == "dim")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
                         <div class="theme-card @(selectedTheme == "dark" ? "active" : "")"
                              @onclick="@(() => SelectTheme("dark"))"
                              @onclick:stopPropagation="true">
@@ -519,7 +545,7 @@
     /* Theme Grid */
     .theme-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1.5rem;
     }
 
@@ -546,13 +572,17 @@
         }
 
     .theme-preview {
-        height: 180px;
+        height: 160px;
         padding: 12px;
         position: relative;
     }
 
     .light-preview {
         background: #ffffff;
+    }
+
+    .dim-preview {
+        background: #3d4a5c;
     }
 
     .dark-preview {
@@ -602,6 +632,12 @@
     .light-preview .preview-sidebar,
     .light-preview .preview-bar {
         color: #111827;
+    }
+
+    .dim-preview .preview-header,
+    .dim-preview .preview-sidebar,
+    .dim-preview .preview-bar {
+        color: #e2e8f0;
     }
 
     .dark-preview .preview-header,
@@ -810,7 +846,7 @@
         }
 
         .theme-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
         }
 
         .color-grid {
@@ -829,6 +865,12 @@
         .btn {
             width: 100%;
             justify-content: center;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .theme-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>
