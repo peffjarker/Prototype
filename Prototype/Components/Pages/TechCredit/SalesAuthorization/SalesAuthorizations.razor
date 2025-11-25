@@ -438,7 +438,8 @@
         display: flex;
         gap: 1rem;
         padding: 1rem;
-        background: #f8f9fa;
+        background: var(--nav-bg);
+        border: 1px solid var(--nav-border);
         border-radius: 8px;
         margin-bottom: 1.5rem;
     }
@@ -473,16 +474,13 @@
     .recap-section {
         background: white;
         border: 1px solid var(--kendo-color-border, #e5e7eb);
-        border-radius: 8px;
         margin-bottom: 1.5rem;
     }
 
     .recap-header {
-        background: #fff3cd;
-        border-bottom: 1px solid #ffc107;
+        background: var(--nav-bg);
+        border: 1px solid var(--nav-border);
         padding: 0.75rem 1.5rem;
-        border-radius: 8px 8px 0 0;
-        margin-bottom: 1rem;
     }
 
         .recap-header h4 {
@@ -492,6 +490,8 @@
         }
 
     .recap-layout {
+        background: var(--nav-bg);
+        border: 1px solid var(--nav-border);
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
@@ -529,7 +529,7 @@
             border: 1px solid var(--kendo-color-border, #e5e7eb);
             border-radius: 4px;
             font-size: 0.875rem;
-            background: white;
+            background: transparent;
         }
 
             .form-field input:read-only {
@@ -551,14 +551,13 @@
         grid-template-columns: repeat(4, 1fr);
         gap: 1rem;
         padding: 1rem 1.5rem 1.5rem 1.5rem;
-        border-top: 1px solid var(--kendo-color-border, #e5e7eb);
-        margin-top: 1rem;
+        background: var(--nav-bg);
+        border: 1px solid var(--nav-border);
     }
 
     .history-section {
-        background: white;
+        background: var(--nav-bg);
         border: 1px solid var(--kendo-color-border, #e5e7eb);
-        border-radius: 8px;
         margin-bottom: 1.5rem;
     }
 
@@ -567,9 +566,8 @@
         justify-content: space-between;
         align-items: center;
         padding: 0.75rem 1rem;
-        background: #f8f9fa;
-        border-bottom: 1px solid var(--kendo-color-border, #e5e7eb);
-        border-radius: 8px 8px 0 0;
+        background: var(--nav-bg);
+        border: 1px solid var(--nav-border);
     }
 
     .history-tabs {
