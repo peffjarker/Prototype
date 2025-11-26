@@ -146,45 +146,6 @@
                             }
                         </div>
 
-                        <div class="theme-card @(selectedTheme == "auto" ? "active" : "")"
-                             @onclick="@(() => SelectTheme("auto"))"
-                             @onclick:stopPropagation="true">
-                            <div class="theme-preview auto-preview">
-                                <div class="preview-split">
-                                    <div class="preview-half light-preview">
-                                        <div class="preview-header"></div>
-                                        <div class="preview-content">
-                                            <div class="preview-sidebar"></div>
-                                            <div class="preview-main">
-                                                <div class="preview-bar"></div>
-                                                <div class="preview-bar short"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="preview-half dark-preview">
-                                        <div class="preview-header"></div>
-                                        <div class="preview-content">
-                                            <div class="preview-sidebar"></div>
-                                            <div class="preview-main">
-                                                <div class="preview-bar"></div>
-                                                <div class="preview-bar short"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="theme-info">
-                                <h3>Auto</h3>
-                                <p>Match system preferences</p>
-                            </div>
-                            @if (selectedTheme == "auto")
-                            {
-                                <div class="theme-check">
-                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
-                                </div>
-                            }
-                        </div>
-
                         <div class="theme-card @(selectedTheme == "sepia" ? "active" : "")"
                              @onclick="@(() => SelectTheme("sepia"))"
                              @onclick:stopPropagation="true">
@@ -282,6 +243,255 @@
                                 <p>Maximum accessibility</p>
                             </div>
                             @if (selectedTheme == "high-contrast")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Add after the "auto" theme card -->
+
+                        <div class="theme-card @(selectedTheme == "dracula" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("dracula"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview dracula-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Dracula</h3>
+                                <p>Popular purple/pink/cyan palette</p>
+                            </div>
+                            @if (selectedTheme == "dracula")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "solarized-light" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("solarized-light"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview solarized-light-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Solarized Light</h3>
+                                <p>Scientifically designed for comfort</p>
+                            </div>
+                            @if (selectedTheme == "solarized-light")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "solarized-dark" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("solarized-dark"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview solarized-dark-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Solarized Dark</h3>
+                                <p>Dark variant with precision colors</p>
+                            </div>
+                            @if (selectedTheme == "solarized-dark")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "monochrome" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("monochrome"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview monochrome-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Monochrome</h3>
+                                <p>Pure grayscale focus</p>
+                            </div>
+                            @if (selectedTheme == "monochrome")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "catppuccin" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("catppuccin"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview catppuccin-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Catppuccin</h3>
+                                <p>Trendy pastel dark theme</p>
+                            </div>
+                            @if (selectedTheme == "catppuccin")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "catppuccin-latte" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("catppuccin-latte"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview catppuccin-latte-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Catppuccin Latte</h3>
+                                <p>Light pastel elegance</p>
+                            </div>
+                            @if (selectedTheme == "catppuccin-latte")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "catppuccin-frappe" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("catppuccin-frappe"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview catppuccin-frappe-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Catppuccin Frappe</h3>
+                                <p>Subdued dark palette</p>
+                            </div>
+                            @if (selectedTheme == "catppuccin-frappe")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "catppuccin-macchiato" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("catppuccin-macchiato"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview catppuccin-macchiato-preview">
+                                <div class="preview-header"></div>
+                                <div class="preview-content">
+                                    <div class="preview-sidebar"></div>
+                                    <div class="preview-main">
+                                        <div class="preview-bar"></div>
+                                        <div class="preview-bar short"></div>
+                                        <div class="preview-bar"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Catppuccin Macchiato</h3>
+                                <p>Medium contrast comfort</p>
+                            </div>
+                            @if (selectedTheme == "catppuccin-macchiato")
+                            {
+                                <div class="theme-check">
+                                    <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
+                                </div>
+                            }
+                        </div>
+
+                        <div class="theme-card @(selectedTheme == "auto" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("auto"))"
+                             @onclick:stopPropagation="true">
+                            <div class="theme-preview auto-preview">
+                                <div class="preview-split">
+                                    <div class="preview-half light-preview">
+                                        <div class="preview-header"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-sidebar"></div>
+                                            <div class="preview-main">
+                                                <div class="preview-bar"></div>
+                                                <div class="preview-bar short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="preview-half dark-preview">
+                                        <div class="preview-header"></div>
+                                        <div class="preview-content">
+                                            <div class="preview-sidebar"></div>
+                                            <div class="preview-main">
+                                                <div class="preview-bar"></div>
+                                                <div class="preview-bar short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="theme-info">
+                                <h3>Auto</h3>
+                                <p>Match system preferences</p>
+                            </div>
+                            @if (selectedTheme == "auto")
                             {
                                 <div class="theme-check">
                                     <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
@@ -1162,6 +1372,161 @@
         background: #ffffff;
         border: 2px solid #000000 !important;
     }
+
+    .dracula-preview {
+        background: #282a36;
+    }
+
+        .dracula-preview .preview-header {
+            background: #ff79c6;
+            opacity: 0.6;
+        }
+
+        .dracula-preview .preview-sidebar {
+            background: #bd93f9;
+            opacity: 0.5;
+        }
+
+        .dracula-preview .preview-bar {
+            background: #f8f8f2;
+            opacity: 0.2;
+        }
+
+    .solarized-light-preview {
+        background: #fdf6e3;
+    }
+
+        .solarized-light-preview .preview-header {
+            background: #93a1a1;
+            opacity: 0.3;
+        }
+
+        .solarized-light-preview .preview-sidebar {
+            background: #839496;
+            opacity: 0.3;
+        }
+
+        .solarized-light-preview .preview-bar {
+            background: #657b83;
+            opacity: 0.3;
+        }
+
+    .solarized-dark-preview {
+        background: #002b36;
+    }
+
+        .solarized-dark-preview .preview-header {
+            background: #268bd2;
+            opacity: 0.6;
+        }
+
+        .solarized-dark-preview .preview-sidebar {
+            background: #2aa198;
+            opacity: 0.5;
+        }
+
+        .solarized-dark-preview .preview-bar {
+            background: #839496;
+            opacity: 0.3;
+        }
+
+    .monochrome-preview {
+        background: #ffffff;
+    }
+
+        .monochrome-preview .preview-header {
+            background: #6a6a6a;
+            opacity: 0.6;
+        }
+
+        .monochrome-preview .preview-sidebar {
+            background: #a0a0a0;
+            opacity: 0.5;
+        }
+
+        .monochrome-preview .preview-bar {
+            background: #1a1a1a;
+            opacity: 0.2;
+        }
+
+    .catppuccin-preview {
+        background: #1e1e2e;
+    }
+
+        .catppuccin-preview .preview-header {
+            background: linear-gradient(135deg, #cba6f7 0%, #b4befe 100%);
+            opacity: 0.7;
+        }
+
+        .catppuccin-preview .preview-sidebar {
+            background: linear-gradient(180deg, #89b4fa 0%, #b4befe 100%);
+            opacity: 0.6;
+        }
+
+        .catppuccin-preview .preview-bar {
+            background: #f5c2e7;
+            opacity: 0.4;
+        }
+
+    /* CATPPUCCIN LATTE PREVIEW */
+    .catppuccin-latte-preview {
+        background: #eff1f5;
+    }
+
+        .catppuccin-latte-preview .preview-header {
+            background: linear-gradient(135deg, #8839ef 0%, #7287fd 100%);
+            opacity: 0.7;
+        }
+
+        .catppuccin-latte-preview .preview-sidebar {
+            background: linear-gradient(180deg, #1e66f5 0%, #7287fd 100%);
+            opacity: 0.6;
+        }
+
+        .catppuccin-latte-preview .preview-bar {
+            background: #ea76cb;
+            opacity: 0.4;
+        }
+
+    /* CATPPUCCIN FRAPPÉ PREVIEW */
+    .catppuccin-frappe-preview {
+        background: #303446;
+    }
+
+        .catppuccin-frappe-preview .preview-header {
+            background: linear-gradient(135deg, #ca9ee6 0%, #babbf1 100%);
+            opacity: 0.7;
+        }
+
+        .catppuccin-frappe-preview .preview-sidebar {
+            background: linear-gradient(180deg, #8caaee 0%, #babbf1 100%);
+            opacity: 0.6;
+        }
+
+        .catppuccin-frappe-preview .preview-bar {
+            background: #f4b8e4;
+            opacity: 0.4;
+        }
+
+    /* CATPPUCCIN MACCHIATO PREVIEW */
+    .catppuccin-macchiato-preview {
+        background: #24273a;
+    }
+
+        .catppuccin-macchiato-preview .preview-header {
+            background: linear-gradient(135deg, #c6a0f6 0%, #b7bdf8 100%);
+            opacity: 0.7;
+        }
+
+        .catppuccin-macchiato-preview .preview-sidebar {
+            background: linear-gradient(180deg, #8aadf4 0%, #b7bdf8 100%);
+            opacity: 0.6;
+        }
+
+        .catppuccin-macchiato-preview .preview-bar {
+            background: #f5bde6;
+            opacity: 0.4;
+        }
 
     .preview-header {
         height: 18px;
