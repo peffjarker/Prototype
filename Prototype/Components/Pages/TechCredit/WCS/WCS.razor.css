@@ -1,154 +1,571 @@
-/* TechCreditBorrowers.razor.css */
-/* Scoped styles for TechCredit Borrowers page */
+/* WCS.razor.css (TechCredit Borrowers) */
+/* Integrated with global appearance system - uses CSS variables from appearance-manager.js */
 
+/* ============================================================
+   MAIN PAGE LAYOUT
+   ============================================================ */
 .techcredit-borrowers-page {
     display: flex;
     flex-direction: column;
     height: calc(100vh - 100px);
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
-/* ===== PAGE HEADER ===== */
-.page-header {
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+.header {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding-bottom: 1rem;
+    gap: var(--spacing-3, 0.75rem);
+    padding-bottom: var(--spacing-4, 1rem);
     border-bottom: 2px solid var(--border);
+    transition: border-color var(--transition-normal, 150ms) ease;
 }
 
-    .page-header h1 {
+    .header .title {
         margin: 0;
         font-size: 1.75rem;
         font-weight: 600;
         color: var(--text);
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
     }
 
+/* ============================================================
+   HEADER STATS
+   ============================================================ */
 .header-stats {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
     flex-wrap: wrap;
-    font-size: 0.875rem;
+    font-size: var(--base-font-size, 0.875rem);
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+    background: var(--hover-bg);
+    border-radius: var(--radius-md, 6px);
+    border: 1px solid var(--border);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .stat-item {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
     align-items: center;
 }
 
 .stat-label {
-    color: var(--text-secondary);
+    color: var(--muted);
     font-weight: 500;
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .stat-value {
     color: var(--text);
     font-weight: 600;
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .stat-divider {
     color: var(--border-strong);
     font-weight: 300;
+    opacity: 0.6;
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
-/* ===== TOOLBAR SECTION ===== */
+/* ============================================================
+   TOOLBAR SECTION
+   ============================================================ */
 .toolbar-section {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem;
+    padding: var(--spacing-3, 0.75rem);
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md, 6px);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .toolbar-left {
     display: flex;
-    gap: 0.75rem;
+    gap: var(--spacing-3, 0.75rem);
 }
 
-/* ===== GRID CONTAINER ===== */
+/* Toolbar button overrides for theme integration */
+.toolbar-section .k-button {
+    font-family: var(--base-font-family, inherit);
+    border-radius: var(--radius-md, 6px);
+    transition: all var(--transition-fast, 100ms) ease;
+}
+
+.toolbar-section .k-button-solid-base {
+    background: var(--card-bg);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+    .toolbar-section .k-button-solid-base:hover {
+        background: var(--hover-bg);
+        border-color: var(--border-strong);
+    }
+
+.toolbar-section .k-button-solid-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+    .toolbar-section .k-button-solid-primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+    }
+
+.toolbar-section .k-button-solid-error {
+    background: var(--kendo-color-error, #dc3545);
+    border-color: var(--kendo-color-error, #dc3545);
+    color: white;
+}
+
+    .toolbar-section .k-button-solid-error:hover {
+        background: color-mix(in srgb, var(--kendo-color-error, #dc3545) 85%, black);
+        border-color: color-mix(in srgb, var(--kendo-color-error, #dc3545) 85%, black);
+    }
+
+/* ============================================================
+   GRID CONTAINER
+   ============================================================ */
 .grid-container {
     flex: 1;
     overflow: hidden;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md, 6px);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
-/* ===== GRID FOOTER STATS ===== */
+    /* Integrate grid with theme */
+    .grid-container .k-grid {
+        border: none;
+        background: var(--card-bg);
+    }
+
+    .grid-container .k-grid-header {
+        background: var(--hover-bg);
+    }
+
+        .grid-container .k-grid-header th {
+            background: var(--hover-bg);
+            color: var(--text);
+            border-color: var(--border);
+            font-family: var(--base-font-family, inherit);
+        }
+
+    .grid-container .k-grid td {
+        background: var(--card-bg);
+        color: var(--text);
+        border-color: var(--border);
+        font-family: var(--base-font-family, inherit);
+    }
+
+    .grid-container .k-grid tr:nth-child(odd) td {
+        background: var(--hover-bg);
+    }
+
+    .grid-container .k-grid tr:hover td {
+        background: var(--row-hover);
+    }
+
+    .grid-container .k-grid tr.k-selected td,
+    .grid-container .k-grid tr.k-state-selected td {
+        background: var(--accent-weak);
+        color: var(--text);
+    }
+
+/* ============================================================
+   GRID FOOTER STATS
+   ============================================================ */
 .grid-footer-stats {
     display: flex;
-    gap: 2rem;
-    padding: 0.75rem 1rem;
-    background: var(--header-bg);
+    gap: var(--spacing-8, 2rem);
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+    background: var(--hover-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md, 6px);
     font-size: 0.9rem;
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .footer-stat {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
     align-items: center;
+    padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+    background: var(--card-bg);
+    border-radius: var(--radius-md, 4px);
+    border: 1px solid var(--border);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .footer-label {
-    color: var(--text-secondary);
+    color: var(--muted);
     font-weight: 600;
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .footer-value {
     color: var(--text);
     font-weight: 700;
     font-size: 1rem;
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
     .footer-value.past-due {
-        color: #dc3545;
+        color: var(--kendo-color-error, #dc3545);
+        padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+        background: color-mix(in srgb, var(--kendo-color-error, #dc3545) 10%, var(--card-bg));
+        border-radius: var(--radius-sm, 4px);
     }
 
-/* ===== CUSTOM GRID STYLES ===== */
+/* ============================================================
+   CUSTOM GRID STYLES
+   ============================================================ */
 .past-due-amount {
-    color: #dc3545;
+    color: var(--kendo-color-error, #dc3545);
     font-weight: 600;
 }
 
-/* Dark mode enhancements */
-[data-theme="dark"] .past-due-amount {
-    color: #ff6b6b;
+/* ============================================================
+   DENSITY ADJUSTMENTS
+   ============================================================ */
+[data-density="compact"] .techcredit-borrowers-page {
+    gap: var(--spacing-2, 0.5rem);
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+[data-density="compact"] .header {
+    padding-bottom: var(--spacing-2, 0.5rem);
+    gap: var(--spacing-2, 0.5rem);
+}
+
+    [data-density="compact"] .header .title {
+        font-size: 1.5rem;
+    }
+
+[data-density="compact"] .header-stats {
+    padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+    gap: var(--spacing-3, 0.75rem);
+    font-size: 0.8rem;
+}
+
+[data-density="compact"] .toolbar-section {
+    padding: var(--spacing-2, 0.5rem);
+}
+
+[data-density="compact"] .toolbar-left {
+    gap: var(--spacing-2, 0.5rem);
+}
+
+[data-density="compact"] .grid-footer-stats {
+    gap: var(--spacing-4, 1rem);
+    padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+    font-size: 0.8rem;
+}
+
+[data-density="compact"] .footer-stat {
+    padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+}
+
+[data-density="compact"] .footer-value {
+    font-size: 0.9rem;
+}
+
+[data-density="spacious"] .techcredit-borrowers-page {
+    gap: var(--spacing-5, 1.25rem);
+}
+
+[data-density="spacious"] .header {
+    padding-bottom: var(--spacing-5, 1.25rem);
+    gap: var(--spacing-4, 1rem);
+}
+
+    [data-density="spacious"] .header .title {
+        font-size: 2rem;
+    }
+
+[data-density="spacious"] .header-stats {
+    padding: var(--spacing-4, 1rem) var(--spacing-5, 1.25rem);
+    gap: var(--spacing-5, 1.25rem);
+    font-size: 1rem;
+}
+
+[data-density="spacious"] .toolbar-section {
+    padding: var(--spacing-4, 1rem);
+}
+
+[data-density="spacious"] .toolbar-left {
+    gap: var(--spacing-4, 1rem);
+}
+
+[data-density="spacious"] .grid-footer-stats {
+    gap: var(--spacing-10, 2.5rem);
+    padding: var(--spacing-4, 1rem) var(--spacing-5, 1.25rem);
+    font-size: 1rem;
+}
+
+[data-density="spacious"] .footer-stat {
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+}
+
+[data-density="spacious"] .footer-value {
+    font-size: 1.1rem;
+}
+
+/* ============================================================
+   BORDER RADIUS ADJUSTMENTS
+   ============================================================ */
+[data-radius="none"] .header-stats,
+[data-radius="none"] .toolbar-section,
+[data-radius="none"] .grid-container,
+[data-radius="none"] .grid-footer-stats,
+[data-radius="none"] .footer-stat,
+[data-radius="none"] .toolbar-section .k-button {
+    border-radius: 0;
+}
+
+[data-radius="rounded"] .header-stats,
+[data-radius="rounded"] .toolbar-section,
+[data-radius="rounded"] .grid-container,
+[data-radius="rounded"] .grid-footer-stats {
+    border-radius: 12px;
+}
+
+[data-radius="rounded"] .footer-stat {
+    border-radius: 8px;
+}
+
+[data-radius="rounded"] .toolbar-section .k-button {
+    border-radius: 8px;
+}
+
+[data-radius="pill"] .toolbar-section .k-button {
+    border-radius: 9999px;
+}
+
+[data-radius="pill"] .footer-stat {
+    border-radius: 9999px;
+}
+
+/* ============================================================
+   HIGH CONTRAST MODE ADJUSTMENTS
+   ============================================================ */
+.high-contrast .header-stats,
+.high-contrast .toolbar-section,
+.high-contrast .grid-container,
+.high-contrast .grid-footer-stats,
+.high-contrast .footer-stat {
+    border-width: 2px;
+}
+
+.high-contrast .header {
+    border-bottom-width: 3px;
+}
+
+.high-contrast .past-due-amount,
+.high-contrast .footer-value.past-due {
+    color: #ff0000;
+    text-decoration: underline;
+}
+
+.high-contrast .stat-divider {
+    color: #000000;
+    opacity: 1;
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+.reduce-motion .techcredit-borrowers-page,
+.reduce-motion .header,
+.reduce-motion .header-stats,
+.reduce-motion .toolbar-section,
+.reduce-motion .grid-container,
+.reduce-motion .grid-footer-stats,
+.reduce-motion .footer-stat {
+    transition: none !important;
+}
+
+/* ============================================================
+   NO ANIMATIONS
+   ============================================================ */
+.no-animations .techcredit-borrowers-page,
+.no-animations .header,
+.no-animations .header-stats,
+.no-animations .toolbar-section,
+.no-animations .grid-container,
+.no-animations .grid-footer-stats,
+.no-animations .footer-stat {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* ============================================================
+   FOCUS INDICATORS (Enhanced Accessibility)
+   ============================================================ */
+.enhanced-focus .toolbar-section .k-button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.enhanced-focus .grid-container:focus-within {
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.2);
+}
+
+/* ============================================================
+   GRID LINES SETTING
+   ============================================================ */
+.show-grid-lines .grid-container .k-grid td {
+    border-width: 1px;
+    border-style: solid;
+}
+
+:not(.show-grid-lines) .grid-container .k-grid td {
+    border-width: 0;
+    border-bottom-width: 1px;
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
 @media (max-width: 1200px) {
     .header-stats {
         font-size: 0.8rem;
+        gap: var(--spacing-3, 0.75rem);
     }
 
     .toolbar-left {
+        flex-wrap: wrap;
+    }
+
+    .grid-footer-stats {
+        gap: var(--spacing-4, 1rem);
         flex-wrap: wrap;
     }
 }
 
 @media (max-width: 768px) {
     .techcredit-borrowers-page {
-        padding: 0.5rem;
+        padding: var(--spacing-2, 0.5rem);
+        height: auto;
+        min-height: calc(100vh - 100px);
+    }
+
+    .header .title {
+        font-size: 1.5rem;
     }
 
     .header-stats {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: var(--spacing-2, 0.5rem);
     }
 
     .stat-divider {
         display: none;
     }
 
+    .stat-item {
+        width: 100%;
+        justify-content: space-between;
+        padding: var(--spacing-1, 0.25rem) 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+    .toolbar-section {
+        flex-direction: column;
+        gap: var(--spacing-3, 0.75rem);
+    }
+
+    .toolbar-left {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+        .toolbar-left .k-button {
+            flex: 1;
+        }
+
+    .grid-container {
+        min-height: 400px;
+    }
+
     .grid-footer-stats {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: var(--spacing-2, 0.5rem);
+    }
+
+    .footer-stat {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 480px) {
+    .header .title {
+        font-size: 1.25rem;
+    }
+
+    .header-stats {
+        padding: var(--spacing-2, 0.5rem);
+        font-size: 0.8rem;
+    }
+
+    .toolbar-left {
+        flex-direction: column;
+    }
+
+        .toolbar-left .k-button {
+            width: 100%;
+        }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+    .techcredit-borrowers-page {
+        height: auto;
+    }
+
+    .toolbar-section {
+        display: none;
+    }
+
+    .header-stats,
+    .grid-container,
+    .grid-footer-stats {
+        border: 1px solid #ccc;
+        background: white;
+    }
+
+    .grid-container {
+        height: auto !important;
+        overflow: visible;
+    }
+
+    .past-due-amount,
+    .footer-value.past-due {
+        color: #dc3545 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }

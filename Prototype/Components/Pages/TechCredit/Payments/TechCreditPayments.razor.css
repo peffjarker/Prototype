@@ -1,40 +1,55 @@
 /* TechCreditPayments.razor.css */
-/* Scoped styles for TechCredit Payments page with density and display mode support */
+/* Scoped styles for TechCredit Payments page with full appearance system integration */
+/* Supports: 9 themes, density settings, border radius variants, accessibility features */
 
 /* ===== Base Layout ===== */
 .techcredit-payments-page {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
+    font-family: var(--base-font-family, inherit);
+    color: var(--text);
+    transition: color var(--transition-normal, 150ms) ease, background-color var(--transition-normal, 150ms) ease;
 }
 
-    /* ===== Density-Specific Padding ===== */
+    /* ===== Density-Specific Page Gaps ===== */
     .techcredit-payments-page[data-density="compact"] {
-        gap: 0.75rem;
+        gap: var(--spacing-3, 0.75rem);
     }
 
     .techcredit-payments-page[data-density="comfortable"] {
-        gap: 1rem;
+        gap: var(--spacing-4, 1rem);
     }
 
     .techcredit-payments-page[data-density="spacious"] {
-        gap: 1.5rem;
+        gap: var(--spacing-6, 1.5rem);
     }
 
 /* ===== PAGE HEADER ===== */
 .page-header {
     display: flex;
     flex-direction: column;
+    transition: gap var(--transition-normal, 150ms) ease;
 }
 
-/* Add this to your TechCreditPayments.razor.css file, right after the .page-header styles */
+.techcredit-payments-page[data-density="compact"] .page-header {
+    gap: var(--spacing-3, 0.75rem);
+}
+
+.techcredit-payments-page[data-density="comfortable"] .page-header {
+    gap: var(--spacing-4, 1rem);
+}
+
+.techcredit-payments-page[data-density="spacious"] .page-header {
+    gap: var(--spacing-5, 1.25rem);
+}
 
 /* ===== HEADER ROW (Title + Tabs on same line) ===== */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
     flex-wrap: wrap;
 }
 
@@ -42,6 +57,8 @@
         margin: 0;
         font-weight: 600;
         color: var(--text);
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
     }
 
 .techcredit-payments-page[data-density="compact"] .header .title {
@@ -56,23 +73,11 @@
     font-size: 2rem;
 }
 
-.techcredit-payments-page[data-density="compact"] .page-header {
-    gap: 0.75rem;
-}
-
-.techcredit-payments-page[data-density="comfortable"] .page-header {
-    gap: 1rem;
-}
-
-.techcredit-payments-page[data-density="spacious"] .page-header {
-    gap: 1.25rem;
-}
-
 .header-main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
     flex-wrap: wrap;
 }
 
@@ -82,32 +87,38 @@
 }
 
 .techcredit-payments-page[data-density="compact"] .header-left {
-    gap: 0.75rem;
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .header-left {
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .header-left {
-    gap: 1.25rem;
+    gap: var(--spacing-5, 1.25rem);
 }
 
-.header-main h1 {
+.header-main h1,
+.header-main h3 {
     margin: 0;
     font-weight: 600;
     color: var(--text);
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
-.techcredit-payments-page[data-density="compact"] .header-main h1 {
+.techcredit-payments-page[data-density="compact"] .header-main h1,
+.techcredit-payments-page[data-density="compact"] .header-main h3 {
     font-size: 1.5rem;
 }
 
-.techcredit-payments-page[data-density="comfortable"] .header-main h1 {
+.techcredit-payments-page[data-density="comfortable"] .header-main h1,
+.techcredit-payments-page[data-density="comfortable"] .header-main h3 {
     font-size: 1.75rem;
 }
 
-.techcredit-payments-page[data-density="spacious"] .header-main h1 {
+.techcredit-payments-page[data-density="spacious"] .header-main h1,
+.techcredit-payments-page[data-density="spacious"] .header-main h3 {
     font-size: 2rem;
 }
 
@@ -116,20 +127,21 @@
     display: flex;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.25rem;
+    border-radius: var(--radius-md, 6px);
+    padding: var(--spacing-1, 0.25rem);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .display-mode-selector {
-    gap: 0.25rem;
+    gap: var(--spacing-1, 0.25rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .display-mode-selector {
-    gap: 0.35rem;
+    gap: var(--spacing-1, 0.35rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .display-mode-selector {
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .mode-btn {
@@ -138,10 +150,10 @@
     justify-content: center;
     border: none;
     background: transparent;
-    color: var(--text-secondary);
-    border-radius: 4px;
+    color: var(--muted);
+    border-radius: var(--radius-sm, 4px);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast, 100ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .mode-btn {
@@ -176,26 +188,28 @@
 /* ===== VIEW SELECTOR TABS (only in tabbed mode) ===== */
 .view-selector {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
     background: var(--card-bg);
-    padding: 0.25rem;
-    border-radius: 8px;
+    padding: var(--spacing-1, 0.25rem);
+    border-radius: var(--radius-lg, 8px);
     border: 1px solid var(--border);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .view-tab {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
+    gap: var(--spacing-2, 0.5rem);
+    padding: var(--spacing-3, 0.75rem) var(--spacing-5, 1.25rem);
     border: none;
     background: transparent;
-    color: var(--text-secondary);
+    color: var(--muted);
     font-size: 0.95rem;
     font-weight: 500;
-    border-radius: 6px;
+    font-family: var(--base-font-family, inherit);
+    border-radius: var(--radius-md, 6px);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast, 100ms) ease;
 }
 
     .view-tab:hover {
@@ -215,6 +229,7 @@
 
     .view-tab .k-icon {
         font-size: 1.1rem;
+        transition: color var(--transition-fast, 100ms) ease;
     }
 
 /* ===== STATISTICS CARDS ===== */
@@ -224,46 +239,51 @@
 }
 
 .techcredit-payments-page[data-density="compact"] .header-stats {
-    gap: 0.75rem;
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .header-stats {
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .header-stats {
-    gap: 1.25rem;
+    gap: var(--spacing-5, 1.25rem);
 }
 
 .stat-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg, 8px);
     border-left-width: 4px;
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease, box-shadow var(--transition-normal, 150ms) ease;
 }
 
+    .stat-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
 .techcredit-payments-page[data-density="compact"] .stat-card {
-    padding: 0.75rem;
+    padding: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .stat-card {
-    padding: 1rem;
+    padding: var(--spacing-4, 1rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .stat-card {
-    padding: 1.25rem;
+    padding: var(--spacing-5, 1.25rem);
 }
 
 .stat-card.stat-danger {
-    border-left-color: #dc2626;
+    border-left-color: var(--kendo-color-error, #dc2626);
 }
 
 .stat-card.stat-warning {
-    border-left-color: #f59e0b;
+    border-left-color: var(--kendo-color-warning, #f59e0b);
 }
 
 .stat-card.stat-success {
-    border-left-color: #10b981;
+    border-left-color: var(--kendo-color-success, #10b981);
 }
 
 .stat-card.stat-info {
@@ -271,49 +291,55 @@
 }
 
 .stat-label {
-    color: var(--text-secondary);
+    color: var(--muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .stat-label {
     font-size: 0.7rem;
-    margin-bottom: 0.4rem;
+    margin-bottom: var(--spacing-1, 0.4rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .stat-label {
     font-size: 0.8rem;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .stat-label {
     font-size: 0.85rem;
-    margin-bottom: 0.6rem;
+    margin-bottom: var(--spacing-2, 0.6rem);
 }
 
 .stat-value {
     font-weight: 700;
     color: var(--text);
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .stat-value {
     font-size: 1.5rem;
-    margin-bottom: 0.15rem;
+    margin-bottom: var(--spacing-1, 0.15rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .stat-value {
     font-size: 1.75rem;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--spacing-1, 0.25rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .stat-value {
     font-size: 2rem;
-    margin-bottom: 0.35rem;
+    margin-bottom: var(--spacing-1, 0.35rem);
 }
 
 .stat-sublabel {
     color: var(--muted);
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .stat-sublabel {
@@ -335,23 +361,24 @@
     align-items: center;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md, 6px);
     flex-wrap: wrap;
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .toolbar-section {
-    padding: 0.5rem;
-    gap: 0.75rem;
+    padding: var(--spacing-2, 0.5rem);
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .toolbar-section {
-    padding: 0.75rem;
-    gap: 1rem;
+    padding: var(--spacing-3, 0.75rem);
+    gap: var(--spacing-4, 1rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .toolbar-section {
-    padding: 1rem;
-    gap: 1.25rem;
+    padding: var(--spacing-4, 1rem);
+    gap: var(--spacing-5, 1.25rem);
 }
 
 .toolbar-left,
@@ -363,18 +390,54 @@
 
 .techcredit-payments-page[data-density="compact"] .toolbar-left,
 .techcredit-payments-page[data-density="compact"] .toolbar-right {
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .toolbar-left,
 .techcredit-payments-page[data-density="comfortable"] .toolbar-right {
-    gap: 0.75rem;
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .toolbar-left,
 .techcredit-payments-page[data-density="spacious"] .toolbar-right {
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
 }
+
+/* Toolbar button overrides for theme integration */
+.toolbar-section .k-button-solid-base {
+    background: var(--card-bg);
+    border-color: var(--border);
+    color: var(--text);
+    transition: all var(--transition-fast, 100ms) ease;
+}
+
+    .toolbar-section .k-button-solid-base:hover {
+        background: var(--hover-bg);
+        border-color: var(--accent);
+    }
+
+.toolbar-section .k-button-solid-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+    transition: all var(--transition-fast, 100ms) ease;
+}
+
+    .toolbar-section .k-button-solid-primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+    }
+
+.toolbar-section .k-button-solid-success {
+    background: var(--kendo-color-success, #10b981);
+    border-color: var(--kendo-color-success, #10b981);
+    color: #ffffff;
+    transition: all var(--transition-fast, 100ms) ease;
+}
+
+    .toolbar-section .k-button-solid-success:hover {
+        filter: brightness(1.1);
+    }
 
 .date-range-filter {
     display: flex;
@@ -382,21 +445,23 @@
 }
 
 .techcredit-payments-page[data-density="compact"] .date-range-filter {
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .date-range-filter {
-    gap: 0.75rem;
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .date-range-filter {
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
 }
 
 .date-range-filter label {
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--muted);
     white-space: nowrap;
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .date-range-filter label {
@@ -418,38 +483,39 @@
 }
 
 .techcredit-payments-page[data-density="compact"] .data-section {
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .data-section {
-    gap: 0.75rem;
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .data-section {
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
 }
 
 /* Collapsible section title (sections mode) */
 .section-title {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md, 6px);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast, 100ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .section-title {
-    padding: 0.75rem;
+    padding: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .section-title {
-    padding: 1rem;
+    padding: var(--spacing-4, 1rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .section-title {
-    padding: 1.25rem;
+    padding: var(--spacing-5, 1.25rem);
 }
 
 .section-title:hover {
@@ -463,22 +529,23 @@
     align-items: center;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md, 6px);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .section-title-static {
-    padding: 0.75rem;
-    gap: 0.5rem;
+    padding: var(--spacing-3, 0.75rem);
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .section-title-static {
-    padding: 1rem;
-    gap: 0.75rem;
+    padding: var(--spacing-4, 1rem);
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .section-title-static {
-    padding: 1.25rem;
-    gap: 1rem;
+    padding: var(--spacing-5, 1.25rem);
+    gap: var(--spacing-4, 1rem);
 }
 
 .section-title-content {
@@ -487,15 +554,15 @@
 }
 
 .techcredit-payments-page[data-density="compact"] .section-title-content {
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .section-title-content {
-    gap: 0.75rem;
+    gap: var(--spacing-3, 0.75rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .section-title-content {
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
 }
 
 .section-title h2,
@@ -503,6 +570,8 @@
     margin: 0;
     font-weight: 600;
     color: var(--text);
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .section-title h2,
@@ -523,6 +592,7 @@
 .section-title .k-icon,
 .section-title-static .k-icon {
     color: var(--accent);
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .section-title .k-icon,
@@ -540,12 +610,38 @@
     font-size: 1.3rem;
 }
 
+/* Section type indicators with accent colors */
+.past-due-section .section-title,
+.past-due-section .section-title-static,
+.compact-past-due-section .section-title {
+    border-left: 4px solid var(--kendo-color-error, #dc2626);
+}
+
+.scheduled-section .section-title,
+.scheduled-section .section-title-static,
+.compact-scheduled-section .section-title {
+    border-left: 4px solid var(--accent);
+}
+
+.history-section .section-title,
+.history-section .section-title-static,
+.compact-history-section .section-title {
+    border-left: 4px solid var(--muted);
+}
+
+.remitted-section .section-title,
+.remitted-section .section-title-static,
+.compact-remitted-section .section-title {
+    border-left: 4px solid var(--kendo-color-success, #10b981);
+}
+
 /* ===== GRID CONTAINER ===== */
 .grid-container {
     overflow: hidden;
     background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md, 6px);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 /* Tabbed mode - single grid takes full space */
@@ -553,222 +649,208 @@
     flex: 1;
 }
 
+/* Grid theming integration */
+.grid-container .k-grid {
+    border: none;
+    background: var(--card-bg);
+}
+
+.grid-container .k-grid-header {
+    background: var(--hover-bg);
+    border-color: var(--border);
+}
+
+    .grid-container .k-grid-header th {
+        background: transparent;
+        border-color: var(--border);
+        color: var(--text);
+        font-weight: 600;
+    }
+
+.grid-container .k-grid-content {
+    background: var(--card-bg);
+}
+
+.grid-container .k-grid td {
+    border-color: var(--border);
+    color: var(--text);
+    transition: background-color var(--transition-fast, 100ms) ease;
+}
+
+.grid-container .k-grid tr:hover td {
+    background: var(--row-hover, var(--hover-bg));
+}
+
+.grid-container .k-grid tr.k-selected td {
+    background: var(--accent-weak);
+    color: var(--text);
+}
+
+/* Grid lines setting support */
+.show-grid-lines .grid-container .k-grid td {
+    border-width: 1px;
+}
+
 /* ===== CUSTOM CELL STYLES ===== */
 .days-overdue {
     display: inline-flex;
     align-items: center;
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     font-weight: 600;
+    font-family: var(--base-font-family, inherit);
+    transition: background-color var(--transition-normal, 150ms) ease, color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .days-overdue {
-    padding: 0.15rem 0.5rem;
+    padding: var(--spacing-1, 0.15rem) var(--spacing-2, 0.5rem);
     font-size: 0.75rem;
 }
 
 .techcredit-payments-page[data-density="comfortable"] .days-overdue {
-    padding: 0.25rem 0.75rem;
+    padding: var(--spacing-1, 0.25rem) var(--spacing-3, 0.75rem);
     font-size: 0.85rem;
 }
 
 .techcredit-payments-page[data-density="spacious"] .days-overdue {
-    padding: 0.35rem 1rem;
+    padding: var(--spacing-1, 0.35rem) var(--spacing-4, 1rem);
     font-size: 0.9rem;
 }
 
+/* Days overdue severity badges using color-mix for theme awareness */
 .days-overdue.days-critical {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fca5a5;
+    background: color-mix(in srgb, var(--kendo-color-error, #dc2626) 15%, var(--card-bg));
+    color: var(--kendo-color-error, #dc2626);
+    border: 1px solid color-mix(in srgb, var(--kendo-color-error, #dc2626) 40%, transparent);
 }
 
 .days-overdue.days-high {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fcd34d;
+    background: color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 15%, var(--card-bg));
+    color: var(--kendo-color-warning-text, #92400e);
+    border: 1px solid color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 40%, transparent);
 }
 
 .days-overdue.days-medium {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fde68a;
+    background: color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 12%, var(--card-bg));
+    color: var(--kendo-color-warning-text, #92400e);
+    border: 1px solid color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 30%, transparent);
 }
 
 .days-overdue.days-low {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #93c5fd;
-}
-
-/* Dark mode overdue badges */
-[data-theme="dark"] .days-overdue.days-critical {
-    background: rgba(220, 38, 38, 0.2);
-    color: #fca5a5;
-    border-color: #dc2626;
-}
-
-[data-theme="dark"] .days-overdue.days-high {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fcd34d;
-    border-color: #f59e0b;
-}
-
-[data-theme="dark"] .days-overdue.days-medium {
-    background: rgba(245, 158, 11, 0.15);
-    color: #fde68a;
-    border-color: #f59e0b;
-}
-
-[data-theme="dark"] .days-overdue.days-low {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
-    border-color: #3b82f6;
+    background: color-mix(in srgb, var(--accent) 15%, var(--card-bg));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .past-due-amount {
-    color: #dc2626;
+    color: var(--kendo-color-error, #dc2626);
     font-weight: 700;
-}
-
-[data-theme="dark"] .past-due-amount {
-    color: #fca5a5;
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 /* ===== SCHEDULED DATE BADGES ===== */
 .scheduled-date {
     display: flex;
     align-items: center;
+    transition: color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .scheduled-date {
-    gap: 0.35rem;
+    gap: var(--spacing-1, 0.35rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .scheduled-date {
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .scheduled-date {
-    gap: 0.65rem;
+    gap: var(--spacing-2, 0.65rem);
 }
 
 .scheduled-date.due-soon {
-    color: #f59e0b;
+    color: var(--kendo-color-warning, #f59e0b);
     font-weight: 600;
 }
 
 .days-badge {
     display: inline-flex;
-    background: #fef3c7;
-    color: #92400e;
-    border-radius: 4px;
+    background: color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 15%, var(--card-bg));
+    color: var(--kendo-color-warning-text, #92400e);
+    border-radius: var(--radius-sm, 4px);
     font-weight: 600;
-    border: 1px solid #fcd34d;
+    font-family: var(--base-font-family, inherit);
+    border: 1px solid color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 40%, transparent);
+    transition: background-color var(--transition-normal, 150ms) ease, color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .days-badge {
-    padding: 0.1rem 0.4rem;
+    padding: var(--spacing-0, 0.1rem) var(--spacing-1, 0.4rem);
     font-size: 0.7rem;
 }
 
 .techcredit-payments-page[data-density="comfortable"] .days-badge {
-    padding: 0.15rem 0.5rem;
+    padding: var(--spacing-1, 0.15rem) var(--spacing-2, 0.5rem);
     font-size: 0.75rem;
 }
 
 .techcredit-payments-page[data-density="spacious"] .days-badge {
-    padding: 0.2rem 0.6rem;
+    padding: var(--spacing-1, 0.2rem) var(--spacing-2, 0.6rem);
     font-size: 0.8rem;
-}
-
-[data-theme="dark"] .days-badge {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fcd34d;
-    border-color: #f59e0b;
 }
 
 /* ===== STATUS BADGES ===== */
 .badge {
     display: inline-flex;
-    border-radius: 4px;
+    border-radius: var(--radius-sm, 4px);
     font-weight: 600;
     border: 1px solid;
+    font-family: var(--base-font-family, inherit);
+    transition: background-color var(--transition-normal, 150ms) ease, color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
 .techcredit-payments-page[data-density="compact"] .badge {
-    padding: 0.15rem 0.5rem;
+    padding: var(--spacing-1, 0.15rem) var(--spacing-2, 0.5rem);
     font-size: 0.75rem;
 }
 
 .techcredit-payments-page[data-density="comfortable"] .badge {
-    padding: 0.25rem 0.75rem;
+    padding: var(--spacing-1, 0.25rem) var(--spacing-3, 0.75rem);
     font-size: 0.8rem;
 }
 
 .techcredit-payments-page[data-density="spacious"] .badge {
-    padding: 0.3rem 0.85rem;
+    padding: var(--spacing-1, 0.3rem) var(--spacing-3, 0.85rem);
     font-size: 0.85rem;
 }
 
+/* Theme-aware badge colors using color-mix */
 .badge-success {
-    background: #d1fae5;
-    color: #065f46;
-    border-color: #6ee7b7;
+    background: color-mix(in srgb, var(--kendo-color-success, #10b981) 15%, var(--card-bg));
+    color: var(--kendo-color-success, #10b981);
+    border-color: color-mix(in srgb, var(--kendo-color-success, #10b981) 40%, transparent);
 }
 
 .badge-warning {
-    background: #fef3c7;
-    color: #92400e;
-    border-color: #fcd34d;
+    background: color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 15%, var(--card-bg));
+    color: var(--kendo-color-warning-text, #92400e);
+    border-color: color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 40%, transparent);
 }
 
 .badge-danger {
-    background: #fee2e2;
-    color: #991b1b;
-    border-color: #fca5a5;
+    background: color-mix(in srgb, var(--kendo-color-error, #dc2626) 15%, var(--card-bg));
+    color: var(--kendo-color-error, #dc2626);
+    border-color: color-mix(in srgb, var(--kendo-color-error, #dc2626) 40%, transparent);
 }
 
 .badge-info {
-    background: #dbeafe;
-    color: #1e40af;
-    border-color: #93c5fd;
+    background: color-mix(in srgb, var(--accent) 15%, var(--card-bg));
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .badge-secondary {
-    background: #f3f4f6;
-    color: #4b5563;
-    border-color: #d1d5db;
-}
-
-/* Dark mode badges */
-[data-theme="dark"] .badge-success {
-    background: rgba(16, 185, 129, 0.2);
-    color: #6ee7b7;
-    border-color: #10b981;
-}
-
-[data-theme="dark"] .badge-warning {
-    background: rgba(245, 158, 11, 0.2);
-    color: #fcd34d;
-    border-color: #f59e0b;
-}
-
-[data-theme="dark"] .badge-danger {
-    background: rgba(220, 38, 38, 0.2);
-    color: #fca5a5;
-    border-color: #dc2626;
-}
-
-[data-theme="dark"] .badge-info {
-    background: rgba(59, 130, 246, 0.2);
-    color: #93c5fd;
-    border-color: #3b82f6;
-}
-
-[data-theme="dark"] .badge-secondary {
-    background: rgba(148, 163, 184, 0.2);
-    color: #cbd5e1;
-    border-color: #64748b;
+    background: color-mix(in srgb, var(--muted) 15%, var(--card-bg));
+    color: var(--muted);
+    border-color: color-mix(in srgb, var(--muted) 30%, transparent);
 }
 
 /* ===== ACTION BUTTONS ===== */
@@ -778,15 +860,212 @@
 }
 
 .techcredit-payments-page[data-density="compact"] .action-buttons {
-    gap: 0.35rem;
+    gap: var(--spacing-1, 0.35rem);
 }
 
 .techcredit-payments-page[data-density="comfortable"] .action-buttons {
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
 }
 
 .techcredit-payments-page[data-density="spacious"] .action-buttons {
-    gap: 0.65rem;
+    gap: var(--spacing-2, 0.65rem);
+}
+
+.action-buttons .k-button {
+    transition: all var(--transition-fast, 100ms) ease;
+}
+
+/* ===== COMPACT-SPECIFIC ADJUSTMENTS ===== */
+/* Hide the top-right tabs when density is compact */
+.techcredit-payments-page[data-density="compact"] .view-selector {
+    display: none;
+}
+
+/* Hide the top toolbar actions in compact density */
+.techcredit-payments-page[data-density="compact"] .toolbar-section .toolbar-left,
+.techcredit-payments-page[data-density="compact"] .toolbar-section .toolbar-right {
+    display: none;
+}
+
+/* SECTION TITLE: make space for right-aligned actions (compact and default) */
+.section-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2, 0.5rem);
+}
+
+    /* Buttons inside section headers are smaller and tighter */
+    .section-actions .k-button,
+    .section-actions button {
+        height: 30px;
+        padding: 0 var(--spacing-2, 8px);
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-1, 0.4rem);
+    }
+
+    .section-actions .k-icon {
+        margin-right: var(--spacing-2, 6px);
+    }
+
+/* Compact history date range styling in header */
+.compact-date-range {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2, 0.5rem);
+}
+
+.compact-history-label {
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    font-family: var(--base-font-family, inherit);
+    transition: color var(--transition-normal, 150ms) ease;
+}
+
+/* Tighter grid container for compact internal collapsibles */
+.techcredit-payments-page[data-density="compact"] .compact-past-due-section .grid-container,
+.techcredit-payments-page[data-density="compact"] .compact-scheduled-section .grid-container,
+.techcredit-payments-page[data-density="compact"] .compact-history-section .grid-container,
+.techcredit-payments-page[data-density="compact"] .compact-remitted-section .grid-container {
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    margin-top: var(--spacing-1, 0.25rem);
+}
+
+/* Small visual polish for compact */
+.techcredit-payments-page[data-density="compact"] .section-title h2 {
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* ===== BORDER RADIUS VARIANTS ===== */
+[data-radius="none"] .stat-card,
+[data-radius="none"] .view-selector,
+[data-radius="none"] .toolbar-section,
+[data-radius="none"] .section-title,
+[data-radius="none"] .section-title-static,
+[data-radius="none"] .grid-container,
+[data-radius="none"] .display-mode-selector,
+[data-radius="none"] .badge,
+[data-radius="none"] .days-overdue,
+[data-radius="none"] .days-badge {
+    border-radius: 0;
+}
+
+[data-radius="small"] .stat-card,
+[data-radius="small"] .view-selector,
+[data-radius="small"] .toolbar-section,
+[data-radius="small"] .section-title,
+[data-radius="small"] .section-title-static,
+[data-radius="small"] .grid-container,
+[data-radius="small"] .display-mode-selector {
+    border-radius: var(--radius-sm, 4px);
+}
+
+[data-radius="large"] .stat-card,
+[data-radius="large"] .view-selector,
+[data-radius="large"] .toolbar-section,
+[data-radius="large"] .section-title,
+[data-radius="large"] .section-title-static,
+[data-radius="large"] .grid-container,
+[data-radius="large"] .display-mode-selector {
+    border-radius: var(--radius-xl, 12px);
+}
+
+[data-radius="pill"] .view-tab,
+[data-radius="pill"] .mode-btn,
+[data-radius="pill"] .badge,
+[data-radius="pill"] .days-overdue,
+[data-radius="pill"] .days-badge {
+    border-radius: var(--radius-full, 9999px);
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+.high-contrast .stat-card {
+    border-width: 2px;
+    border-left-width: 6px;
+}
+
+.high-contrast .section-title,
+.high-contrast .section-title-static {
+    border-width: 2px;
+    border-left-width: 6px;
+}
+
+.high-contrast .grid-container {
+    border-width: 2px;
+}
+
+.high-contrast .view-selector,
+.high-contrast .toolbar-section {
+    border-width: 2px;
+}
+
+.high-contrast .badge,
+.high-contrast .days-overdue,
+.high-contrast .days-badge {
+    border-width: 2px;
+    font-weight: 700;
+}
+
+.high-contrast .view-tab.active {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+}
+
+/* High contrast badge colors - solid backgrounds */
+.high-contrast .badge-success {
+    background: var(--kendo-color-success, #10b981);
+    color: #ffffff;
+}
+
+.high-contrast .badge-warning {
+    background: var(--kendo-color-warning, #f59e0b);
+    color: #000000;
+}
+
+.high-contrast .badge-danger {
+    background: var(--kendo-color-error, #dc2626);
+    color: #ffffff;
+}
+
+.high-contrast .badge-info {
+    background: var(--accent);
+    color: #ffffff;
+}
+
+.high-contrast .days-overdue.days-critical {
+    background: var(--kendo-color-error, #dc2626);
+    color: #ffffff;
+}
+
+/* ===== REDUCED MOTION ===== */
+.reduce-motion .techcredit-payments-page,
+.reduce-motion .stat-card,
+.reduce-motion .section-title,
+.reduce-motion .view-tab,
+.reduce-motion .mode-btn,
+.reduce-motion .badge,
+.reduce-motion .days-overdue,
+.reduce-motion .grid-container .k-grid td,
+.reduce-motion .action-buttons .k-button {
+    transition: none !important;
+}
+
+/* ===== ENHANCED FOCUS ===== */
+.enhanced-focus .view-tab:focus-visible,
+.enhanced-focus .mode-btn:focus-visible,
+.enhanced-focus .section-title:focus-visible,
+.enhanced-focus .action-buttons .k-button:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.enhanced-focus .grid-container .k-grid tr:focus-within td {
+    box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
@@ -800,7 +1079,7 @@
     .techcredit-payments-page[data-density="compact"],
     .techcredit-payments-page[data-density="comfortable"],
     .techcredit-payments-page[data-density="spacious"] {
-        padding: 0.5rem;
+        padding: var(--spacing-2, 0.5rem);
     }
 
     .header-main {
@@ -814,6 +1093,10 @@
 
     .view-selector {
         flex-direction: column;
+    }
+
+    .view-tab {
+        justify-content: center;
     }
 
     .header-stats {
@@ -839,89 +1122,23 @@
         .date-range-filter label {
             text-align: center;
         }
-}
 
-/* ===========================
-   COMPACT-SPECIFIC ADJUSTMENTS
-   (Adds section header actions and hides top tabs/toolbar)
-   =========================== */
-
-/* Hide the top-right tabs when density is compact (we render internal collapsibles instead) */
-.techcredit-payments-page[data-density="compact"] .view-selector {
-    display: none;
-}
-
-/* hide the top toolbar actions in compact density; actions moved into section headers */
-.techcredit-payments-page[data-density="compact"] .toolbar-section .toolbar-left,
-.techcredit-payments-page[data-density="compact"] .toolbar-section .toolbar-right {
-    display: none;
-}
-
-/* SECTION TITLE: make space for right-aligned actions (compact and default) */
-.section-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* Actions placed at the right side of a section header (compact and where used) */
-.section-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-    /* buttons inside section headers are smaller and tighter (adapts to Kendo/Telerik k-button class or custom button) */
-    .section-actions .k-button,
-    .section-actions button {
-        height: 30px;
-        padding: 0 8px;
-        font-size: 0.85rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
+    .section-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
-    /* In case the component uses icons as separate elements */
-    .section-actions .k-icon {
-        margin-right: 6px;
+    .compact-date-range {
+        flex-direction: column;
+        align-items: flex-end;
     }
-
-/* compact history date range styling in header */
-.compact-date-range {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
 }
 
-.compact-history-label {
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    white-space: nowrap;
-}
-
-/* TIGHTER grid container for compact internal collapsibles */
-.techcredit-payments-page[data-density="compact"] .compact-past-due-section .grid-container,
-.techcredit-payments-page[data-density="compact"] .compact-scheduled-section .grid-container,
-.techcredit-payments-page[data-density="compact"] .compact-history-section .grid-container {
-    border-radius: 6px;
-    overflow: hidden;
-    margin-top: 0.25rem;
-}
-
-/* small visual polish for compact */
-.techcredit-payments-page[data-density="compact"] .section-title h2 {
-    font-size: 1rem;
-    margin: 0;
-}
-
-/* Responsive: stack header actions under the title on very small screens */
 @media (max-width: 520px) {
     .section-title {
         flex-direction: column;
         align-items: stretch;
-        gap: 0.5rem;
+        gap: var(--spacing-2, 0.5rem);
     }
 
     .section-actions {
@@ -931,4 +1148,66 @@
     .compact-date-range {
         justify-content: flex-end;
     }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .techcredit-payments-page {
+        padding: 0;
+        gap: 0.5rem;
+    }
+
+    .toolbar-section,
+    .view-selector,
+    .display-mode-selector,
+    .section-actions,
+    .action-buttons {
+        display: none !important;
+    }
+
+    .stat-card,
+    .section-title,
+    .section-title-static,
+    .grid-container {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+
+        .stat-card.stat-danger {
+            border-left-color: #dc2626;
+        }
+
+        .stat-card.stat-warning {
+            border-left-color: #f59e0b;
+        }
+
+        .stat-card.stat-success {
+            border-left-color: #10b981;
+        }
+
+        .stat-card.stat-info {
+            border-left-color: #3b82f6;
+        }
+
+    .badge,
+    .days-overdue,
+    .days-badge {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .header-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Ensure grids print properly */
+    .grid-container {
+        overflow: visible;
+        max-height: none;
+    }
+
+        .grid-container .k-grid {
+            height: auto !important;
+        }
 }

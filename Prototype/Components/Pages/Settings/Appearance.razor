@@ -1,4 +1,4 @@
-@page "/settings/appearance"
+﻿@page "/settings/appearance"
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 @using System.Text.Json
@@ -13,6 +13,20 @@
             <div class="header-content">
                 <h1 class="title">Appearance</h1>
                 <p class="subtitle">Customize how IBN Dealer Suite looks and feels</p>
+            </div>
+            <div class="header-actions">
+                <div class="preset-dropdown">
+                    <TelerikDropDownList Data="@presets"
+                                         @bind-Value="@selectedPreset"
+                                         TextField="Name"
+                                         ValueField="Id"
+                                         OnChange="@ApplyPreset"
+                                         Width="180px">
+                        <DropDownListSettings>
+                            <DropDownListPopupSettings Height="auto" />
+                        </DropDownListSettings>
+                    </TelerikDropDownList>
+                </div>
             </div>
         </div>
 
@@ -304,6 +318,79 @@
                                 }
                             </button>
                         }
+                        <button class="color-swatch custom-color @(selectedAccent == "custom" ? "active" : "")"
+                                style="background: @(selectedAccent == "custom" ? customAccentColor : "conic-gradient(red, yellow, lime, aqua, blue, magenta, red)");"
+                                @onclick="@OpenColorPicker"
+                                @onclick:stopPropagation="true"
+                                title="Custom Color"
+                                aria-label="Custom Color"
+                                type="button">
+                            @if (selectedAccent != "custom")
+                            {
+                                <TelerikSvgIcon Icon="@SvgIcon.Plus" Class="plus-icon" />
+                            }
+                            else
+                            {
+                                <TelerikSvgIcon Icon="@SvgIcon.Check" Class="check-icon" />
+                            }
+                        </button>
+                    </div>
+                    @if (showColorPicker)
+                    {
+                        <div class="custom-color-picker">
+                            <TelerikColorPicker @bind-Value="@customAccentColor"
+                                                ValueFormat="ColorFormat.Hex"
+                                                ShowPreview="true"
+                                                OnChange="@ApplyCustomColor" />
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <!-- Typography -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.FontFamily" />
+                    <div class="section-title-group">
+                        <h2>Typography</h2>
+                        <p class="section-description">Customize fonts and text sizing</p>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="typography-grid">
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <h4>Font Family</h4>
+                                <p>Choose your preferred typeface</p>
+                            </div>
+                            <div class="setting-control">
+                                <TelerikDropDownList Data="@fontFamilies"
+                                                     @bind-Value="@selectedFont"
+                                                     Width="200px" />
+                            </div>
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <h4>Base Font Size</h4>
+                                <p>Adjust the default text size (@(fontSize)px)</p>
+                            </div>
+                            <div class="setting-control slider-control">
+                                <span class="slider-label">A</span>
+                                <TelerikSlider @bind-Value="@fontSize"
+                                               Min="12"
+                                               Max="20"
+                                               SmallStep="1"
+                                               LargeStep="2"
+                                               Width="200px" />
+                                <span class="slider-label large">A</span>
+                            </div>
+                        </div>
+
+                        <div class="font-preview" style="font-family: @GetFontFamily(); font-size: @(fontSize)px;">
+                            <p class="preview-text">The quick brown fox jumps over the lazy dog.</p>
+                            <p class="preview-text small">0123456789 • ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -373,14 +460,129 @@
                 </div>
             </section>
 
+            <!-- Border Radius -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.BorderRadius" />
+                    <div class="section-title-group">
+                        <h2>Corner Style</h2>
+                        <p class="section-description">Adjust the roundness of UI elements</p>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="radius-options">
+                        @foreach (var option in radiusOptions)
+                        {
+                            <button class="radius-option @(borderRadius == option.Value ? "active" : "")"
+                                    @onclick="@(() => SelectRadius(option.Value))"
+                                    type="button">
+                                <div class="radius-preview" style="border-radius: @option.Preview;"></div>
+                                <span>@option.Name</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </section>
+
+            <!-- Accessibility & Motion -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.Accessibility" />
+                    <div class="section-title-group">
+                        <h2>Accessibility & Motion</h2>
+                        <p class="section-description">Customize animations and accessibility features</p>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="accessibility-settings">
+                        <div class="toggle-row">
+                            <div class="toggle-label">
+                                <h4>Enable Animations</h4>
+                                <p>Smooth transitions and micro-interactions</p>
+                            </div>
+                            <TelerikSwitch @bind-Value="@animations" />
+                        </div>
+
+                        <div class="toggle-row">
+                            <div class="toggle-label">
+                                <h4>Reduced Motion</h4>
+                                <p>Minimize movement for motion sensitivity</p>
+                            </div>
+                            <TelerikSwitch @bind-Value="@reducedMotion" />
+                        </div>
+
+                        <div class="toggle-row">
+                            <div class="toggle-label">
+                                <h4>Show Grid Lines</h4>
+                                <p>Display cell borders in data grids</p>
+                            </div>
+                            <TelerikSwitch @bind-Value="@showGridLines" />
+                        </div>
+
+                        <div class="toggle-row">
+                            <div class="toggle-label">
+                                <h4>Focus Indicators</h4>
+                                <p>Enhanced focus outlines for keyboard navigation</p>
+                            </div>
+                            <TelerikSwitch @bind-Value="@focusIndicators" />
+                        </div>
+
+                        <div class="setting-row" style="margin-top: 1rem;">
+                            <div class="setting-label">
+                                <h4>Animation Speed</h4>
+                                <p>Control the speed of animations (@(animationSpeed)x)</p>
+                            </div>
+                            <div class="setting-control slider-control">
+                                <span class="slider-label">🐢</span>
+                                <TelerikSlider @bind-Value="@animationSpeed"
+                                               Min="0.5"
+                                               Max="2.0"
+                                               SmallStep="0.25"
+                                               LargeStep="0.5"
+                                               Width="180px"
+                                               Enabled="@animations" />
+                                <span class="slider-label">🐇</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data & Settings Management -->
+            <section class="settings-section">
+                <div class="section-header">
+                    <TelerikSvgIcon Icon="@SvgIcon.Gear" />
+                    <div class="section-title-group">
+                        <h2>Settings Management</h2>
+                        <p class="section-description">Export, import, or reset your appearance settings</p>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <div class="management-actions">
+
+                        <button class="management-btn danger" @onclick="ResetToDefaults" type="button">
+                            <TelerikSvgIcon Icon="@SvgIcon.ArrowRotateCcw" />
+                            <div class="btn-text">
+                                <h4>Reset to Defaults</h4>
+                                <p>Restore all default settings</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Action Buttons -->
             <div class="settings-actions">
-                <button class="btn outline" @onclick="ResetToDefaults" type="button">
-                    <TelerikSvgIcon Icon="@SvgIcon.ArrowRotateCcw" />
-                    Reset to Defaults
-                </button>
+                <div class="action-info">
+                    <TelerikSvgIcon Icon="@SvgIcon.InfoCircle" />
+                    <span>Changes will apply after saving</span>
+                </div>
                 <div class="action-right">
                     <button class="btn" @onclick="Cancel" type="button">Cancel</button>
+                    <button class="btn secondary" @onclick="PreviewChanges" type="button">
+                        <TelerikSvgIcon Icon="@SvgIcon.Eye" />
+                        Preview
+                    </button>
                     <button class="btn primary" @onclick="SaveChanges" type="button">
                         <TelerikSvgIcon Icon="@SvgIcon.Save" />
                         Save Changes
@@ -392,15 +594,29 @@
 </div>
 
 @code {
+        // Theme & Colors
     private string selectedTheme = "light";
     private string selectedAccent = "blue";
-    private string density = "comfortable";
+    private string customAccentColor = "#6366f1";
+    private bool showColorPicker = false;
+
+    // Typography
     private int fontSize = 14;
     private string selectedFont = "System Default";
+
+    // Density & Layout
+    private string density = "comfortable";
+    private string borderRadius = "default";
+
+    // Accessibility
     private bool animations = true;
     private bool reducedMotion = false;
-    private bool highContrast = false;
     private bool showGridLines = true;
+    private bool focusIndicators = true;
+    private double animationSpeed = 1.0;
+
+    // Presets
+    private string selectedPreset = "";
 
     private List<string> fontFamilies = new()
     {
@@ -409,7 +625,11 @@
         "Segoe UI",
         "Inter",
         "Roboto",
-        "Open Sans"
+        "Open Sans",
+        "Source Sans Pro",
+        "Lato",
+        "Nunito",
+        "Poppins"
     };
 
     private List<AccentColor> accentColors = new()
@@ -424,6 +644,27 @@
         new("Green", "#16a34a", "green"),
         new("Teal", "#0d9488", "teal"),
         new("Cyan", "#0891b2", "cyan")
+    };
+
+    private List<RadiusOption> radiusOptions = new()
+    {
+        new("None", "none", "0"),
+        new("Subtle", "subtle", "4px"),
+        new("Default", "default", "8px"),
+        new("Rounded", "rounded", "12px"),
+        new("Extra", "extra", "16px"),
+        new("Pill", "pill", "9999px")
+    };
+
+    private List<AppearancePreset> presets = new()
+    {
+        new("", "Select a preset..."),
+        new("minimal", "Minimal"),
+        new("professional", "Professional"),
+        new("modern", "Modern"),
+        new("accessibility", "Accessibility First"),
+        new("compact-dark", "Compact Dark"),
+        new("cozy-light", "Cozy Light")
     };
 
     protected override async Task OnInitializedAsync()
@@ -450,25 +691,20 @@
     {
         try
         {
-            var themeJson = await JS.InvokeAsync<string>("localStorage.getItem", "ibn-theme");
-            if (!string.IsNullOrEmpty(themeJson))
-            {
-                selectedTheme = themeJson.Trim('"');
-            }
+            selectedTheme = await GetSetting<string>("ibn-theme", "light");
+            selectedAccent = await GetSetting<string>("ibn-accent", "blue");
+            customAccentColor = await GetSetting<string>("ibn-customAccent", "#6366f1");
+            density = await GetSetting<string>("ibn-density", "comfortable");
+            fontSize = await GetSetting<int>("ibn-fontSize", 14);
+            selectedFont = await GetSetting<string>("ibn-font", "System Default");
+            animations = await GetSetting<bool>("ibn-animations", true);
+            reducedMotion = await GetSetting<bool>("ibn-reducedMotion", false);
+            showGridLines = await GetSetting<bool>("ibn-gridLines", true);
+            borderRadius = await GetSetting<string>("ibn-borderRadius", "default");
+            focusIndicators = await GetSetting<bool>("ibn-focusIndicators", true);
+            animationSpeed = await GetSetting<double>("ibn-animationSpeed", 1.0);
 
-            var accentJson = await JS.InvokeAsync<string>("localStorage.getItem", "ibn-accent");
-            if (!string.IsNullOrEmpty(accentJson))
-            {
-                selectedAccent = accentJson.Trim('"');
-            }
-
-            var densityJson = await JS.InvokeAsync<string>("localStorage.getItem", "ibn-density");
-            if (!string.IsNullOrEmpty(densityJson))
-            {
-                density = densityJson.Trim('"');
-            }
-
-            Console.WriteLine($"Loaded settings - Theme: {selectedTheme}, Accent: {selectedAccent}, Density: {density}");
+            Console.WriteLine($"Loaded settings - Theme: {selectedTheme}, Accent: {selectedAccent}");
         }
         catch (Exception ex)
         {
@@ -476,47 +712,120 @@
         }
     }
 
-    private async Task SelectTheme(string theme)
+    private async Task<T> GetSetting<T>(string key, T defaultValue)
     {
         try
         {
-            Console.WriteLine($"SelectTheme called: {theme}");
-            selectedTheme = theme;
-            await InvokeAsync(StateHasChanged);
+            var json = await JS.InvokeAsync<string>("localStorage.getItem", key);
+            if (!string.IsNullOrEmpty(json))
+            {
+                return JsonSerializer.Deserialize<T>(json)!;
+            }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"SelectTheme error: {ex.Message}");
-        }
+        catch { }
+        return defaultValue;
+    }
+
+    private async Task SelectTheme(string theme)
+    {
+        selectedTheme = theme;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task SelectAccent(string accent)
     {
-        try
+        selectedAccent = accent;
+        showColorPicker = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenColorPicker()
+    {
+        showColorPicker = !showColorPicker;
+        if (showColorPicker)
         {
-            Console.WriteLine($"SelectAccent called: {accent}");
-            selectedAccent = accent;
-            await InvokeAsync(StateHasChanged);
+            selectedAccent = "custom";
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"SelectAccent error: {ex.Message}");
-        }
+        StateHasChanged();
+    }
+
+    private void ApplyCustomColor()
+    {
+        selectedAccent = "custom";
+        StateHasChanged();
     }
 
     private async Task SelectDensity(string value)
     {
-        try
+        density = value;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SelectRadius(string value)
+    {
+        borderRadius = value;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ApplyPreset()
+    {
+        if (string.IsNullOrEmpty(selectedPreset)) return;
+
+        switch (selectedPreset)
         {
-            Console.WriteLine($"SelectDensity called: {value}");
-            density = value;
-            await InvokeAsync(StateHasChanged);
-            Console.WriteLine($"SelectDensity completed, new density: {density}");
+            case "minimal":
+                selectedTheme = "light";
+                selectedAccent = "blue";
+                density = "comfortable";
+                borderRadius = "subtle";
+                animations = true;
+                fontSize = 14;
+                break;
+            case "professional":
+                selectedTheme = "light";
+                selectedAccent = "indigo";
+                density = "comfortable";
+                borderRadius = "default";
+                animations = true;
+                fontSize = 14;
+                break;
+            case "modern":
+                selectedTheme = "dark";
+                selectedAccent = "purple";
+                density = "comfortable";
+                borderRadius = "rounded";
+                animations = true;
+                fontSize = 15;
+                break;
+            case "accessibility":
+                selectedTheme = "high-contrast";
+                selectedAccent = "blue";
+                density = "spacious";
+                borderRadius = "default";
+                animations = false;
+                focusIndicators = true;
+                fontSize = 16;
+                break;
+            case "compact-dark":
+                selectedTheme = "midnight";
+                selectedAccent = "cyan";
+                density = "compact";
+                borderRadius = "subtle";
+                animations = true;
+                fontSize = 13;
+                break;
+            case "cozy-light":
+                selectedTheme = "sepia";
+                selectedAccent = "orange";
+                density = "spacious";
+                borderRadius = "rounded";
+                animations = true;
+                fontSize = 16;
+                break;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"SelectDensity error: {ex.Message}");
-        }
+
+        selectedPreset = "";
+        await InvokeAsync(StateHasChanged);
     }
 
     private string GetFontFamily()
@@ -528,8 +837,42 @@
             "Inter" => "'Inter', system-ui, sans-serif",
             "Roboto" => "'Roboto', sans-serif",
             "Open Sans" => "'Open Sans', sans-serif",
+            "Source Sans Pro" => "'Source Sans Pro', sans-serif",
+            "Lato" => "'Lato', sans-serif",
+            "Nunito" => "'Nunito', sans-serif",
+            "Poppins" => "'Poppins', sans-serif",
             _ => "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
         };
+    }
+
+    private async Task PreviewChanges()
+    {
+        await ApplySettingsToDOM();
+    }
+
+    private async Task ApplySettingsToDOM()
+    {
+        try
+        {
+            // Temporarily apply settings without saving
+            await JS.InvokeVoidAsync("eval", $@"
+                (function() {{
+                    localStorage.setItem('ibn-theme', '{JsonSerializer.Serialize(selectedTheme)}');
+                    localStorage.setItem('ibn-accent', '{JsonSerializer.Serialize(selectedAccent)}');
+                    localStorage.setItem('ibn-density', '{JsonSerializer.Serialize(density)}');
+                    localStorage.setItem('ibn-fontSize', '{fontSize}');
+                    localStorage.setItem('ibn-font', '{JsonSerializer.Serialize(selectedFont)}');
+                    localStorage.setItem('ibn-borderRadius', '{JsonSerializer.Serialize(borderRadius)}');
+                    localStorage.setItem('ibn-animations', '{animations.ToString().ToLower()}');
+                    localStorage.setItem('ibn-animationSpeed', '{animationSpeed}');
+                    window.refreshAppearance?.();
+                }})();
+            ");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Preview error: {ex.Message}");
+        }
     }
 
     private async Task SaveChanges()
@@ -538,13 +881,16 @@
         {
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-theme", JsonSerializer.Serialize(selectedTheme));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-accent", JsonSerializer.Serialize(selectedAccent));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-customAccent", JsonSerializer.Serialize(customAccentColor));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-density", JsonSerializer.Serialize(density));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-fontSize", JsonSerializer.Serialize(fontSize));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-font", JsonSerializer.Serialize(selectedFont));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animations", JsonSerializer.Serialize(animations));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-reducedMotion", JsonSerializer.Serialize(reducedMotion));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-highContrast", JsonSerializer.Serialize(highContrast));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-gridLines", JsonSerializer.Serialize(showGridLines));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-borderRadius", JsonSerializer.Serialize(borderRadius));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-focusIndicators", JsonSerializer.Serialize(focusIndicators));
+            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animationSpeed", JsonSerializer.Serialize(animationSpeed));
 
             await JS.InvokeVoidAsync("eval", "window.refreshAppearance?.()");
             await JS.InvokeVoidAsync("console.log", "Settings saved successfully");
@@ -559,36 +905,29 @@
 
     private void Cancel()
     {
-        Nav.NavigateTo("/settings");
+        Nav.NavigateTo("/");
     }
 
     private async Task ResetToDefaults()
     {
         selectedTheme = "light";
         selectedAccent = "blue";
+        customAccentColor = "#6366f1";
         density = "comfortable";
         fontSize = 14;
         selectedFont = "System Default";
         animations = true;
         reducedMotion = false;
-        highContrast = false;
         showGridLines = true;
+        borderRadius = "default";
+        focusIndicators = true;
+        animationSpeed = 1.0;
         await InvokeAsync(StateHasChanged);
     }
 
-    public class AccentColor
-    {
-        public string Name { get; set; }
-        public string Color { get; set; }
-        public string Value { get; set; }
-
-        public AccentColor(string name, string color, string value)
-        {
-            Name = name;
-            Color = color;
-            Value = value;
-        }
-    }
+    public record AccentColor(string Name, string Color, string Value);
+    public record RadiusOption(string Name, string Value, string Preview);
+    public record AppearancePreset(string Id, string Name);
 }
 
 <style>
@@ -608,6 +947,9 @@
     }
 
     .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
         border-bottom: 2px solid var(--nav-border);
@@ -624,6 +966,11 @@
         margin: 0;
         font-size: 1rem;
         color: var(--muted, #6b7280);
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
     }
 
     .settings-container {
@@ -812,22 +1159,6 @@
         opacity: 0.7;
     }
 
-        .colorful-preview .preview-bar.accent-bar {
-            background: linear-gradient(90deg, #a855f7 0%, #ec4899 100%);
-            opacity: 0.8;
-        }
-
-        .colorful-preview .preview-bar.accent-bar-alt {
-            background: linear-gradient(90deg, #06b6d4 0%, #8b5cf6 100%);
-            opacity: 0.8;
-        }
-
-    .sepia-preview .preview-header,
-    .sepia-preview .preview-sidebar,
-    .sepia-preview .preview-bar {
-        color: #5c4b37;
-    }
-
     .sepia-preview .preview-header {
         background: #d4c4a8;
         opacity: 0.6;
@@ -843,12 +1174,6 @@
         opacity: 0.3;
     }
 
-    .nord-preview .preview-header,
-    .nord-preview .preview-sidebar,
-    .nord-preview .preview-bar {
-        color: #eceff4;
-    }
-
     .nord-preview .preview-header {
         background: #88c0d0;
         opacity: 0.6;
@@ -862,12 +1187,6 @@
     .nord-preview .preview-bar {
         background: #d8dee9;
         opacity: 0.2;
-    }
-
-    .midnight-preview .preview-header,
-    .midnight-preview .preview-sidebar,
-    .midnight-preview .preview-bar {
-        color: #e4e4e7;
     }
 
     .midnight-preview .preview-header {
@@ -954,8 +1273,8 @@
     /* Color Grid */
     .color-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+        gap: 0.75rem;
         max-width: 600px;
     }
 
@@ -981,11 +1300,84 @@
             box-shadow: 0 0 0 3px var(--accent, #0c5ea8), 0 4px 12px rgba(0, 0, 0, 0.3);
         }
 
-    .check-icon {
+        .color-swatch.custom-color {
+            background-size: cover;
+        }
+
+    .check-icon, .plus-icon {
         color: white;
-        font-size: 24px;
+        font-size: 20px;
         filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
     }
+
+    .custom-color-picker {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--hover-bg, #f3f4f6);
+        border-radius: 8px;
+        display: inline-block;
+    }
+
+    /* Typography */
+    .typography-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .setting-label h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text, #111827);
+    }
+
+    .setting-label p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--muted, #6b7280);
+    }
+
+    .slider-control {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .slider-label {
+        font-size: 0.75rem;
+        color: var(--muted, #6b7280);
+    }
+
+        .slider-label.large {
+            font-size: 1.25rem;
+        }
+
+    .font-preview {
+        padding: 1.25rem;
+        background: var(--hover-bg, #f3f4f6);
+        border-radius: 8px;
+        border: 1px dashed var(--border, #e5e7eb);
+    }
+
+    .preview-text {
+        margin: 0;
+        line-height: 1.6;
+        color: var(--text, #111827);
+    }
+
+        .preview-text.small {
+            margin-top: 0.5rem;
+            font-size: 0.85em;
+            color: var(--muted, #6b7280);
+        }
 
     /* Density Options */
     .density-options {
@@ -1045,6 +1437,138 @@
         color: var(--muted, #6b7280);
     }
 
+    /* Border Radius Options */
+    .radius-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .radius-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        border: 1px solid var(--nav-border);
+        border-radius: 8px;
+        background: var(--card-bg);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 80px;
+    }
+
+        .radius-option:hover {
+            border-color: var(--accent);
+            background: var(--hover-bg);
+        }
+
+        .radius-option.active {
+            border-color: var(--accent);
+            background: rgba(12, 94, 168, 0.08);
+            box-shadow: 0 0 0 3px rgba(12, 94, 168, 0.15);
+        }
+
+    .radius-preview {
+        width: 40px;
+        height: 40px;
+        background: var(--accent, #0c5ea8);
+    }
+
+    .radius-option span {
+        font-size: 0.8rem;
+        color: var(--text);
+        font-weight: 500;
+    }
+
+    /* Layout Settings */
+    .layout-settings {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    /* Accessibility Settings */
+    .accessibility-settings {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .toggle-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background: var(--hover-bg, #f3f4f6);
+        border-radius: 8px;
+    }
+
+    .toggle-label h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .toggle-label p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--muted);
+    }
+
+    /* Management Actions */
+    .management-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .management-btn {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        border: 1px solid var(--nav-border);
+        border-radius: 12px;
+        background: var(--card-bg);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+    }
+
+        .management-btn:hover {
+            border-color: var(--accent);
+            background: var(--hover-bg);
+        }
+
+        .management-btn.danger:hover {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.08);
+        }
+
+        .management-btn .k-svg-icon {
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .management-btn.danger .k-svg-icon {
+            color: #ef4444;
+        }
+
+    .btn-text h4 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .btn-text p {
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--muted);
+    }
+
     /* Settings Actions */
     .settings-actions {
         display: flex;
@@ -1055,6 +1579,14 @@
         border-radius: 12px;
         gap: 1rem;
         background: var(--card-bg, #f9fafb);
+    }
+
+    .action-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--muted);
+        font-size: 0.875rem;
     }
 
     .action-right {
@@ -1093,13 +1625,14 @@
                 border-color: var(--accent-hover, #0d6bb6);
             }
 
-        .btn.outline {
+        .btn.secondary {
             background: transparent;
-            color: var(--text, #111827);
+            color: var(--accent);
+            border-color: var(--accent);
         }
 
-            .btn.outline:hover {
-                background: var(--hover-bg, #f3f4f6);
+            .btn.secondary:hover {
+                background: rgba(12, 94, 168, 0.08);
             }
 
     /* Responsive */
@@ -1108,12 +1641,23 @@
             padding: 1rem;
         }
 
+        .page-header {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
         .theme-grid {
             grid-template-columns: repeat(3, 1fr);
         }
 
         .color-grid {
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .setting-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
         }
 
         .settings-actions {
@@ -1134,6 +1678,10 @@
     @@media (max-width: 560px) {
         .theme-grid {
             grid-template-columns: repeat(2, 1fr);
+        }
+
+        .radius-options {
+            justify-content: center;
         }
     }
 

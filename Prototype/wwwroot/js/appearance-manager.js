@@ -49,37 +49,79 @@
         'Open Sans': "'Open Sans', sans-serif"
     };
 
+    // Border radius mappings
+    const borderRadiusSettings = {
+        'none': {
+            xs: '0',
+            sm: '0',
+            md: '0',
+            lg: '0',
+            xl: '0',
+            full: '0'
+        },
+        'subtle': {
+            xs: '2px',
+            sm: '3px',
+            md: '4px',
+            lg: '6px',
+            xl: '8px',
+            full: '9999px'
+        },
+        'default': {
+            xs: '4px',
+            sm: '6px',
+            md: '8px',
+            lg: '12px',
+            xl: '16px',
+            full: '9999px'
+        },
+        'rounded': {
+            xs: '6px',
+            sm: '8px',
+            md: '12px',
+            lg: '16px',
+            xl: '24px',
+            full: '9999px'
+        },
+        'extra': {
+            xs: '8px',
+            sm: '12px',
+            md: '16px',
+            lg: '24px',
+            xl: '32px',
+            full: '9999px'
+        },
+        'pill': {
+            xs: '9999px',
+            sm: '9999px',
+            md: '9999px',
+            lg: '9999px',
+            xl: '9999px',
+            full: '9999px'
+        }
+    };
+
     // Load settings from localStorage
     function loadSettings() {
         const settings = { ...defaults };
 
         try {
-            const theme = localStorage.getItem('ibn-theme');
-            if (theme) settings.theme = JSON.parse(theme);
+            const keys = [
+                'theme', 'accent', 'customAccent', 'density', 'fontSize', 'font',
+                'animations', 'animationSpeed', 'reducedMotion', 'highContrast',
+                'gridLines', 'borderRadius'
+            ];
 
-            const accent = localStorage.getItem('ibn-accent');
-            if (accent) settings.accent = JSON.parse(accent);
-
-            const density = localStorage.getItem('ibn-density');
-            if (density) settings.density = JSON.parse(density);
-
-            const fontSize = localStorage.getItem('ibn-fontSize');
-            if (fontSize) settings.fontSize = JSON.parse(fontSize);
-
-            const font = localStorage.getItem('ibn-font');
-            if (font) settings.font = JSON.parse(font);
-
-            const animations = localStorage.getItem('ibn-animations');
-            if (animations !== null) settings.animations = JSON.parse(animations);
-
-            const reducedMotion = localStorage.getItem('ibn-reducedMotion');
-            if (reducedMotion !== null) settings.reducedMotion = JSON.parse(reducedMotion);
-
-            const highContrast = localStorage.getItem('ibn-highContrast');
-            if (highContrast !== null) settings.highContrast = JSON.parse(highContrast);
-
-            const gridLines = localStorage.getItem('ibn-gridLines');
-            if (gridLines !== null) settings.gridLines = JSON.parse(gridLines);
+            keys.forEach(key => {
+                const stored = localStorage.getItem(`ibn-${key}`);
+                if (stored !== null) {
+                    try {
+                        settings[key] = JSON.parse(stored);
+                    } catch {
+                        settings[key] = stored;
+                    }
+                }
+            });
         } catch (e) {
             console.error('Error loading appearance settings:', e);
         }
@@ -2032,9 +2074,21 @@
     }
 
     // Apply accent color
-    function applyAccent(accentName) {
+
+    function applyAccent(accentName, customAccent) {
         const root = document.documentElement;
-        const colors = accentColors[accentName] || accentColors.blue;
+        let colors;
+
+        if (accentName === 'custom' && customAccent) {
+            // Generate color palette from custom color
+            colors = {
+                primary: customAccent,
+                light: lightenColor(customAccent, 85),
+                hover: adjustColor(customAccent, -20)
+            };
+        } else {
+            colors = accentColors[accentName] || accentColors.blue;
+        }
 
         // Custom app variables
         root.style.setProperty('--accent', colors.primary);
@@ -2046,12 +2100,76 @@
         root.style.setProperty('--kendo-color-primary-hover', colors.hover);
         root.style.setProperty('--kendo-color-primary-active', colors.hover);
         root.style.setProperty('--kendo-color-on-primary', '#ffffff');
+        root.style.setProperty('--kendo-color-primary-subtle', colors.light);
 
-        // Extract RGB values from hex
+        // RGB values for rgba() usage
         const rgb = hexToRgb(colors.primary);
         if (rgb) {
             root.style.setProperty('--accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
         }
+    }
+
+    function applyBorderRadius(radiusName) {
+        const root = document.documentElement;
+        const radii = borderRadiusSettings[radiusName] || borderRadiusSettings.default;
+
+        // Custom app variables
+        root.style.setProperty('--radius-xs', radii.xs);
+        root.style.setProperty('--radius-sm', radii.sm);
+        root.style.setProperty('--radius-md', radii.md);
+        root.style.setProperty('--radius-lg', radii.lg);
+        root.style.setProperty('--radius-xl', radii.xl);
+        root.style.setProperty('--radius-full', radii.full);
+
+        // Kendo/Telerik border radius variables
+        root.style.setProperty('--kendo-border-radius-sm', radii.sm);
+        root.style.setProperty('--kendo-border-radius-md', radii.md);
+        root.style.setProperty('--kendo-border-radius-lg', radii.lg);
+
+        // Component-specific radii
+        root.style.setProperty('--kendo-button-border-radius', radii.md);
+        root.style.setProperty('--kendo-input-border-radius', radii.md);
+        root.style.setProperty('--kendo-card-border-radius', radii.lg);
+        root.style.setProperty('--kendo-popup-border-radius', radii.md);
+        root.style.setProperty('--kendo-window-border-radius', radii.lg);
+        root.style.setProperty('--kendo-chip-border-radius', radii.full);
+        root.style.setProperty('--kendo-badge-border-radius', radii.full);
+        root.style.setProperty('--kendo-notification-border-radius', radii.md);
+        root.style.setProperty('--kendo-tooltip-border-radius', radii.sm);
+        root.style.setProperty('--kendo-menu-popup-border-radius', radii.md);
+        root.style.setProperty('--kendo-tabstrip-border-radius', radii.md);
+        root.style.setProperty('--kendo-panelbar-border-radius', radii.md);
+
+        // Add class for CSS-based overrides
+        root.setAttribute('data-radius', radiusName);
+    }
+
+    function applyAnimationSpeed(speed) {
+        const root = document.documentElement;
+
+        // Base durations (in ms)
+        const baseDurations = {
+            fast: 100,
+            normal: 150,
+            slow: 200,
+            slower: 300,
+            animation: 200
+        };
+
+        // Calculate adjusted durations (speed > 1 = faster, speed < 1 = slower)
+        const multiplier = 1 / speed;
+
+        root.style.setProperty('--transition-fast', `${Math.round(baseDurations.fast * multiplier)}ms`);
+        root.style.setProperty('--transition-normal', `${Math.round(baseDurations.normal * multiplier)}ms`);
+        root.style.setProperty('--transition-slow', `${Math.round(baseDurations.slow * multiplier)}ms`);
+        root.style.setProperty('--transition-slower', `${Math.round(baseDurations.slower * multiplier)}ms`);
+        root.style.setProperty('--animation-duration', `${Math.round(baseDurations.animation * multiplier)}ms`);
+
+        // Kendo animation durations
+        root.style.setProperty('--kendo-transition-duration', `${Math.round(baseDurations.normal * multiplier)}ms`);
+        root.style.setProperty('--kendo-animation-duration', `${Math.round(baseDurations.animation * multiplier)}ms`);
+
+        root.setAttribute('data-animation-speed', speed.toString());
     }
 
     // Convert hex to RGB
@@ -2064,37 +2182,83 @@
         } : null;
     }
 
+    function adjustColor(hex, amount) {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return hex;
+
+        const adjust = (value) => Math.max(0, Math.min(255, value + amount));
+        const r = adjust(rgb.r).toString(16).padStart(2, '0');
+        const g = adjust(rgb.g).toString(16).padStart(2, '0');
+        const b = adjust(rgb.b).toString(16).padStart(2, '0');
+
+        return `#${r}${g}${b}`;
+    }
+    function lightenColor(hex, percent) {
+        const rgb = hexToRgb(hex);
+        if (!rgb) return hex;
+
+        const lighten = (value) => Math.round(value + (255 - value) * (percent / 100));
+        const r = lighten(rgb.r).toString(16).padStart(2, '0');
+        const g = lighten(rgb.g).toString(16).padStart(2, '0');
+        const b = lighten(rgb.b).toString(16).padStart(2, '0');
+
+        return `#${r}${g}${b}`;
+    }
+
+
     // Apply density
     function applyDensity(densityName) {
         const root = document.documentElement;
         const density = densitySettings[densityName] || densitySettings.comfortable;
 
         // Adjust spacing scale
-        const baseSpacing = 4; // 4px base unit
+        const baseSpacing = 4;
         for (let i = 0; i <= 30; i++) {
             const value = Math.round(baseSpacing * i * density.multiplier);
+            root.style.setProperty(`--spacing-${i}`, `${value}px`);
             root.style.setProperty(`--kendo-spacing-${i}`, `${value}px`);
         }
 
-        // Adjust line height
-        root.style.setProperty('--base-line-height', density.lineHeight);
+        // Line height
+        root.style.setProperty('--base-line-height', density.lineHeight.toString());
+        root.style.setProperty('--kendo-line-height', density.lineHeight.toString());
 
-        // Component-specific padding based on density
+        // Component-specific padding
         const componentPadding = {
-            compact: { x: '8px', y: '4px' },
-            comfortable: { x: '12px', y: '8px' },
-            spacious: { x: '16px', y: '12px' }
+            compact: { x: '8px', y: '4px', cellX: '6px', cellY: '4px' },
+            comfortable: { x: '12px', y: '8px', cellX: '12px', cellY: '8px' },
+            spacious: { x: '16px', y: '12px', cellX: '16px', cellY: '12px' }
         };
 
-        const padding = componentPadding[densityName];
-        root.style.setProperty('--kendo-grid-cell-padding-x', padding.x);
-        root.style.setProperty('--kendo-grid-cell-padding-y', padding.y);
-        root.style.setProperty('--kendo-grid-header-padding-x', padding.x);
-        root.style.setProperty('--kendo-grid-header-padding-y', padding.y);
+        const padding = componentPadding[densityName] || componentPadding.comfortable;
+
+        // Grid
+        root.style.setProperty('--kendo-grid-cell-padding-x', padding.cellX);
+        root.style.setProperty('--kendo-grid-cell-padding-y', padding.cellY);
+        root.style.setProperty('--kendo-grid-header-padding-x', padding.cellX);
+        root.style.setProperty('--kendo-grid-header-padding-y', padding.cellY);
+
+        // Buttons
         root.style.setProperty('--kendo-button-padding-x', padding.x);
         root.style.setProperty('--kendo-button-padding-y', padding.y);
+
+        // Inputs
         root.style.setProperty('--kendo-input-padding-x', padding.x);
         root.style.setProperty('--kendo-input-padding-y', padding.y);
+
+        // List items
+        root.style.setProperty('--kendo-list-item-padding-x', padding.x);
+        root.style.setProperty('--kendo-list-item-padding-y', padding.y);
+
+        // Menu items
+        root.style.setProperty('--kendo-menu-item-padding-x', padding.x);
+        root.style.setProperty('--kendo-menu-item-padding-y', padding.y);
+
+        // Tree items
+        root.style.setProperty('--kendo-treeview-item-padding-x', padding.x);
+        root.style.setProperty('--kendo-treeview-item-padding-y', padding.y);
+
+        root.setAttribute('data-density', densityName);
     }
 
     // Apply font settings
@@ -2102,31 +2266,44 @@
         const root = document.documentElement;
         const fontFamily = fontFamilies[fontName] || fontFamilies['System Default'];
 
-        // Custom app variables
         root.style.setProperty('--base-font-family', fontFamily);
         root.style.setProperty('--base-font-size', `${fontSize}px`);
-
-        // Kendo/Telerik typography variables
         root.style.setProperty('--kendo-font-family', fontFamily);
         root.style.setProperty('--kendo-font-size', `${fontSize}px`);
+        root.style.setProperty('--kendo-font-size-xs', `${fontSize - 2}px`);
         root.style.setProperty('--kendo-font-size-sm', `${fontSize - 1}px`);
+        root.style.setProperty('--kendo-font-size-md', `${fontSize}px`);
         root.style.setProperty('--kendo-font-size-lg', `${fontSize + 2}px`);
+        root.style.setProperty('--kendo-font-size-xl', `${fontSize + 4}px`);
 
-        // Apply to body
         document.body.style.fontFamily = fontFamily;
         document.body.style.fontSize = `${fontSize}px`;
     }
 
+    function applyReducedMotion(enabled) {
+        if (enabled) {
+            document.documentElement.classList.add('reduce-motion');
+        } else {
+            document.documentElement.classList.remove('reduce-motion');
+        }
+    }
+
     // Apply animations setting
-    function applyAnimations(enabled) {
+    function applyAnimations(enabled, speed = 1.0) {
         const root = document.documentElement;
 
         if (!enabled) {
+            root.classList.add('no-animations');
             root.style.setProperty('--transition-duration', '0ms');
+            root.style.setProperty('--transition-fast', '0ms');
+            root.style.setProperty('--transition-normal', '0ms');
+            root.style.setProperty('--transition-slow', '0ms');
             root.style.setProperty('--animation-duration', '0ms');
+            root.style.setProperty('--kendo-transition-duration', '0ms');
+            root.style.setProperty('--kendo-animation-duration', '0ms');
         } else {
-            root.style.setProperty('--transition-duration', '150ms');
-            root.style.setProperty('--animation-duration', '200ms');
+            root.classList.remove('no-animations');
+            applyAnimationSpeed(speed);
         }
     }
 
@@ -2153,11 +2330,13 @@
         const root = document.documentElement;
 
         if (enabled) {
-            document.documentElement.classList.add('show-grid-lines');
+            root.classList.add('show-grid-lines');
             root.style.setProperty('--kendo-grid-border-width', '1px');
+            root.style.setProperty('--grid-cell-border-width', '1px');
         } else {
-            document.documentElement.classList.remove('show-grid-lines');
+            root.classList.remove('show-grid-lines');
             root.style.setProperty('--kendo-grid-border-width', '0px');
+            root.style.setProperty('--grid-cell-border-width', '0px');
         }
     }
 
@@ -2165,28 +2344,30 @@
     function applyAppearanceSettings() {
         const settings = loadSettings();
 
+        // Apply all settings
         applyTheme(settings.theme);
-        applyAccent(settings.accent);
+        applyAccent(settings.accent, settings.customAccent);
         applyDensity(settings.density);
         applyFontSettings(settings.font, settings.fontSize);
-        applyAnimations(settings.animations);
+        applyBorderRadius(settings.borderRadius);
+        applyAnimations(settings.animations, settings.animationSpeed);
         applyReducedMotion(settings.reducedMotion);
-        applyHighContrast(settings.highContrast);
         applyGridLines(settings.gridLines);
 
-        console.log('Appearance settings applied:', settings);
+        console.log('Extended appearance settings applied:', settings);
     }
 
     // Listen for system theme changes if using auto
     function watchSystemTheme() {
         const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        darkModeQuery.addEventListener('change', (e) => {
+        darkModeQuery.addEventListener('change', () => {
             const settings = loadSettings();
             if (settings.theme === 'auto') {
                 applyTheme('auto');
             }
         });
     }
+
 
     // Listen for storage events (when settings change in another tab)
     window.addEventListener('storage', (e) => {
@@ -2206,7 +2387,23 @@
         watchSystemTheme();
     }
 
-    // Expose function globally for manual refresh
+    // Expose for manual refresh
     window.refreshAppearance = applyAppearanceSettings;
 
+    // Expose individual functions for programmatic use
+    window.appearanceManager = {
+        applyTheme,
+        applyAccent,
+        applyDensity,
+        applyBorderRadius,
+        applyAnimationSpeed,
+        applyAnimations,
+        applyFontSettings,
+        applyReducedMotion,
+        applyGridLines,
+        loadSettings,
+        refresh: applyAppearanceSettings
+    };
+
 })();
+
