@@ -46,8 +46,46 @@
         'Segoe UI': "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         'Inter': "'Inter', system-ui, sans-serif",
         'Roboto': "'Roboto', sans-serif",
-        'Open Sans': "'Open Sans', sans-serif"
+        'Open Sans': "'Open Sans', sans-serif",
+
+        // Fun / playful
+        'Comic Sans MS': "'Comic Sans MS', 'Comic Sans', cursive",
+        'Papyrus': "'Papyrus', fantasy",
+        'Chalkboard SE': "'Chalkboard SE', 'Comic Sans MS', cursive",
+        'Marker Felt': "'Marker Felt', 'Comic Sans MS', cursive",
+
+        // Serif classics
+        'Times New Roman': "'Times New Roman', Times, serif",
+        'Georgia': "Georgia, serif",
+        'Garamond': "'Garamond', serif",
+        'Baskerville': "'Baskerville', serif",
+        'Didot': "'Didot', serif",
+
+        // Sans-serif staples
+        'Arial': "Arial, Helvetica, sans-serif",
+        'Verdana': "Verdana, Geneva, sans-serif",
+        'Tahoma': "Tahoma, Geneva, sans-serif",
+        'Trebuchet MS': "'Trebuchet MS', Helvetica, sans-serif",
+        'Futura': "'Futura', sans-serif",
+        'Gill Sans': "'Gill Sans', Calibri, sans-serif",
+
+        // Monospace / dev-oriented
+        'Consolas': "'Consolas', 'Courier New', monospace",
+        'Courier New': "'Courier New', Courier, monospace",
+        'JetBrains Mono': "'JetBrains Mono', monospace",
+        'Menlo': "'Menlo', monospace",
+        'Fira Code': "'Fira Code', monospace",
+
+        // Decorative / system oddballs
+        'Copperplate': "'Copperplate', 'Copperplate Gothic Light', serif",
+        'Impact': "Impact, Charcoal, sans-serif",
+        'Lucida Handwriting': "'Lucida Handwriting', cursive",
+        'Brush Script MT': "'Brush Script MT', cursive",
+        'American Typewriter': "'American Typewriter', serif",
+        'Snell Roundhand': "'Snell Roundhand', cursive"
     };
+
+
 
     // Border radius mappings
     const borderRadiusSettings = {

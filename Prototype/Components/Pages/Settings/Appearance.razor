@@ -503,13 +503,13 @@
                             <TelerikSwitch @bind-Value="@animations" />
                         </div>
 
-                        <div class="toggle-row">
+@*                         <div class="toggle-row">
                             <div class="toggle-label">
                                 <h4>Reduced Motion</h4>
                                 <p>Minimize movement for motion sensitivity</p>
                             </div>
                             <TelerikSwitch @bind-Value="@reducedMotion" />
-                        </div>
+                        </div> *@
 
                         <div class="toggle-row">
                             <div class="toggle-label">
@@ -519,13 +519,13 @@
                             <TelerikSwitch @bind-Value="@showGridLines" />
                         </div>
 
-                        <div class="toggle-row">
+@*                         <div class="toggle-row">
                             <div class="toggle-label">
                                 <h4>Focus Indicators</h4>
                                 <p>Enhanced focus outlines for keyboard navigation</p>
                             </div>
                             <TelerikSwitch @bind-Value="@focusIndicators" />
-                        </div>
+                        </div> *@
 
                         <div class="setting-row" style="margin-top: 1rem;">
                             <div class="setting-label">
@@ -619,18 +619,56 @@
     private string selectedPreset = "";
 
     private List<string> fontFamilies = new()
-    {
-        "System Default",
-        "Helvetica Neue",
-        "Segoe UI",
-        "Inter",
-        "Roboto",
-        "Open Sans",
-        "Source Sans Pro",
-        "Lato",
-        "Nunito",
-        "Poppins"
-    };
+{
+    // Existing
+    "System Default",
+    "Helvetica Neue",
+    "Segoe UI",
+    "Inter",
+    "Roboto",
+    "Open Sans",
+    "Source Sans Pro",
+    "Lato",
+    "Nunito",
+    "Poppins",
+
+    // Added — Fun / Playful
+    "Comic Sans MS",
+    "Papyrus",
+    "Chalkboard SE",
+    "Marker Felt",
+
+    // Serif Classics
+    "Times New Roman",
+    "Georgia",
+    "Garamond",
+    "Baskerville",
+    "Didot",
+
+    // Sans-Serif Basics / UI Options
+    "Arial",
+    "Verdana",
+    "Tahoma",
+    "Trebuchet MS",
+    "Futura",
+    "Gill Sans",
+
+    // Monospace
+    "Consolas",
+    "Courier New",
+    "JetBrains Mono",
+    "Menlo",
+    "Fira Code",
+
+    // Decorative / Oddballs
+    "Copperplate",
+    "Impact",
+    "Lucida Handwriting",
+    "Brush Script MT",
+    "American Typewriter",
+    "Snell Roundhand"
+};
+
 
     private List<AccentColor> accentColors = new()
     {
@@ -832,6 +870,10 @@
     {
         return selectedFont switch
         {
+            // System Default
+            "System Default" => "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+
+            // Sans-serif UI / Modern
             "Helvetica Neue" => "'Helvetica Neue', Helvetica, Arial, sans-serif",
             "Segoe UI" => "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
             "Inter" => "'Inter', system-ui, sans-serif",
@@ -841,6 +883,42 @@
             "Lato" => "'Lato', sans-serif",
             "Nunito" => "'Nunito', sans-serif",
             "Poppins" => "'Poppins', sans-serif",
+            "Arial" => "Arial, Helvetica, sans-serif",
+            "Verdana" => "Verdana, Geneva, sans-serif",
+            "Tahoma" => "Tahoma, Geneva, sans-serif",
+            "Trebuchet MS" => "'Trebuchet MS', Helvetica, sans-serif",
+            "Futura" => "'Futura', sans-serif",
+            "Gill Sans" => "'Gill Sans', Calibri, sans-serif",
+
+            // Fun / Playful
+            "Comic Sans MS" => "'Comic Sans MS', 'Comic Sans', cursive",
+            "Papyrus" => "'Papyrus', fantasy",
+            "Chalkboard SE" => "'Chalkboard SE', 'Comic Sans MS', cursive",
+            "Marker Felt" => "'Marker Felt', 'Comic Sans MS', cursive",
+
+            // Serif
+            "Times New Roman" => "'Times New Roman', Times, serif",
+            "Georgia" => "Georgia, serif",
+            "Garamond" => "'Garamond', serif",
+            "Baskerville" => "'Baskerville', serif",
+            "Didot" => "'Didot', serif",
+
+            // Monospace
+            "Consolas" => "'Consolas', 'Courier New', monospace",
+            "Courier New" => "'Courier New', Courier, monospace",
+            "JetBrains Mono" => "'JetBrains Mono', monospace",
+            "Menlo" => "'Menlo', monospace",
+            "Fira Code" => "'Fira Code', monospace",
+
+            // Decorative
+            "Copperplate" => "'Copperplate', 'Copperplate Gothic Light', serif",
+            "Impact" => "Impact, Charcoal, sans-serif",
+            "Lucida Handwriting" => "'Lucida Handwriting', cursive",
+            "Brush Script MT" => "'Brush Script MT', cursive",
+            "American Typewriter" => "'American Typewriter', serif",
+            "Snell Roundhand" => "'Snell Roundhand', cursive",
+
+            // Fallback
             _ => "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
         };
     }
@@ -886,10 +964,8 @@
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-fontSize", JsonSerializer.Serialize(fontSize));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-font", JsonSerializer.Serialize(selectedFont));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animations", JsonSerializer.Serialize(animations));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-reducedMotion", JsonSerializer.Serialize(reducedMotion));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-gridLines", JsonSerializer.Serialize(showGridLines));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-borderRadius", JsonSerializer.Serialize(borderRadius));
-            await JS.InvokeVoidAsync("localStorage.setItem", "ibn-focusIndicators", JsonSerializer.Serialize(focusIndicators));
             await JS.InvokeVoidAsync("localStorage.setItem", "ibn-animationSpeed", JsonSerializer.Serialize(animationSpeed));
 
             await JS.InvokeVoidAsync("eval", "window.refreshAppearance?.()");
@@ -920,7 +996,7 @@
         reducedMotion = false;
         showGridLines = true;
         borderRadius = "default";
-        focusIndicators = true;
+        focusIndicators = false;
         animationSpeed = 1.0;
         await InvokeAsync(StateHasChanged);
     }
