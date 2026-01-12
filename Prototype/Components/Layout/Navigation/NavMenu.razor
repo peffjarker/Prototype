@@ -4,6 +4,7 @@
 @using System.Collections.Generic
 @using System.Threading.Tasks
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
 @using Prototype.Components.SharedComponents.Search
 @using Telerik.Blazor
@@ -69,25 +70,36 @@
 
         <div class="nav-divider" role="presentation"></div>
 
-        <TelerikDropDownButton Class="user-menu" ShowArrowButton="false">
-            <DropDownButtonContent>
-                <div class="user-menu-trigger" title="Account">
-                    <div class="user-avatar large">
-                        <span>JP</span>
-                    </div>
-                </div>
-            </DropDownButtonContent>
-            <DropDownButtonItems>
-                <DropDownButtonItem OnClick="@(() => NavigateToProfile())">
-                    <TelerikSvgIcon Icon="@SvgIcon.User" />
-                    <span>My Profile</span>
-                </DropDownButtonItem>
-                <DropDownButtonItem OnClick="@(() => NavigateToAppearance())">
-                    <TelerikSvgIcon Icon="@SvgIcon.Palette" />
-                    <span>Appearance</span>
-                </DropDownButtonItem>
-            </DropDownButtonItems>
-        </TelerikDropDownButton>
+        <AuthorizeView>
+            <Authorized>
+                <TelerikDropDownButton Class="user-menu" ShowArrowButton="false">
+                    <DropDownButtonContent>
+                        <div class="user-menu-trigger" title="Account">
+                            <div class="user-avatar large">
+                                <span><Prototype.Components.Layout.Navigation.LoginDisplay /></span>
+                            </div>
+                        </div>
+                    </DropDownButtonContent>
+                    <DropDownButtonItems>
+                        <DropDownButtonItem OnClick="@(() => NavigateToProfile())">
+                            <TelerikSvgIcon Icon="@SvgIcon.User" />
+                            <span>My Profile</span>
+                        </DropDownButtonItem>
+                        <DropDownButtonItem OnClick="@(() => NavigateToAppearance())">
+                            <TelerikSvgIcon Icon="@SvgIcon.Palette" />
+                            <span>Appearance</span>
+                        </DropDownButtonItem>
+                        <DropDownButtonItem OnClick="@SignOut">
+                            <TelerikSvgIcon Icon="@SvgIcon.Logout" />
+                            <span>Sign Out</span>
+                        </DropDownButtonItem>
+                    </DropDownButtonItems>
+                </TelerikDropDownButton>
+            </Authorized>
+            <NotAuthorized>
+                <a href="MicrosoftIdentity/Account/SignIn" class="sign-in-btn">Sign In</a>
+            </NotAuthorized>
+        </AuthorizeView>
     </AppBarSection>
 </TelerikAppBar>
 
@@ -147,15 +159,19 @@
             </button>
         </div>
 
-        <div class="drawer-user">
-            <div class="user-avatar">
-                <span>JD</span>
-            </div>
-            <div class="user-info">
-                <div class="user-name">John Doe</div>
-                <div class="user-role">Administrator</div>
-            </div>
-        </div>
+        <AuthorizeView>
+            <Authorized Context="authContext">
+                <div class="drawer-user">
+                    <div class="user-avatar">
+                        <span><Prototype.Components.Layout.Navigation.LoginDisplay /></span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">@authContext.User.Identity?.Name</div>
+                        <div class="user-role">@GetUserRole(authContext.User)</div>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
 
         <div class="drawer-search">
             <GlobalSearch />
@@ -334,7 +350,20 @@
     private void NavigateToAppearance() => Nav.NavigateTo(Url.BuildHref("/settings/appearance"));
     private void NavigateToSecurity() => Nav.NavigateTo(Url.BuildHref("/settings/security"));
 
-    private void SignOut() => Nav.NavigateTo("/auth/signout", forceLoad: true);
+    private void SignOut() => Nav.NavigateTo("MicrosoftIdentity/Account/SignOut", forceLoad: true);
+
+    private string GetUserRole(System.Security.Claims.ClaimsPrincipal user)
+    {
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "34292b7e-74b4-4c44-b0c8-deb3859f44b2"))
+            return "Administrator";
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "84b76a76-52e2-4310-9767-3f40b7515ae6"))
+            return "Customer Service";
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "5076c722-89d1-4afb-bfa0-e261a37728c2"))
+            return "Purchasing";
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "2780fc34-4d65-4445-b4b5-1fe59780f5a6"))
+            return "Tech Credit";
+        return "User";
+    }
 
     private void LoadNotifications()
     {
@@ -955,6 +984,25 @@
         display: grid;
         place-items: center;
     }
+
+    /* --- Sign In Button --- */
+    .sign-in-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: var(--accent);
+        color: white;
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.15s ease;
+    }
+
+        .sign-in-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
 
     /* --- Responsive Breakpoints --- */
 

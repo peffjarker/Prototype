@@ -545,9 +545,10 @@
         _selectedItemsCollection = FilteredRows.Where(r => Params.SelectedItems.Contains(r.Item)).ToList();
     }
 
-    public void Dispose()
+    public new void Dispose()
     {
         SidePanelService.OnChange -= StateHasChanged;
+        base.Dispose();
     }
 
     // ============================================================

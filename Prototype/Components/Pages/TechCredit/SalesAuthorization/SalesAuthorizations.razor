@@ -289,7 +289,25 @@
 
     protected override void ReadFromUrl()
     {
-        Params = SalesAuthorizationsParameters.FromUrl(Url);
+        var rawParams = SalesAuthorizationsParameters.FromUrl(Url);
+
+        // Validate option parameter - must be a valid TechCredit option
+        var validOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Customer Information",
+            "Credit Application",
+            "Sales Authorizations",
+            "WCS",
+            "Payments"
+        };
+
+        // If the option from URL is not a valid TechCredit option, use default for this page
+        if (!validOptions.Contains(rawParams.Option))
+        {
+            rawParams.Option = "Sales Authorizations"; // Default for this page
+        }
+
+        Params = rawParams;
 
         if (string.IsNullOrEmpty(Params.SelectedCustomer))
         {

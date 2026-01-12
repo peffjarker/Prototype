@@ -135,7 +135,25 @@
     protected override void ReadFromUrl()
     {
         // Read raw values from URL
-        Params = WCSParameters.FromUrl(Url);
+        var rawParams = WCSParameters.FromUrl(Url);
+
+        // Validate option parameter - must be a valid TechCredit option
+        var validOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Customer Information",
+            "Credit Application",
+            "Sales Authorizations",
+            "WCS",
+            "Payments"
+        };
+
+        // If the option from URL is not a valid TechCredit option, use default for this page
+        if (!validOptions.Contains(rawParams.Option))
+        {
+            rawParams.Option = "WCS"; // Default for this page
+        }
+
+        Params = rawParams;
     }
 
     // ============================================================
