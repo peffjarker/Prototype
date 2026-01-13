@@ -55,6 +55,29 @@
     --focus-ring-width: 3px;
     --focus-ring-color: var(--accent);
     --focus-ring-offset: 2px;
+    /* Semantic Colors */
+    --success: #22c55e;
+    --success-bg: #dcfce7;
+    --success-border: #bbf7d0;
+    --success-text: #166534;
+    --warning: #f59e0b;
+    --warning-bg: #fef3c7;
+    --warning-border: #fde68a;
+    --warning-text: #854d0e;
+    --danger: #ef4444;
+    --danger-bg: #fee2e2;
+    --danger-border: #fecaca;
+    --danger-text: #991b1b;
+    --info: #0891b2;
+    --info-bg: #cffafe;
+    --info-border: #a5f3fc;
+    --info-text: #164e63;
+    /* Overlay */
+    --overlay-bg: rgba(0, 0, 0, 0.5);
+    /* Scrollbar */
+    --scrollbar-track: var(--hover-bg);
+    --scrollbar-thumb: var(--muted);
+    --scrollbar-thumb-hover: var(--text);
 }
 
 /* ========== BASE RESET & GLOBALS ========== */
@@ -321,23 +344,23 @@ textarea:focus-visible,
 
 .btn-danger {
     color: #fff;
-    background: #dc2626;
-    border-color: #dc2626;
+    background: var(--danger);
+    border-color: var(--danger);
 }
 
     .btn-danger:hover {
-        background: #b91c1c;
-        border-color: #b91c1c;
+        background: var(--danger-text);
+        border-color: var(--danger-text);
     }
 
 .btn-warn {
-    color: #7a4a05;
-    background: #fff7ec;
-    border-color: #f1c891;
+    color: var(--warning-text);
+    background: var(--warning-bg);
+    border-color: var(--warning-border);
 }
 
     .btn-warn:hover {
-        background: #fff2e2;
+        opacity: 0.9;
     }
 
 /* Button Sizes */
@@ -428,19 +451,19 @@ textarea {
 /* Validation States */
 .form-control.valid,
 input.valid {
-    border-color: #22c55e;
+    border-color: var(--success);
 }
 
 .form-control.invalid,
 input.invalid,
 .invalid {
-    border-color: #ef4444;
+    border-color: var(--danger);
 }
 
 .validation-message {
     margin-top: var(--spacing-1);
     font-size: 0.75rem;
-    color: #ef4444;
+    color: var(--danger);
 }
 
 /* Checkbox & Radio */
@@ -590,21 +613,27 @@ table {
 }
 
 .badge-success {
-    color: #166534;
-    background: #dcfce7;
-    border-color: #bbf7d0;
+    color: var(--success-text);
+    background: var(--success-bg);
+    border-color: var(--success-border);
 }
 
 .badge-warning {
-    color: #854d0e;
-    background: #fef3c7;
-    border-color: #fde68a;
+    color: var(--warning-text);
+    background: var(--warning-bg);
+    border-color: var(--warning-border);
 }
 
 .badge-danger {
-    color: #991b1b;
-    background: #fee2e2;
-    border-color: #fecaca;
+    color: var(--danger-text);
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
+}
+
+.badge-info {
+    color: var(--info-text);
+    background: var(--info-bg);
+    border-color: var(--info-border);
 }
 
 /* ========== NAVIGATION ========== */
@@ -1047,15 +1076,19 @@ header,
 }
 
 .text-success {
-    color: #22c55e;
+    color: var(--success);
 }
 
 .text-warning {
-    color: #f59e0b;
+    color: var(--warning);
 }
 
 .text-danger {
-    color: #ef4444;
+    color: var(--danger);
+}
+
+.text-info {
+    color: var(--info);
 }
 
 .bg-accent {

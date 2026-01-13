@@ -15,56 +15,50 @@
 <h3>Settings</h3>
 
 <div class="settings-container">
-    <p>Application settings page - customize this as needed.</p>
-
-    <div class="settings-section">
-        <h4>Debug Information</h4>
-        <p><strong>Is Admin:</strong> @_isAdmin</p>
-        <p><strong>Is Shadowing:</strong> @ShadowLoginService.IsShadowing</p>
-        @if (ShadowLoginService.IsShadowing)
-        {
-            <p><strong>Shadow Role:</strong> @ShadowLoginService.ShadowRole</p>
-        }
-        <p><strong>User Name:</strong> @_userName</p>
-
-        <details style="margin-top: 1rem;">
-            <summary style="cursor: pointer; font-weight: bold;">Show All Claims</summary>
-            <div style="margin-top: 1rem; max-height: 400px; overflow-y: auto; background: #f9fafb; padding: 1rem; border-radius: 4px;">
-                @if (_claims != null && _claims.Any())
-                {
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ddd;">Type</th>
-                                <th style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ddd;">Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var claim in _claims)
-                            {
-                                <tr>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #eee; font-family: monospace; font-size: 0.9em;">@claim.Type</td>
-                                    <td style="padding: 0.5rem; border-bottom: 1px solid #eee; font-family: monospace; font-size: 0.9em; word-break: break-all;">@claim.Value</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <p>No claims found</p>
-                }
-            </div>
-        </details>
-    </div>
-
-    <div class="settings-section">
-        <h4>General Settings</h4>
-        <p>Add your application settings here.</p>
-    </div>
 
     @if (_isAdmin)
     {
+        <div class="settings-section">
+            <h4>Debug Information</h4>
+            <p><strong>Is Admin:</strong> @_isAdmin</p>
+            <p><strong>Is Shadowing:</strong> @ShadowLoginService.IsShadowing</p>
+            @if (ShadowLoginService.IsShadowing)
+            {
+                <p><strong>Shadow Role:</strong> @ShadowLoginService.ShadowRole</p>
+            }
+            <p><strong>User Name:</strong> @_userName</p>
+
+            <details style="margin-top: 1rem;">
+                <summary style="cursor: pointer; font-weight: bold;">Show All Claims</summary>
+                <div style="margin-top: 1rem; max-height: 400px; overflow-y: auto; background: #f9fafb; padding: 1rem; border-radius: 4px;">
+                    @if (_claims != null && _claims.Any())
+                    {
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ddd;">Type</th>
+                                    <th style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ddd;">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var claim in _claims)
+                                {
+                                    <tr>
+                                        <td style="padding: 0.5rem; border-bottom: 1px solid #eee; font-family: monospace; font-size: 0.9em;">@claim.Type</td>
+                                        <td style="padding: 0.5rem; border-bottom: 1px solid #eee; font-family: monospace; font-size: 0.9em; word-break: break-all;">@claim.Value</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No claims found</p>
+                    }
+                </div>
+            </details>
+        </div>
+
         <div class="settings-section shadow-login-section">
             <h4>Shadow Login (Admin Only)</h4>
             <p>Emulate different user roles to test their experience:</p>
@@ -152,11 +146,11 @@
         border-radius: 8px;
     }
 
-    .settings-section h4 {
-        margin-top: 0;
-        margin-bottom: 1rem;
-        color: #374151;
-    }
+        .settings-section h4 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #374151;
+        }
 
     .shadow-login-section {
         background: #fff3cd;
@@ -191,16 +185,16 @@
         color: white;
     }
 
-    .btn-primary:hover {
-        background: #0b5ed7;
-    }
+        .btn-primary:hover {
+            background: #0b5ed7;
+        }
 
     .btn-warning {
         background: #ffc107;
         color: #000;
     }
 
-    .btn-warning:hover {
-        background: #e0a800;
-    }
+        .btn-warning:hover {
+            background: #e0a800;
+        }
 </style>

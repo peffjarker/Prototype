@@ -1,71 +1,95 @@
-﻿.badge {
+/* badges.css - Theme-aware badges and buttons */
+
+.badge {
     display: inline-block;
     padding: 0.25em 0.6em;
     font-size: 0.875em;
     font-weight: 600;
     line-height: 1;
-    color: #fff;
+    color: var(--text);
     text-align: center;
     white-space: nowrap;
     vertical-align: baseline;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-full);
+    background: var(--hover-bg);
+    border: 1px solid var(--border);
 }
 
 .badge-success {
-    background-color: #28a745;
+    color: var(--success-text);
+    background-color: var(--success-bg);
+    border-color: var(--success-border);
 }
 
 .badge-secondary {
-    background-color: #6c757d;
+    color: var(--muted);
+    background-color: var(--hover-bg);
+    border-color: var(--border);
 }
 
 .badge-danger {
-    background-color: #dc3545;
+    color: var(--danger-text);
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
 }
 
 .badge-info {
-    background-color: #17a2b8;
+    color: var(--info-text);
+    background-color: var(--info-bg);
+    border-color: var(--info-border);
 }
 
 .badge-warning {
-    background-color: #ffc107;
-    color: #212529;
+    color: var(--warning-text);
+    background-color: var(--warning-bg);
+    border-color: var(--warning-border);
 }
 
 .text-danger {
-    color: #dc3545 !important;
+    color: var(--danger) !important;
 }
 
 .text-warning {
-    color: #ffc107 !important;
+    color: var(--warning) !important;
+}
+
+.text-success {
+    color: var(--success) !important;
+}
+
+.text-info {
+    color: var(--info) !important;
 }
 
 .link-button {
     background: none;
     border: none;
-    color: #007bff;
+    color: var(--accent);
     text-decoration: underline;
     cursor: pointer;
     padding: 0;
     font: inherit;
+    transition: color var(--transition-fast) ease;
 }
 
     .link-button:hover {
-        color: #0056b3;
+        color: var(--accent-hover);
     }
 
 .btn-primary {
-    background-color: #007bff;
+    background-color: var(--accent);
     color: white;
-    border: none;
+    border: 1px solid var(--accent);
     padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-md);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    transition: all var(--transition-fast) ease;
 }
 
     .btn-primary:hover {
-        background-color: #0056b3;
+        background-color: var(--accent-hover);
+        border-color: var(--accent-hover);
     }

@@ -55,7 +55,7 @@
                 <TelerikButton OnClick="@ClearAllFilters" Icon="@SvgIcon.FilterClear">Clear Filters</TelerikButton>
                 <span style="margin-left: auto; display: flex; gap: 1rem; align-items: center;">
                     <span style="font-weight: bold;">Total Items: @FilteredRows.Count</span>
-                    <span style="font-weight: bold; color: #007bff;">Selected: @Params.SelectedItems.Count</span>
+                    <span class="text-accent" style="font-weight: bold;">Selected: @Params.SelectedItems.Count</span>
                     @if (Params.SelectedItems.Count > 0)
                     {
                         <TelerikButton OnClick="@(() => { SelectedItemsCollection = new List<Row>(); })"
@@ -93,7 +93,7 @@
                     <FooterTemplate>
                         @{
                             var total = FilteredRows.Sum(x => x.OnOrderOpen);
-                            <strong style="color: #007bff;">@total</strong>
+                            <strong class="text-accent">@total</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>
@@ -114,7 +114,7 @@
                     <FooterTemplate>
                         @{
                             var total = FilteredRows.Sum(x => x.InTransit);
-                            <strong style="color: #17a2b8;">@total</strong>
+                            <strong class="text-info">@total</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>
@@ -143,7 +143,7 @@
                     <FooterTemplate>
                         @{
                             var total = FilteredRows.Sum(x => x.BKO);
-                            <strong style="color: #dc3545;">@total</strong>
+                            <strong class="text-danger">@total</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>
@@ -158,7 +158,7 @@
                     <FooterTemplate>
                         @{
                             var total = FilteredRows.Sum(x => x.TotalOpenCost);
-                            <strong style="font-size: 1.1em; color: #28a745;">@total.ToString("C")</strong>
+                            <strong class="text-success" style="font-size: 1.1em;">@total.ToString("C")</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>
@@ -190,24 +190,24 @@
 
         <div style="padding: 1rem; background: transparent; border: 1px solid var(--nav-border); display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.875rem;">
             <div>
-                <span style="color: #6c757d;">In Transit:</span>
-                <strong style="color: #17a2b8;">@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
+                <span class="text-muted">In Transit:</span>
+                <strong class="text-info">@FilteredRows.Sum(x => x.InTransitCost).ToString("C")</strong>
             </div>
             <div>
-                <span style="color: #6c757d;">Backorders Awaiting Release:</span>
-                <strong style="color: #ffc107;">@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+                <span class="text-muted">Backorders Awaiting Release:</span>
+                <strong class="text-warning">@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
             </div>
             <div>
-                <span style="color: #6c757d;">Backordered:</span>
-                <strong style="color: #dc3545;">@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
+                <span class="text-muted">Backordered:</span>
+                <strong class="text-danger">@FilteredRows.Sum(x => x.BackorderCost).ToString("C")</strong>
             </div>
             <div>
-                <span style="color: #6c757d;">Unacknowledged:</span>
+                <span class="text-muted">Unacknowledged:</span>
                 <strong>@FilteredRows.Sum(x => x.UnacknowledgedCost).ToString("C")</strong>
             </div>
             <div>
-                <span style="color: #6c757d;">Open Items:</span>
-                <strong style="color: #28a745; font-size: 1.1em;">@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
+                <span class="text-muted">Open Items:</span>
+                <strong class="text-success" style="font-size: 1.1em;">@FilteredRows.Sum(x => x.TotalOpenCost).ToString("C")</strong>
             </div>
         </div>
     </section>
@@ -217,7 +217,7 @@
         <header class="section-header" style="background: transparent; padding: 1rem; border: 1px solid var(--nav-border);">
             <h4 style="margin: 0; display: flex; align-items: center; gap: 1rem;">
                 Open PO Lines
-                <span class="badge" style="background: #007bff; color: white; padding: 0.35em 0.65em;">
+                <span class="badge badge-primary" style="padding: 0.35em 0.65em;">
                     @VisibleOpenLines.Count Lines
                 </span>
             </h4>
@@ -308,7 +308,7 @@
                             var line = (OpenPOLine)context;
                             @if (line.Open > 0)
                             {
-                                <span style="font-weight: 600; color: #007bff;">@line.Open</span>
+                                <span class="text-accent" style="font-weight: 600;">@line.Open</span>
                             }
                             else
                             {
@@ -319,7 +319,7 @@
                     <FooterTemplate>
                         @{
                             var total = VisibleOpenLines.Sum(x => x.Open);
-                            <strong style="color: #007bff;">@total</strong>
+                            <strong class="text-accent">@total</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>
@@ -340,7 +340,7 @@
                     <FooterTemplate>
                         @{
                             var total = VisibleOpenLines.Sum(x => x.InTransit);
-                            <strong style="color: #17a2b8;">@total</strong>
+                            <strong class="text-info">@total</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>
@@ -369,7 +369,7 @@
                     <FooterTemplate>
                         @{
                             var total = VisibleOpenLines.Sum(x => x.BKO);
-                            <strong style="color: #dc3545;">@total</strong>
+                            <strong class="text-danger">@total</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>
@@ -391,7 +391,7 @@
                     <FooterTemplate>
                         @{
                             var total = VisibleOpenLines.Sum(x => x.TotalOpenCost);
-                            <strong style="font-size: 1.1em; color: #28a745;">@total.ToString("C")</strong>
+                            <strong class="text-success" style="font-size: 1.1em;">@total.ToString("C")</strong>
                         }
                     </FooterTemplate>
                 </GridColumn>

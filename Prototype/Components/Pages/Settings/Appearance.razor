@@ -252,8 +252,8 @@
                             }
                         </div>
 
-                        <div class="theme-card @(selectedTheme == "catppuccin" ? "active" : "")"
-                             @onclick="@(() => SelectTheme("catppuccin"))"
+                        <div class="theme-card @(selectedTheme == "catppuccin-mocha" ? "active" : "")"
+                             @onclick="@(() => SelectTheme("catppuccin-mocha"))"
                              @onclick:stopPropagation="true">
                             <div class="theme-preview catppuccin-preview">
                                 <div class="preview-header"></div>
@@ -270,7 +270,7 @@
                                 <h3>Catppuccin Mocha</h3>
                                 <p>Trendy pastel dark theme</p>
                             </div>
-                            @if (selectedTheme == "catppuccin")
+                            @if (selectedTheme == "catppuccin-mocha")
                             {
                                 <div class="theme-check">
                                     <TelerikSvgIcon Icon="@SvgIcon.CheckCircle" />
@@ -1094,7 +1094,7 @@
                 break;
             case "catppuccin-mocha":
                 // Catppuccin Mocha - Original dark with color-rich accents
-                selectedTheme = "catppuccin";
+                selectedTheme = "catppuccin-mocha";
                 selectedAccent = "purple";
                 density = "comfortable";
                 borderRadius = "rounded";
