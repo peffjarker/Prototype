@@ -76,4 +76,9 @@ public interface ISearchProvider
     /// Whether this provider is currently enabled
     /// </summary>
     bool IsEnabled { get; }
+
+    /// <summary>
+    /// Authorization policy required to access this provider's results (null = no restriction)
+    /// </summary>
+    string? RequiredPolicy { get; }
 }

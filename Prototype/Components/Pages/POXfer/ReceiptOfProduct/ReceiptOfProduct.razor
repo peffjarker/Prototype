@@ -1,4 +1,5 @@
 ﻿@page "/po-transfer/receipt-of-product"
+@attribute [Authorize(Policy = AppPolicies.CustomerService)]
 
 @using System.Globalization
 @using Microsoft.AspNetCore.Components.Web

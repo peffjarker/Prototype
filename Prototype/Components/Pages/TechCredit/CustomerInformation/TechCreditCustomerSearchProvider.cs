@@ -1,4 +1,5 @@
 ﻿// Components/Services/Search/TechCreditSearchProvider.cs
+using Prototype.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ public sealed class TechCreditSearchProvider : ISearchProvider
     public string ProviderName => "TechCredit Customers";
     public SearchResultType ResultType => SearchResultType.Customer;
     public bool IsEnabled => true;
+    public string? RequiredPolicy => AppPolicies.TechCredit;
 
     private readonly List<CustomerInfo> _customers;
 

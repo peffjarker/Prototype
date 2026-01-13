@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Prototype.Components.Services.Search;
@@ -33,6 +36,16 @@ public interface ISearchService
 public sealed class SearchService : ISearchService
 {
     private readonly List<ISearchProvider> _providers = new();
+    private readonly IAuthorizationService _authorizationService;
+    private readonly AuthenticationStateProvider _authenticationStateProvider;
+
+    public SearchService(
+        IAuthorizationService authorizationService,
+        AuthenticationStateProvider authenticationStateProvider)
+    {
+        _authorizationService = authorizationService;
+        _authenticationStateProvider = authenticationStateProvider;
+    }
 
     public void RegisterProvider(ISearchProvider provider)
     {
@@ -67,13 +80,18 @@ public sealed class SearchService : ISearchService
 
         var stopwatch = Stopwatch.StartNew();
 
-        // Get enabled providers and filter by search type
+        // Get current user for authorization checks
+        var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Get enabled providers, filter by search type, and filter by authorization
         var enabledProviders = _providers.Where(p => p.IsEnabled).ToList();
-        var filteredProviders = FilterProvidersBySearchType(enabledProviders, searchType);
+        var typeFilteredProviders = FilterProvidersBySearchType(enabledProviders, searchType);
+        var authorizedProviders = await FilterProvidersByAuthorizationAsync(typeFilteredProviders, user);
 
-        Console.WriteLine($"[SearchService] Found {filteredProviders.Count} enabled providers matching '{searchType}': {string.Join(", ", filteredProviders.Select(p => p.ProviderName))}");
+        Console.WriteLine($"[SearchService] Found {authorizedProviders.Count} authorized providers matching '{searchType}': {string.Join(", ", authorizedProviders.Select(p => p.ProviderName))}");
 
-        var searchTasks = filteredProviders.Select(p => SearchProviderAsync(p, query, maxResultsPerProvider));
+        var searchTasks = authorizedProviders.Select(p => SearchProviderAsync(p, query, maxResultsPerProvider));
         var results = await Task.WhenAll(searchTasks);
 
         Console.WriteLine($"[SearchService] Search completed. Results by provider:");
@@ -104,6 +122,35 @@ public sealed class SearchService : ISearchService
             TotalCount = groups.Sum(g => g.Results.Count),
             SearchDuration = stopwatch.Elapsed
         };
+    }
+
+    private async Task<List<ISearchProvider>> FilterProvidersByAuthorizationAsync(List<ISearchProvider> providers, ClaimsPrincipal user)
+    {
+        var authorizedProviders = new List<ISearchProvider>();
+
+        foreach (var provider in providers)
+        {
+            // If provider has no policy requirement, it's available to everyone
+            if (string.IsNullOrEmpty(provider.RequiredPolicy))
+            {
+                authorizedProviders.Add(provider);
+                continue;
+            }
+
+            // Check if user has authorization for this provider's policy
+            var authResult = await _authorizationService.AuthorizeAsync(user, provider.RequiredPolicy);
+            if (authResult.Succeeded)
+            {
+                authorizedProviders.Add(provider);
+                Console.WriteLine($"[SearchService] User authorized for provider: {provider.ProviderName} (Policy: {provider.RequiredPolicy})");
+            }
+            else
+            {
+                Console.WriteLine($"[SearchService] User NOT authorized for provider: {provider.ProviderName} (Policy: {provider.RequiredPolicy})");
+            }
+        }
+
+        return authorizedProviders;
     }
 
     private List<ISearchProvider> FilterProvidersBySearchType(List<ISearchProvider> providers, string searchType)

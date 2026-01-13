@@ -1,4 +1,5 @@
 // Components/Services/Search/TechCreditBorrowersSearchProvider.cs
+using Prototype.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ public sealed class WCSSearchProvider : ISearchProvider
     public string ProviderName => "TechCredit Borrowers";
     public SearchResultType ResultType => SearchResultType.Customer;
     public bool IsEnabled => true;
+    public string? RequiredPolicy => Prototype.Models.AppPolicies.TechCredit;
 
     private readonly List<BorrowerRecord> _borrowers;
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prototype.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ public sealed class POSearchProvider : ISearchProvider
     public string ProviderName => "Purchase Orders";
     public SearchResultType ResultType => SearchResultType.PurchaseOrder;
     public bool IsEnabled => true;
+    public string? RequiredPolicy => AppPolicies.CustomerService;
 
     private readonly List<PoSummary> _poSummaries;
 

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using Prototype.Authorization;
 using Prototype.Components;
 using Prototype.Components.Layout.Navigation.Sidebar;
 using Prototype.Components.Services;
@@ -14,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add authentication
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+    .AddMicrosoftIdentityWebApp(options =>
+    {
+        builder.Configuration.Bind("AzureAd", options);
+        options.TokenValidationParameters.NameClaimType = "preferred_username";
+    });
 
 builder.Services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>
 {
@@ -22,7 +28,30 @@ builder.Services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.Authentic
     options.Scope.Add("openid");
     options.Scope.Add("profile");
     options.Scope.Add("offline_access");
+
+    // Request group claims
+    options.TokenValidationParameters.RoleClaimType = "groups";
+
+    options.Events = new OpenIdConnectEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            // This will help us debug what claims are coming through
+            var claims = context.Principal?.Claims;
+            if (claims != null)
+            {
+                foreach (var claim in claims)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Claim: {claim.Type} = {claim.Value}");
+                }
+            }
+            await Task.CompletedTask;
+        }
+    };
 });
+
+// Register custom authorization handler
+builder.Services.AddSingleton<IAuthorizationHandler, ShadowAwareAuthorizationHandler>();
 
 // Add authorization policies
 builder.Services.AddAuthorization(options =>
@@ -32,19 +61,27 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 
+    // Define policies using custom shadow-aware requirements
     options.AddPolicy(AppPolicies.CustomerService, policy =>
-        policy.RequireClaim("groups", "84b76a76-52e2-4310-9767-3f40b7515ae6"));
-    options.AddPolicy(AppPolicies.Admin, policy =>
-        policy.RequireClaim("groups", "34292b7e-74b4-4c44-b0c8-deb3859f44b2"));
+        policy.Requirements.Add(new ShadowAwareRequirement(AppPolicies.CustomerService)));
+
     options.AddPolicy(AppPolicies.Purchasing, policy =>
-        policy.RequireClaim("groups", "5076c722-89d1-4afb-bfa0-e261a37728c2"));
+        policy.Requirements.Add(new ShadowAwareRequirement(AppPolicies.Purchasing)));
+
     options.AddPolicy(AppPolicies.TechCredit, policy =>
-        policy.RequireClaim("groups", "2780fc34-4d65-4445-b4b5-1fe59780f5a6"));
+        policy.Requirements.Add(new ShadowAwareRequirement(AppPolicies.TechCredit)));
+
+    options.AddPolicy(AppPolicies.Admin, policy =>
+        policy.Requirements.Add(new ShadowAwareRequirement(AppPolicies.Admin)));
 });
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddSingleton<IShadowLoginService, ShadowLoginService>();
+builder.Services.AddScoped<ShadowAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<ShadowAuthenticationStateProvider>());
 builder.Services.AddTelerikBlazor();
 builder.Services.AddScoped<SidePanelService>();
 builder.Services.AddScoped<ISidebarState, SidebarState>();

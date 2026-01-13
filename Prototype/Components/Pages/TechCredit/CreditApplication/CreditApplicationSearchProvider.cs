@@ -1,4 +1,5 @@
 ﻿// Components/Services/Search/CreditApplicationSearchProvider.cs
+using Prototype.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ public sealed class CreditApplicationSearchProvider : ISearchProvider
     public string ProviderName => "Credit Applications";
     public SearchResultType ResultType => SearchResultType.Customer;
     public bool IsEnabled => true;
+    public string? RequiredPolicy => AppPolicies.TechCredit;
 
     private readonly List<CreditApp> _applications;
 

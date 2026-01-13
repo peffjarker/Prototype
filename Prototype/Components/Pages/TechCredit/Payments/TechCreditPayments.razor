@@ -1,4 +1,5 @@
 @page "/techcredit/payments"
+@attribute [Authorize(Policy = AppPolicies.TechCredit)]
 @inherits PageWithSidebarBase
 @using Prototype.Components.SharedComponents.Sidepanel
 @using Prototype.Pages.Collections

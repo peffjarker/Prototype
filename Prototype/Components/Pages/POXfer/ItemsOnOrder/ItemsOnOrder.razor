@@ -1,4 +1,5 @@
 ﻿@page "/po-transfer/items-on-order"
+@attribute [Authorize(Policy = AppPolicies.CustomerService)]
 
 @using System.Globalization
 @using Microsoft.AspNetCore.Components.Web

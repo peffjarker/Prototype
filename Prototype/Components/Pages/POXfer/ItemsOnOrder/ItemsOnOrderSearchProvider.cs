@@ -1,4 +1,5 @@
 ﻿// Components/Services/Search/ItemsOnOrderSearchProvider.cs
+using Prototype.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ public sealed class ItemsOnOrderSearchProvider : ISearchProvider
     public string ProviderName => "Items On Order";
     public SearchResultType ResultType => SearchResultType.Item;
     public bool IsEnabled => true;
+    public string? RequiredPolicy => AppPolicies.CustomerService;
 
     private readonly List<Row> _items;
 

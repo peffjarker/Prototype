@@ -1,4 +1,5 @@
 ﻿@page "/product/webcat"
+@attribute [Authorize(Policy = AppPolicies.Purchasing)]
 
 @using System.Linq
 @using Microsoft.AspNetCore.WebUtilities

@@ -1,4 +1,5 @@
 ﻿@page "/techcredit/customerinformation"
+@attribute [Authorize(Policy = AppPolicies.TechCredit)]
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar

@@ -1,7 +1,14 @@
 @* Pages/Settings.razor *@
 @page "/settings"
 @using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Components.Services
+@using Prototype.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject ISidebarState Sidebar
+@inject IShadowLoginService ShadowLoginService
+@inject ShadowAuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Settings</PageTitle>
 
@@ -9,21 +16,125 @@
 
 <div class="settings-container">
     <p>Application settings page - customize this as needed.</p>
-    
+
+    <div class="settings-section">
+        <h4>Debug Information</h4>
+        <p><strong>Is Admin:</strong> @_isAdmin</p>
+        <p><strong>Is Shadowing:</strong> @ShadowLoginService.IsShadowing</p>
+        @if (ShadowLoginService.IsShadowing)
+        {
+            <p><strong>Shadow Role:</strong> @ShadowLoginService.ShadowRole</p>
+        }
+        <p><strong>User Name:</strong> @_userName</p>
+
+        <details style="margin-top: 1rem;">
+            <summary style="cursor: pointer; font-weight: bold;">Show All Claims</summary>
+            <div style="margin-top: 1rem; max-height: 400px; overflow-y: auto; background: #f9fafb; padding: 1rem; border-radius: 4px;">
+                @if (_claims != null && _claims.Any())
+                {
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ddd;">Type</th>
+                                <th style="text-align: left; padding: 0.5rem; border-bottom: 2px solid #ddd;">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var claim in _claims)
+                            {
+                                <tr>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #eee; font-family: monospace; font-size: 0.9em;">@claim.Type</td>
+                                    <td style="padding: 0.5rem; border-bottom: 1px solid #eee; font-family: monospace; font-size: 0.9em; word-break: break-all;">@claim.Value</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p>No claims found</p>
+                }
+            </div>
+        </details>
+    </div>
+
     <div class="settings-section">
         <h4>General Settings</h4>
         <p>Add your application settings here.</p>
     </div>
+
+    @if (_isAdmin)
+    {
+        <div class="settings-section shadow-login-section">
+            <h4>Shadow Login (Admin Only)</h4>
+            <p>Emulate different user roles to test their experience:</p>
+
+            @if (ShadowLoginService.IsShadowing)
+            {
+                <div class="shadow-active">
+                    <p><strong>Currently shadowing:</strong> @ShadowLoginService.ShadowRole</p>
+                    <button class="btn btn-warning" @onclick="ClearShadow">Exit Shadow Mode</button>
+                </div>
+            }
+            else
+            {
+                <div class="shadow-controls">
+                    <button class="btn btn-primary" @onclick="@(() => SetShadow("CustomerService"))">Shadow as Customer Service</button>
+                    <button class="btn btn-primary" @onclick="@(() => SetShadow("Purchasing"))">Shadow as Purchasing</button>
+                    <button class="btn btn-primary" @onclick="@(() => SetShadow("TechCredit"))">Shadow as TechCredit</button>
+                </div>
+            }
+        </div>
+    }
 </div>
 
 @code {
-    protected override void OnInitialized()
+    private bool _isAdmin = false;
+    private string? _userName;
+    private List<System.Security.Claims.Claim>? _claims;
+
+    protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Get user info for debug
+        _userName = user.Identity?.Name;
+        _claims = user.Claims.ToList();
+
+        // Check if user is admin
+        _isAdmin = user.HasClaim("groups", "34292b7e-74b4-4c44-b0c8-deb3859f44b2") ||
+                   user.HasClaim(c => c.Type == "preferred_username" && c.Value.Equals("jeffp@cornwelltools.com", StringComparison.OrdinalIgnoreCase));
+
         // Hide sidebar on settings page if desired
         // Sidebar.ResetAll(hide: true);
-        
+
         // Or keep it visible with no sections
         Sidebar.SetSections(Enumerable.Empty<SidebarSection>());
+    }
+
+    private async Task SetShadow(string role)
+    {
+        ShadowLoginService.SetShadowRole(role);
+        AuthStateProvider.TriggerAuthenticationStateChange();
+
+        // Wait a moment for the auth state change to propagate
+        await Task.Delay(100);
+
+        // Navigate without force reload to maintain circuit and state
+        NavigationManager.NavigateTo("/");
+    }
+
+    private async Task ClearShadow()
+    {
+        ShadowLoginService.ClearShadowRole();
+        AuthStateProvider.TriggerAuthenticationStateChange();
+
+        // Wait a moment for the auth state change to propagate
+        await Task.Delay(100);
+
+        // Navigate without force reload to maintain circuit and state
+        NavigationManager.NavigateTo("/");
     }
 }
 
@@ -45,5 +156,51 @@
         margin-top: 0;
         margin-bottom: 1rem;
         color: #374151;
+    }
+
+    .shadow-login-section {
+        background: #fff3cd;
+        border-color: #ffc107;
+    }
+
+    .shadow-controls {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .shadow-active {
+        padding: 1rem;
+        background: #fff;
+        border: 2px solid #ffc107;
+        border-radius: 6px;
+        margin-top: 1rem;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: #0d6efd;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #0b5ed7;
+    }
+
+    .btn-warning {
+        background: #ffc107;
+        color: #000;
+    }
+
+    .btn-warning:hover {
+        background: #e0a800;
     }
 </style>
