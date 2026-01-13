@@ -8,7 +8,7 @@ public class SalesAuthorizationsSeedData
         {
             new SalesAuth
             {
-                CustomerId = "000736262",
+                CustomerId = "0000736262",
                 CustomerName = "ALLTOP, TIMOTHY C",
                 Phone = "419-685-4759",
                 CustomerProfile = "0-0-0",
@@ -42,9 +42,9 @@ public class SalesAuthorizationsSeedData
             },
             new SalesAuth
             {
-                CustomerId = "000736263",
+                CustomerId = "0000745891",
                 CustomerName = "AULT, JOSEPH",
-                Phone = "419-555-0123",
+                Phone = "330-555-0123",
                 CustomerProfile = "1-2-0",
                 ThisSale = 1850.00m,
                 RolloverAmount = 350.00m,
@@ -75,9 +75,9 @@ public class SalesAuthorizationsSeedData
             },
             new SalesAuth
             {
-                CustomerId = "000736264",
+                CustomerId = "0000752341",
                 CustomerName = "BAGINSKI, KEVIN",
-                Phone = "419-555-0145",
+                Phone = "440-555-0198",
                 CustomerProfile = "0-1-0",
                 ThisSale = 3200.00m,
                 RolloverAmount = 0.00m,
@@ -108,9 +108,9 @@ public class SalesAuthorizationsSeedData
             },
             new SalesAuth
             {
-                CustomerId = "000736265",
+                CustomerId = "0000759012",
                 CustomerName = "BALL, TAYLOR JAMMAL",
-                Phone = "419-555-0167",
+                Phone = "216-555-0456",
                 CustomerProfile = "2-0-1",
                 ThisSale = 1500.00m,
                 RolloverAmount = 0.00m,
@@ -141,9 +141,9 @@ public class SalesAuthorizationsSeedData
             },
             new SalesAuth
             {
-                CustomerId = "000736266",
+                CustomerId = "0000761234",
                 CustomerName = "BANE, CARL",
-                Phone = "419-555-0189",
+                Phone = "614-555-0789",
                 CustomerProfile = "0-0-0",
                 ThisSale = 2800.00m,
                 RolloverAmount = 450.00m,
@@ -174,9 +174,9 @@ public class SalesAuthorizationsSeedData
             },
             new SalesAuth
             {
-                CustomerId = "000736267",
+                CustomerId = "0000765678",
                 CustomerName = "BARKER, KEVIN",
-                Phone = "419-555-0201",
+                Phone = "937-555-0234",
                 CustomerProfile = "1-0-0",
                 ThisSale = 1200.00m,
                 RolloverAmount = 0.00m,
@@ -207,9 +207,9 @@ public class SalesAuthorizationsSeedData
             },
             new SalesAuth
             {
-                CustomerId = "000736268",
+                CustomerId = "0000769123",
                 CustomerName = "BAUM, JEREMY",
-                Phone = "419-555-0223",
+                Phone = "419-555-0567",
                 CustomerProfile = "0-1-0",
                 ThisSale = 980.00m,
                 RolloverAmount = 0.00m,
@@ -240,9 +240,9 @@ public class SalesAuthorizationsSeedData
             },
             new SalesAuth
             {
-                CustomerId = "000736269",
+                CustomerId = "0000772456",
                 CustomerName = "BLUHM, LINDSAY",
-                Phone = "419-555-0245",
+                Phone = "330-555-0891",
                 CustomerProfile = "0-0-1",
                 ThisSale = 3500.00m,
                 RolloverAmount = 0.00m,

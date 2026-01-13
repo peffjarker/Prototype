@@ -51,7 +51,7 @@ namespace Prototype.Components.Pages.Collections.SalesAuthorizations
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = Option,
+                ["option"] = "Sales Authorizations",
                 ["status"] = CustomerStatus,
                 ["customer"] = SelectedCustomer,
                 ["view"] = HistoryView

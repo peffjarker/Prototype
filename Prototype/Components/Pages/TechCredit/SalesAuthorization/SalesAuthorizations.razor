@@ -333,15 +333,15 @@
             {
         new FacetOption("Customer Information", "Customer Information",
             Href: Url.BuildHref("/techcredit/customerinformation",
-                new Dictionary<string, string?> { ["status"] = "All" })),
+                new Dictionary<string, string?> { ["status"] = "All", ["customer"] = Params.SelectedCustomer })),
 
         new FacetOption("Credit Application", "Credit Application",
             Href: Url.BuildHref("/techcredit/creditapplication",
-                new Dictionary<string, string?> { ["status"] = "All" })),
+                new Dictionary<string, string?> { ["status"] = "All", ["customer"] = Params.SelectedCustomer })),
 
         new FacetOption("Sales Authorizations", "Sales Authorizations",
             Href: Url.BuildHref("/techcredit/salesauthorizations",
-                new Dictionary<string, string?> { ["status"] = "All" })),
+                new Dictionary<string, string?> { ["status"] = "All", ["customer"] = Params.SelectedCustomer })),
 
         new FacetOption("WCS", "WCS",
             Href: Url.BuildHref("/techcredit/wcs",

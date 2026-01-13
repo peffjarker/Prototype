@@ -47,7 +47,7 @@ namespace Prototype.Pages.Collections
             return new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["dealer"] = Dealer,
-                ["option"] = Option,
+                ["option"] = "WCS",
                 ["status"] = CustomerStatus,
                 ["customer"] = SelectedCustomer
             };
