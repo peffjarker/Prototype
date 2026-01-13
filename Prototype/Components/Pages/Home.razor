@@ -554,8 +554,7 @@
         --home-shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.12);
     }
 
-    /* ===== Theme-Aware Favorites Section ===== */
-    /* Use data attribute set by appearance manager to detect theme */
+    /* ===== Theme-Aware Shadows ===== */
     [data-theme="dark"] {
         --home-shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
         --home-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
@@ -565,9 +564,11 @@
     /* ===== Base Layout ===== */
     .home-page {
         margin: 0 auto;
-        max-width: 1600px;
         color: var(--text);
-        transition: all 0.2s ease;
+        font-family: var(--base-font-family, inherit);
+        font-size: var(--base-font-size, 14px);
+        line-height: var(--base-line-height, 1.5);
+        transition: all var(--transition-normal, 0.2s) ease;
     }
 
         /* ===== Density-Specific Padding ===== */
@@ -598,7 +599,7 @@
             font-weight: 600;
             color: var(--text);
             letter-spacing: 0.2px;
-            line-height: 1.3;
+            line-height: var(--base-line-height, 1.3);
         }
 
         .section-header .k-svg-icon {
@@ -647,12 +648,11 @@
     /* ===== Favorites Section ===== */
     .favorites-section {
         padding: 1.5rem;
-        /* Light mode: gold gradient */
         background: linear-gradient(180deg, var(--home-favorite-bg-light-start) 0%, var(--home-favorite-bg-light-end) 100%);
-        border-radius: 12px;
+        border-radius: var(--radius-lg, 12px);
         border: none;
         box-shadow: var(--home-shadow-sm);
-        animation: fadeIn 0.3s ease-in-out;
+        animation: fadeIn var(--animation-duration, 0.3s) ease-in-out;
     }
 
     /* Dark mode: gray background */
@@ -663,7 +663,7 @@
     .home-page[data-density="compact"] .favorites-section {
         margin-bottom: 1rem;
         padding: 1rem;
-        border-radius: 8px;
+        border-radius: var(--radius-md, 8px);
     }
 
     .home-page[data-density="comfortable"] .favorites-section {
@@ -676,7 +676,6 @@
     }
 
     .favorites-section .section-header {
-        /* Light mode: gold border and text */
         border-bottom-color: var(--home-favorite-border-light);
     }
 
@@ -707,7 +706,7 @@
     }
 
     .module-group {
-        animation: fadeIn 0.4s ease-in-out;
+        animation: fadeIn var(--animation-duration, 0.4s) ease-in-out;
     }
 
     .home-page[data-density="compact"] .module-group {
@@ -740,9 +739,9 @@
         align-items: center;
         gap: 0.75rem;
         background: var(--accent-weak);
-        border-radius: 8px;
+        border-radius: var(--radius-md, 8px);
         border-left: 4px solid var(--accent);
-        transition: all 0.2s ease-in-out;
+        transition: all var(--transition-normal, 0.2s) ease-in-out;
     }
 
         .module-title h3 {
@@ -750,7 +749,7 @@
             font-weight: 600;
             color: var(--accent);
             letter-spacing: 0.3px;
-            line-height: 1.3;
+            line-height: var(--base-line-height, 1.3);
         }
 
         .module-title .k-svg-icon {
@@ -760,7 +759,7 @@
     .home-page[data-density="compact"] .module-title {
         padding: 0.75rem;
         margin-bottom: 0.75rem;
-        border-radius: 6px;
+        border-radius: var(--radius-sm, 6px);
     }
 
         .home-page[data-density="compact"] .module-title h3 {
@@ -787,7 +786,7 @@
     .home-page[data-density="spacious"] .module-title {
         padding: 1.5rem;
         margin-bottom: 2rem;
-        border-radius: 10px;
+        border-radius: var(--radius-md, 10px);
     }
 
         .home-page[data-density="spacious"] .module-title h3 {
@@ -812,9 +811,9 @@
         padding: 0.75rem 1rem;
         background: var(--card-bg);
         border: 1px solid var(--border);
-        border-radius: 8px;
+        border-radius: var(--radius-md, 8px);
         cursor: pointer;
-        transition: all 0.15s ease;
+        transition: all var(--transition-fast, 0.15s) ease;
     }
 
         .compact-item:hover {
@@ -832,8 +831,9 @@
         justify-content: center;
         background: var(--accent-weak);
         color: var(--accent);
-        border-radius: 6px;
+        border-radius: var(--radius-sm, 6px);
         font-size: 1rem;
+        transition: all var(--transition-fast, 0.15s) ease;
     }
 
         .compact-icon.favorite {
@@ -852,7 +852,7 @@
             font-weight: 600;
             color: var(--text);
             letter-spacing: 0.2px;
-            line-height: 1.3;
+            line-height: var(--base-line-height, 1.3);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -890,11 +890,11 @@
         position: relative;
         background: var(--card-bg);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: var(--radius-lg, 12px);
         cursor: pointer;
-        transition: all 0.2s ease-in-out;
+        transition: all var(--transition-normal, 0.2s) ease-in-out;
         box-shadow: var(--home-shadow-sm);
-        animation: slideUp 0.3s ease-in-out backwards;
+        animation: slideUp var(--animation-duration, 0.3s) ease-in-out backwards;
     }
 
         .page-card:nth-child(1) {
@@ -962,9 +962,9 @@
         align-items: center;
         justify-content: center;
         background: var(--accent-weak);
-        border-radius: 12px;
+        border-radius: var(--radius-lg, 12px);
         color: var(--accent);
-        transition: all 0.2s ease-in-out;
+        transition: all var(--transition-normal, 0.2s) ease-in-out;
     }
 
     .home-page[data-density="comfortable"] .card-icon-wrapper {
@@ -994,8 +994,8 @@
         border: none;
         cursor: pointer;
         color: var(--muted);
-        transition: all 0.2s ease-in-out;
-        border-radius: 6px;
+        transition: all var(--transition-normal, 0.2s) ease-in-out;
+        border-radius: var(--radius-sm, 6px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1025,7 +1025,7 @@
         font-weight: 600;
         color: var(--text);
         letter-spacing: 0.2px;
-        line-height: 1.3;
+        line-height: var(--base-line-height, 1.3);
     }
 
     .home-page[data-density="comfortable"] .page-card h3 {
@@ -1068,12 +1068,12 @@
         padding: 0.35rem 0.75rem;
         background: rgba(0, 0, 0, 0.05);
         color: var(--text);
-        border-radius: 6px;
+        border-radius: var(--radius-sm, 6px);
         font-size: 0.75rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        transition: all 0.2s ease-in-out;
+        transition: all var(--transition-normal, 0.2s) ease-in-out;
     }
 
     [data-theme="dark"] .badge {
@@ -1102,6 +1102,141 @@
             transform: translateY(0);
         }
     }
+
+    /* ===== Respect Reduced Motion / No Animations ===== */
+    .no-animations .page-card,
+    .no-animations .favorites-section,
+    .no-animations .module-group,
+    .no-animations .compact-item,
+    .no-animations .card-icon-wrapper,
+    .no-animations .favorite-btn,
+    .no-animations .badge {
+        animation: none !important;
+        transition: none !important;
+    }
+
+        .no-animations .page-card:hover {
+            transform: none;
+        }
+
+    .reduce-motion .page-card,
+    .reduce-motion .favorites-section,
+    .reduce-motion .module-group,
+    .reduce-motion .compact-item,
+    .reduce-motion .card-icon-wrapper,
+    .reduce-motion .favorite-btn,
+    .reduce-motion .badge {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+
+        .reduce-motion .page-card:hover {
+            transform: none;
+        }
+
+    /* Also respect system reduced motion preference */
+    @@media (prefers-reduced-motion: reduce) {
+        .page-card,
+        .favorites-section,
+        .module-group,
+        .compact-item,
+        .card-icon-wrapper,
+        .favorite-btn,
+        .badge {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+
+            .page-card:hover {
+                transform: none;
+            }
+    }
+
+    /* ===== Border Radius Variations ===== */
+    /* None */
+    [data-radius="none"] .page-card,
+    [data-radius="none"] .favorites-section,
+    [data-radius="none"] .compact-item,
+    [data-radius="none"] .compact-icon,
+    [data-radius="none"] .card-icon-wrapper,
+    [data-radius="none"] .favorite-btn,
+    [data-radius="none"] .badge,
+    [data-radius="none"] .module-title {
+        border-radius: 0 !important;
+    }
+
+    /* Subtle */
+    [data-radius="subtle"] .page-card {
+        border-radius: 6px;
+    }
+
+    [data-radius="subtle"] .favorites-section {
+        border-radius: 6px;
+    }
+
+    [data-radius="subtle"] .compact-item,
+    [data-radius="subtle"] .module-title {
+        border-radius: 4px;
+    }
+
+    [data-radius="subtle"] .compact-icon,
+    [data-radius="subtle"] .favorite-btn,
+    [data-radius="subtle"] .badge {
+        border-radius: 3px;
+    }
+
+    [data-radius="subtle"] .card-icon-wrapper {
+        border-radius: 6px;
+    }
+
+    /* Rounded */
+    [data-radius="rounded"] .page-card {
+        border-radius: 16px;
+    }
+
+    [data-radius="rounded"] .favorites-section {
+        border-radius: 16px;
+    }
+
+    [data-radius="rounded"] .compact-item,
+    [data-radius="rounded"] .module-title {
+        border-radius: 12px;
+    }
+
+    [data-radius="rounded"] .compact-icon,
+    [data-radius="rounded"] .favorite-btn,
+    [data-radius="rounded"] .badge {
+        border-radius: 8px;
+    }
+
+    [data-radius="rounded"] .card-icon-wrapper {
+        border-radius: 16px;
+    }
+
+    /* Extra */
+    [data-radius="extra"] .page-card {
+        border-radius: 24px;
+    }
+
+    [data-radius="extra"] .favorites-section {
+        border-radius: 24px;
+    }
+
+    [data-radius="extra"] .compact-item,
+    [data-radius="extra"] .module-title {
+        border-radius: 16px;
+    }
+
+    [data-radius="extra"] .compact-icon,
+    [data-radius="extra"] .favorite-btn,
+    [data-radius="extra"] .badge {
+        border-radius: 12px;
+    }
+
+    [data-radius="extra"] .card-icon-wrapper {
+        border-radius: 24px;
+    }
+
 
     /* ===== Responsive Design ===== */
 
@@ -1221,43 +1356,66 @@
 </style>
 
 <script>
-    // Set data-theme attribute on document element for theme-aware CSS
     (function() {
-        function updateThemeAttribute() {
+        function updateAppearanceAttributes() {
             try {
+                // Theme
                 const themeJson = localStorage.getItem('ibn-theme');
                 let theme = themeJson ? JSON.parse(themeJson) : 'light';
-
-                // Handle 'auto' theme by checking system preference
                 if (theme === 'auto') {
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     theme = prefersDark ? 'dark' : 'light';
                 }
-
                 document.documentElement.setAttribute('data-theme', theme);
+
+                // Border radius
+                const radiusJson = localStorage.getItem('ibn-borderRadius');
+                const radius = radiusJson ? JSON.parse(radiusJson) : 'default';
+                document.documentElement.setAttribute('data-radius', radius);
+
+                // Animations
+                const animationsJson = localStorage.getItem('ibn-animations');
+                const animations = animationsJson ? JSON.parse(animationsJson) : true;
+                if (!animations) {
+                    document.documentElement.classList.add('no-animations');
+                } else {
+                    document.documentElement.classList.remove('no-animations');
+                }
+
+                // Reduced motion
+                const reducedMotionJson = localStorage.getItem('ibn-reducedMotion');
+                const reducedMotion = reducedMotionJson ? JSON.parse(reducedMotionJson) : false;
+                if (reducedMotion) {
+                    document.documentElement.classList.add('reduce-motion');
+                } else {
+                    document.documentElement.classList.remove('reduce-motion');
+                }
+
             } catch (e) {
-                console.error('Error setting theme attribute:', e);
-                document.documentElement.setAttribute('data-theme', 'light');
+                console.error('Error setting appearance attributes:', e);
             }
         }
 
         // Update immediately
-        updateThemeAttribute();
+        updateAppearanceAttributes();
 
-        // Listen for storage changes (theme updates)
+        // Listen for storage changes
         window.addEventListener('storage', (e) => {
-            if (e.key === 'ibn-theme') {
-                updateThemeAttribute();
+            if (e.key && e.key.startsWith('ibn-')) {
+                updateAppearanceAttributes();
             }
         });
 
         // Listen for system theme changes when using 'auto'
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-            const themeJson = localStorage.getItem('ibn-theme');
-            const theme = themeJson ? JSON.parse(themeJson) : 'light';
-            if (theme === 'auto') {
-                updateThemeAttribute();
-            }
-        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateAppearanceAttributes);
+
+        // Also refresh when appearance manager updates
+        if (window.refreshAppearance) {
+            const originalRefresh = window.refreshAppearance;
+            window.refreshAppearance = function() {
+                originalRefresh();
+                updateAppearanceAttributes();
+            };
+        }
     })();
 </script>

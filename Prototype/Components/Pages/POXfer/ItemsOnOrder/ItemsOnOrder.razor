@@ -171,10 +171,10 @@
 
         @if (Params.SelectedItems.Count > 0)
         {
-            <div style="padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6;">
+            <div style="padding: 1rem; background: var(--app-bg); border: 1px solid var(--nav-border);">
                 <div class="chips-row">
                     <div class="chips">
-                        <span class="chips-label" style="font-weight: 600;">Filtering PO Lines by Selected Items:</span>
+                        <span class="chips-label" style="font-weight: 600;">Filtering PO Lines by Selected Items: </span>
                         @foreach (var it in Params.SelectedItems.OrderBy(x => x))
                         {
                             <span class="chip" title="Remove filter">
@@ -224,7 +224,7 @@
             @if (Params.SelectedItems.Count > 0)
             {
                 <div class="chips compact" style="margin-top: 0.5rem;">
-                    <span class="chips-label">Showing PO lines for:</span>
+                    <span class="chips-label">Showing PO lines for: </span>
                     @foreach (var it in Params.SelectedItems.OrderBy(x => x))
                     {
                         <span class="chip" title="Remove filter">

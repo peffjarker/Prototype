@@ -19,11 +19,12 @@
 .section-title {
     font-size: 0.875rem;
     font-weight: 700;
-    color: #495057;
+    color: var(--muted);
     margin: 0 0 0.75rem 0;
     padding: 0.5rem 0.75rem;
-    background: #f8f9fa;
-    border-left: 3px solid #007bff;
+    background: var(--hover-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -32,19 +33,19 @@
 .item-number {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #007bff;
+    color: var(--accent);
     margin-bottom: 0.5rem;
     letter-spacing: 0.5px;
 }
 
 .item-description {
     font-size: 1.125rem;
-    color: #212529;
+    color: var(--text);
     line-height: 1.4;
     font-weight: 500;
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid var(--border);
 }
 
 /* Preview Rows */
@@ -53,19 +54,19 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem;
-    background: #ffffff;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    transition: background-color 0.15s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast) ease;
 }
 
     .preview-row:hover {
-        background: #f8f9fa;
+        background: var(--hover-bg);
     }
 
     .preview-row label {
         font-weight: 600;
-        color: #6c757d;
+        color: var(--muted);
         margin: 0;
         font-size: 0.875rem;
     }
@@ -78,19 +79,19 @@
 
 .discount-value {
     font-weight: 700;
-    color: #007bff;
+    color: var(--accent);
     font-size: 1.125rem;
 }
 
 /* Status Badge */
 .status-badge {
     padding: 0.35rem 0.85rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-weight: 700;
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 .status-active {
@@ -130,22 +131,22 @@
     flex-direction: column;
     gap: 0.375rem;
     padding: 1rem;
-    background: #ffffff;
-    border-radius: 6px;
-    border: 1px solid var(--nav-border);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal) ease;
 }
 
     .inventory-item:hover {
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-md);
         transform: translateY(-1px);
     }
 
     .inventory-item label {
         font-size: 0.6875rem;
         font-weight: 700;
-        color: #6c757d;
+        color: var(--muted);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin: 0;
@@ -154,7 +155,7 @@
 .inventory-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #495057;
+    color: var(--text);
     line-height: 1;
 }
 
@@ -183,36 +184,36 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem;
-    background: #ffffff;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    transition: background-color 0.15s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast) ease;
 }
 
     .detail-item:hover {
-        background: #f8f9fa;
+        background: var(--hover-bg);
     }
 
     .detail-item label {
         font-weight: 600;
-        color: #6c757d;
+        color: var(--muted);
         margin: 0;
         font-size: 0.875rem;
     }
 
     .detail-item span {
         font-weight: 600;
-        color: #212529;
+        color: var(--text);
         font-size: 0.9375rem;
     }
 
 /* Catalog Text */
 .catalog-text {
     padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 6px;
-    border: 1px solid var(--nav-border);
-    color: #495057;
+    background: var(--hover-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    color: var(--text);
     line-height: 1.6;
     font-size: 0.9375rem;
     margin-top: 0.5rem;
@@ -231,8 +232,8 @@
 .spinner {
     width: 40px;
     height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #007bff;
+    border: 4px solid var(--border);
+    border-top: 4px solid var(--accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -248,7 +249,7 @@
 }
 
 .preview-loading p {
-    color: #6c757d;
+    color: var(--muted);
     margin: 0;
 }
 
@@ -269,7 +270,7 @@
     }
 
     .preview-error p {
-        color: #6c757d;
+        color: var(--muted);
         margin: 0;
     }
 
@@ -283,7 +284,7 @@
     text-align: center;
     white-space: nowrap;
     vertical-align: baseline;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .badge-info {

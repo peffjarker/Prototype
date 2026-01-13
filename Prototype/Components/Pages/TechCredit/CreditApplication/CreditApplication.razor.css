@@ -1,14 +1,30 @@
-﻿.credit-app-layout {
+﻿/* CreditApplication.razor.css */
+/* Integrated with global appearance system - uses CSS variables from appearance-manager.js */
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+.credit-app-layout {
     display: grid;
     grid-template-columns: 260px 1fr;
     gap: 0;
     min-height: 600px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 12px);
+    overflow: hidden;
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
+/* ============================================================
+   DETAIL PANEL
+   ============================================================ */
 .detail-panel {
-    padding: 1.5rem;
+    padding: var(--spacing-6, 1.5rem);
     overflow-y: auto;
     max-height: calc(100vh - 200px);
+    background: var(--card-bg);
+    transition: background-color var(--transition-normal, 150ms) ease;
 }
 
 .detail-empty {
@@ -16,67 +32,116 @@
     align-items: center;
     justify-content: center;
     height: 400px;
-    color: #6c757d;
+    color: var(--muted);
     font-size: 1.1rem;
+    font-family: var(--base-font-family, inherit);
 }
 
+    .detail-empty p {
+        margin: 0;
+        padding: var(--spacing-4, 1rem);
+        background: var(--hover-bg);
+        border-radius: var(--radius-md, 8px);
+        border: 1px dashed var(--border);
+    }
+
+/* ============================================================
+   FORM LAYOUT
+   ============================================================ */
 .form-layout {
     display: grid;
     grid-template-columns: 1fr 340px;
-    gap: 1.5rem;
+    gap: var(--spacing-6, 1.5rem);
     max-width: 100%;
 }
 
 .form-main {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--spacing-5, 1.25rem);
     min-width: 0;
 }
 
 .form-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: var(--spacing-5, 1.25rem);
     min-width: 0;
 }
 
+/* ============================================================
+   FORM SECTIONS
+   ============================================================ */
 .form-section {
-    padding: 1.25rem;
-    background: var(--nav-bg);
-    border-radius: 6px;
-    border: 1px solid var(--nav-border);
+    padding: var(--spacing-5, 1.25rem);
+    background: var(--hover-bg);
+    border-radius: var(--radius-md, 6px);
+    border: 1px solid var(--border);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease, box-shadow var(--transition-normal, 150ms) ease;
 }
 
-    .form-section h4 {
-        margin: 0 0 1rem 0;
-        color: #495057;
-        font-size: 0.95rem;
-        font-weight: 600;
+    .form-section:hover {
+        box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
     }
 
+    .form-section h4 {
+        margin: 0 0 var(--spacing-4, 1rem) 0;
+        color: var(--text);
+        font-size: 0.95rem;
+        font-weight: 600;
+        font-family: var(--base-font-family, inherit);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-2, 0.5rem);
+        transition: color var(--transition-normal, 150ms) ease;
+    }
+
+        .form-section h4::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 1em;
+            background: var(--accent);
+            border-radius: var(--radius-xs, 2px);
+        }
+
+/* ============================================================
+   SIDEBAR SECTIONS
+   ============================================================ */
 .sidebar-section {
-    padding: 1.25rem;
-    background: var(--nav-bg);
-    border-radius: 6px;
-    border: 1px solid var(--kendo-color-border, #e5e7eb);
+    padding: var(--spacing-5, 1.25rem);
+    background: var(--hover-bg);
+    border-radius: var(--radius-md, 6px);
+    border: 1px solid var(--border);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
     .sidebar-section h4 {
-        margin: 0 0 1rem 0;
-        color: #495057;
+        margin: 0 0 var(--spacing-4, 1rem) 0;
+        color: var(--text);
         font-size: 0.95rem;
         font-weight: 600;
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
     }
 
 .app-status {
-    border-color: var(--nav-border);
+    border-color: var(--border);
+    background: var(--accent-weak);
+    border-left: 4px solid var(--accent);
 }
 
+    .app-status h4 {
+        color: var(--accent);
+    }
+
+/* ============================================================
+   FORM ROWS & FIELDS
+   ============================================================ */
 .form-row {
     display: flex;
-    gap: 0.875rem;
-    margin-bottom: 0.875rem;
+    gap: var(--spacing-3, 0.875rem);
+    margin-bottom: var(--spacing-3, 0.875rem);
 }
 
     .form-row:last-child {
@@ -87,7 +152,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--spacing-1, 0.25rem);
     min-width: 0;
 }
 
@@ -106,40 +171,75 @@
     .form-field label {
         font-size: 0.75rem;
         font-weight: 600;
-        color: #495057;
+        color: var(--text);
         white-space: nowrap;
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
     }
 
     .form-field input[type="text"],
     .form-field input[type="email"],
     .form-field input:not([type="checkbox"]) {
-        padding: 0.5rem;
-        border: 1px solid var(--kendo-color-border, #e5e7eb);
-        border-radius: 4px;
-        font-size: 0.875rem;
-        background: white;
+        padding: var(--spacing-2, 0.5rem);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md, 4px);
+        font-size: var(--base-font-size, 0.875rem);
+        font-family: var(--base-font-family, inherit);
+        background: var(--card-bg);
+        color: var(--text);
         min-width: 0;
+        transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease, color var(--transition-normal, 150ms) ease, box-shadow var(--transition-fast, 100ms) ease;
+    }
+
+    .form-field input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.15);
     }
 
     .form-field input:read-only {
         background: transparent;
         cursor: default;
-        border: 1px solid var(--nav-border);
-        color: var(--muted);
+        border: 1px solid var(--border);
+        color: var(--text);
     }
 
+        .form-field input:read-only:focus {
+            box-shadow: none;
+            border-color: var(--border);
+        }
+
+    /* Checkbox styling */
+    .form-field input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+        .form-field input[type="checkbox"]:disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+/* ============================================================
+   REQUIRED FIELD INDICATOR
+   ============================================================ */
 .required {
-    color: #dc3545;
+    color: var(--kendo-color-error, #dc3545);
     font-weight: bold;
 }
 
+/* ============================================================
+   COMPOSITE INPUT GROUPS
+   ============================================================ */
 .ssn-inputs,
 .dob-inputs,
 .phone-inputs,
 .time-inputs {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--spacing-2, 0.5rem);
     flex-wrap: nowrap;
 }
 
@@ -147,55 +247,269 @@
     .dob-inputs span,
     .phone-inputs span,
     .time-inputs span {
-        color: #495057;
+        color: var(--text);
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: var(--base-font-size, 0.875rem);
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
     }
 
+    .ssn-inputs input,
+    .dob-inputs input,
+    .phone-inputs input,
+    .time-inputs input {
+        text-align: center;
+    }
+
+/* ============================================================
+   FORM NOTES
+   ============================================================ */
 .form-notes {
-    padding: 0.875rem;
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 4px;
+    padding: var(--spacing-3, 0.875rem);
+    background: var(--kendo-color-warning, #ffc107);
+    background: color-mix(in srgb, var(--kendo-color-warning, #ffc107) 20%, var(--card-bg));
+    border: 1px solid var(--kendo-color-warning, #ffc107);
+    border-radius: var(--radius-md, 4px);
     font-size: 0.8rem;
     font-style: italic;
-    color: black;
+    color: var(--text);
+    font-family: var(--base-font-family, inherit);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
     .form-notes div {
-        margin-bottom: 0.25rem;
+        margin-bottom: var(--spacing-1, 0.25rem);
     }
 
         .form-notes div:last-child {
             margin-bottom: 0;
         }
 
+/* ============================================================
+   FORM ACTIONS
+   ============================================================ */
 .form-actions {
     display: flex;
-    gap: 1rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--nav-border);
-    margin-top: 1rem;
+    gap: var(--spacing-4, 1rem);
+    padding-top: var(--spacing-6, 1.5rem);
+    border-top: 1px solid var(--border);
+    margin-top: var(--spacing-4, 1rem);
+    transition: border-color var(--transition-normal, 150ms) ease;
 }
 
+/* ============================================================
+   DECISION STATUS BADGES
+   ============================================================ */
 .decision-approved {
-    background: #d4edda !important;
-    color: #155724 !important;
+    background: color-mix(in srgb, var(--kendo-color-success, #22c55e) 15%, var(--card-bg)) !important;
+    color: var(--kendo-color-success, #155724) !important;
     font-weight: 600;
+    border: 1px solid var(--kendo-color-success, #22c55e);
+    border-radius: var(--radius-md, 4px);
+    padding: var(--spacing-2, 0.5rem);
 }
 
 .decision-expired {
-    background: #fff3cd !important;
-    color: #856404 !important;
+    background: color-mix(in srgb, var(--kendo-color-warning, #f59e0b) 15%, var(--card-bg)) !important;
+    color: var(--kendo-color-warning, #856404) !important;
     font-weight: 600;
+    border: 1px solid var(--kendo-color-warning, #f59e0b);
+    border-radius: var(--radius-md, 4px);
+    padding: var(--spacing-2, 0.5rem);
 }
 
 .decision-denied {
-    background: #f8d7da !important;
-    color: #721c24 !important;
+    background: color-mix(in srgb, var(--kendo-color-error, #ef4444) 15%, var(--card-bg)) !important;
+    color: var(--kendo-color-error, #721c24) !important;
     font-weight: 600;
+    border: 1px solid var(--kendo-color-error, #ef4444);
+    border-radius: var(--radius-md, 4px);
+    padding: var(--spacing-2, 0.5rem);
 }
 
+/* ============================================================
+   HEADER STYLING
+   ============================================================ */
+.wrap > .header {
+    margin-bottom: var(--spacing-4, 1rem);
+    padding-bottom: var(--spacing-3, 0.75rem);
+    border-bottom: 2px solid var(--border);
+    transition: border-color var(--transition-normal, 150ms) ease;
+}
+
+    .wrap > .header .title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
+    }
+
+/* ============================================================
+   DENSITY ADJUSTMENTS
+   ============================================================ */
+[data-density="compact"] .detail-panel {
+    padding: var(--spacing-4, 1rem);
+}
+
+[data-density="compact"] .form-section,
+[data-density="compact"] .sidebar-section {
+    padding: var(--spacing-3, 0.75rem);
+}
+
+[data-density="compact"] .form-row {
+    gap: var(--spacing-2, 0.5rem);
+    margin-bottom: var(--spacing-2, 0.5rem);
+}
+
+[data-density="compact"] .form-field input:not([type="checkbox"]) {
+    padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+    font-size: 0.8rem;
+}
+
+[data-density="compact"] .form-field label {
+    font-size: 0.7rem;
+}
+
+[data-density="compact"] .form-layout {
+    gap: var(--spacing-4, 1rem);
+}
+
+[data-density="compact"] .form-main,
+[data-density="compact"] .form-sidebar {
+    gap: var(--spacing-3, 0.75rem);
+}
+
+[data-density="spacious"] .detail-panel {
+    padding: var(--spacing-8, 2rem);
+}
+
+[data-density="spacious"] .form-section,
+[data-density="spacious"] .sidebar-section {
+    padding: var(--spacing-6, 1.5rem);
+}
+
+[data-density="spacious"] .form-row {
+    gap: var(--spacing-4, 1rem);
+    margin-bottom: var(--spacing-4, 1rem);
+}
+
+[data-density="spacious"] .form-field input:not([type="checkbox"]) {
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+    font-size: 1rem;
+}
+
+[data-density="spacious"] .form-field label {
+    font-size: 0.85rem;
+    margin-bottom: var(--spacing-1, 0.25rem);
+}
+
+[data-density="spacious"] .form-layout {
+    gap: var(--spacing-8, 2rem);
+}
+
+[data-density="spacious"] .form-main,
+[data-density="spacious"] .form-sidebar {
+    gap: var(--spacing-6, 1.5rem);
+}
+
+/* ============================================================
+   BORDER RADIUS ADJUSTMENTS
+   ============================================================ */
+[data-radius="none"] .credit-app-layout,
+[data-radius="none"] .form-section,
+[data-radius="none"] .sidebar-section,
+[data-radius="none"] .form-field input,
+[data-radius="none"] .form-notes {
+    border-radius: 0;
+}
+
+[data-radius="pill"] .form-field input:not([type="checkbox"]) {
+    border-radius: 9999px;
+    padding-left: var(--spacing-4, 1rem);
+    padding-right: var(--spacing-4, 1rem);
+}
+
+[data-radius="rounded"] .credit-app-layout {
+    border-radius: 16px;
+}
+
+[data-radius="rounded"] .form-section,
+[data-radius="rounded"] .sidebar-section {
+    border-radius: 12px;
+}
+
+[data-radius="rounded"] .form-field input:not([type="checkbox"]) {
+    border-radius: 8px;
+}
+
+/* ============================================================
+   HIGH CONTRAST MODE ADJUSTMENTS
+   ============================================================ */
+.high-contrast .form-section,
+.high-contrast .sidebar-section {
+    border-width: 2px;
+}
+
+.high-contrast .form-field input {
+    border-width: 2px;
+}
+
+.high-contrast .required {
+    text-decoration: underline;
+}
+
+.high-contrast .form-notes {
+    border-width: 2px;
+    background: #ffff00;
+    color: #000000;
+}
+
+.high-contrast .decision-approved,
+.high-contrast .decision-expired,
+.high-contrast .decision-denied {
+    border-width: 2px;
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+.reduce-motion .credit-app-layout,
+.reduce-motion .form-section,
+.reduce-motion .sidebar-section,
+.reduce-motion .form-field input,
+.reduce-motion .detail-panel {
+    transition: none !important;
+}
+
+/* ============================================================
+   NO ANIMATIONS
+   ============================================================ */
+.no-animations .credit-app-layout,
+.no-animations .form-section,
+.no-animations .sidebar-section,
+.no-animations .form-field input,
+.no-animations .detail-panel {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* ============================================================
+   FOCUS INDICATORS (Enhanced Accessibility)
+   ============================================================ */
+.enhanced-focus .form-field input:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.enhanced-focus .form-section:focus-within {
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.2);
+}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
 @media (max-width: 1400px) {
     .form-layout {
         grid-template-columns: 1fr 320px;
@@ -205,6 +519,10 @@
 @media (max-width: 1200px) {
     .credit-app-layout {
         grid-template-columns: 1fr;
+    }
+
+    .detail-panel {
+        max-height: none;
     }
 
     .form-layout {
@@ -217,11 +535,117 @@
 }
 
 @media (max-width: 768px) {
+    .detail-panel {
+        padding: var(--spacing-4, 1rem);
+    }
+
     .form-row {
         flex-direction: column;
+        gap: var(--spacing-3, 0.75rem);
     }
 
     .form-field.small {
         flex: 1;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+        .form-actions .k-button {
+            width: 100%;
+        }
+
+    .ssn-inputs,
+    .dob-inputs,
+    .phone-inputs,
+    .time-inputs {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-panel {
+        padding: var(--spacing-3, 0.75rem);
+    }
+
+    .form-section,
+    .sidebar-section {
+        padding: var(--spacing-3, 0.75rem);
+    }
+
+        .form-section h4,
+        .sidebar-section h4 {
+            font-size: 0.9rem;
+        }
+
+    .form-field label {
+        font-size: 0.7rem;
+    }
+
+    .form-field input:not([type="checkbox"]) {
+        font-size: 0.85rem;
+        padding: var(--spacing-2, 0.5rem);
+    }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+    .credit-app-layout {
+        display: block;
+        border: none;
+        box-shadow: none;
+    }
+
+    .detail-panel {
+        max-height: none;
+        padding: 0;
+    }
+
+    .form-layout {
+        display: block;
+    }
+
+    .form-sidebar {
+        order: 0;
+        margin-bottom: 1rem;
+    }
+
+    .form-section,
+    .sidebar-section {
+        break-inside: avoid;
+        border: 1px solid #ccc;
+        background: white;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-field input {
+        border: none;
+        padding: 0;
+        background: transparent;
+    }
+
+    .form-actions {
+        display: none;
+    }
+
+    .decision-approved {
+        background: #d4edda !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .decision-expired {
+        background: #fff3cd !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .decision-denied {
+        background: #f8d7da !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }

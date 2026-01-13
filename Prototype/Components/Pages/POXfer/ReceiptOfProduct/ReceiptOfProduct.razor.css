@@ -1,99 +1,156 @@
 ﻿/* ===== Receipt of Product – layout & meta grid ===== */
+
 /* Top meta grid */
 .rop-meta {
-    padding: 12px;
+    margin-bottom: 1rem;
+    padding: var(--spacing-4, 1rem);
     display: grid;
-    grid-template-columns: repeat(8, minmax(150px, 1fr));
-    gap: 14px;
-    align-items: start;
-    grid-auto-flow: dense;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4, 1rem);
+    align-items: end;
 }
-
-    /* Field stacks specific to ROP (vertical by default) */
-    .rop-meta .field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-        .rop-meta .field.inline {
-            flex-direction: row;
-            align-items: center;
-            gap: 10px;
-        }
-
-    .rop-meta .span-2 {
-        grid-column: span 2;
-    }
-
-    .rop-meta .field.narrow {
-        max-width: 120px;
-    }
-
-    /* Labels */
-    .rop-meta label {
-        font-size: .85rem;
-        font-weight: 600;
-        color: var(--text); /* ✅ Already using variable */
-    }
 
 .rop-card {
     margin-bottom: 1rem;
 }
 
-/* Inputs / selects within meta (unified height) */
-.rop-meta input,
-.rop-meta select {
-    appearance: none;
-    height: 36px;
-    padding: 6px 10px;
-    border: 1px solid var(--border); /* ✅ Changed from rgba(0,0,0,.14) */
-    border-radius: 10px;
-    background: var(--card-bg); /* ✅ Changed from #fff */
-    color: var(--text); /* ✅ Added */
-    font-size: .95rem;
-    outline: none;
-    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+/* ========== FIXED FIELD LAYOUTS ========== */
+
+/* Field - horizontal label-input layout */
+.rop-meta .field {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--spacing-2, 0.5rem);
+    align-items: center;
 }
 
-    .rop-meta input[readonly] {
-        background: var(--hover-bg, #f9fafb); /* ✅ Changed from #f9fafb */
+    /* Labels */
+    .rop-meta .field > label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--muted);
+        white-space: nowrap;
+        text-align: right;
     }
 
-    .rop-meta input:focus,
-    .rop-meta select:focus {
-        border-color: var(--accent); /* ✅ Changed from #6aa5ff */
-        box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), .15); /* ✅ Dynamic */
+    /* Inputs / selects within meta */
+    .rop-meta .field > input,
+    .rop-meta .field > select {
+        appearance: none;
+        width: 100%;
+        height: 36px;
+        padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md, 8px);
+        background: var(--card-bg);
+        color: var(--text);
+        font-size: 0.875rem;
+        font-family: inherit;
+        outline: none;
+        transition: border-color var(--transition-fast, 150ms) ease, box-shadow var(--transition-fast, 150ms) ease, background-color var(--transition-fast, 150ms) ease;
     }
 
-/* Checkbox */
-.rop-meta .rop-pno {
+        .rop-meta .field > input:hover,
+        .rop-meta .field > select:hover {
+            border-color: var(--border-strong);
+        }
+
+        .rop-meta .field > input:focus,
+        .rop-meta .field > select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.15);
+        }
+
+        .rop-meta .field > input[readonly],
+        .rop-meta .field > input:disabled {
+            background: var(--hover-bg);
+            border-color: var(--border);
+            color: var(--text);
+            cursor: default;
+        }
+
+    /* Inline field (checkbox) - keeps label and checkbox on same line */
+    .rop-meta .field.inline {
+        grid-template-columns: auto auto;
+        justify-content: start;
+        gap: var(--spacing-2, 0.5rem);
+    }
+
+        .rop-meta .field.inline > label {
+            text-align: left;
+        }
+
+/* Span 2 columns in the grid */
+.rop-meta .span-2 {
+    grid-column: span 2;
+}
+
+/* Narrow field */
+.rop-meta .field.narrow {
+    max-width: 180px;
+}
+
+/* Checkbox styling */
+.rop-meta .rop-pno,
+.rop-meta .field input[type="checkbox"] {
     width: 18px;
     height: 18px;
+    accent-color: var(--accent);
+    cursor: pointer;
 }
 
 /* Align action buttons to grid end */
 .rop-meta .field.align-end {
     align-self: end;
+    justify-self: start;
 }
+
+    /* Button styling within meta */
+    .rop-meta .field.align-end .btn {
+        height: 36px;
+        padding: 0 var(--spacing-4, 1rem);
+    }
+
+/* ========== END FIXED FIELD LAYOUTS ========== */
 
 /* Responsive */
-@media (max-width:1200px) {
+@media (max-width: 1200px) {
     .rop-meta {
-        grid-template-columns: repeat(6, minmax(140px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
 }
 
-@media (max-width:900px) {
+@media (max-width: 900px) {
     .rop-meta {
-        grid-template-columns: repeat(4, minmax(140px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: var(--spacing-3, 0.75rem);
     }
 }
 
-@media (max-width:640px) {
+@media (max-width: 640px) {
     .rop-meta {
-        grid-template-columns: repeat(2, minmax(140px, 1fr));
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-3, 0.75rem);
     }
+
+        .rop-meta .span-2 {
+            grid-column: span 2;
+        }
+
+        /* Stack labels on mobile */
+        .rop-meta .field {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-1, 0.25rem);
+        }
+
+            .rop-meta .field > label {
+                text-align: left;
+            }
+
+            .rop-meta .field.inline {
+                grid-template-columns: auto auto;
+                flex-direction: row;
+            }
 
     .section-header {
         flex-wrap: wrap;

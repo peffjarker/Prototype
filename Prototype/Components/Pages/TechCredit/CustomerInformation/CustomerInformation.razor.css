@@ -1,14 +1,30 @@
-﻿.techcredit-layout {
+﻿/* CustomerInformation.razor.css */
+/* Integrated with global appearance system - uses CSS variables from appearance-manager.js */
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+.techcredit-layout {
     display: grid;
     grid-template-columns: 260px 1fr;
     gap: 0;
     min-height: 600px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 12px);
+    overflow: hidden;
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
+/* ============================================================
+   DETAIL PANEL
+   ============================================================ */
 .detail-panel {
-    padding: 1.5rem;
+    padding: var(--spacing-6, 1.5rem);
     overflow-y: auto;
     max-height: calc(100vh - 200px);
+    background: var(--card-bg);
+    transition: background-color var(--transition-normal, 150ms) ease;
 }
 
 .detail-empty {
@@ -16,131 +32,455 @@
     align-items: center;
     justify-content: center;
     height: 400px;
-    color: #6c757d;
+    color: var(--muted);
     font-size: 1.1rem;
+    font-family: var(--base-font-family, inherit);
 }
 
-.detail-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--nav-border);
-}
-
-.info-section {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: var(--nav-bg);
-    border-radius: 8px;
-    border: 1px solid var(--nav-border);
-}
-
-    .info-section h4 {
-        margin: 0 0 1rem 0;
-        color: #495057;
-        font-size: 1.1rem;
+    .detail-empty p {
+        margin: 0;
+        padding: var(--spacing-4, 1rem);
+        background: var(--hover-bg);
+        border-radius: var(--radius-md, 8px);
+        border: 1px dashed var(--border);
     }
 
+/* ============================================================
+   DETAIL HEADER
+   ============================================================ */
+.detail-header {
+    margin-bottom: var(--spacing-8, 2rem);
+    padding-bottom: var(--spacing-4, 1rem);
+    border-bottom: 1px solid var(--border);
+    transition: border-color var(--transition-normal, 150ms) ease;
+}
+
+/* ============================================================
+   INFO SECTIONS
+   ============================================================ */
+.info-section {
+    margin-bottom: var(--spacing-8, 2rem);
+    padding: var(--spacing-6, 1.5rem);
+    background: var(--hover-bg);
+    border-radius: var(--radius-lg, 8px);
+    border: 1px solid var(--border);
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease, box-shadow var(--transition-normal, 150ms) ease;
+}
+
+    .info-section:hover {
+        box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+    }
+
+    .info-section h4 {
+        margin: 0 0 var(--spacing-4, 1rem) 0;
+        color: var(--text);
+        font-size: 1.1rem;
+        font-weight: 600;
+        font-family: var(--base-font-family, inherit);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-2, 0.5rem);
+    }
+
+        .info-section h4::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 1.1em;
+            background: var(--accent);
+            border-radius: var(--radius-xs, 2px);
+        }
+
+/* ============================================================
+   FIELD LAYOUTS
+   ============================================================ */
 .field-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 8rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--spacing-4, 1rem);
 }
 
 .field-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: var(--spacing-4, 1rem);
 }
 
 .field {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: var(--spacing-1, 0.25rem);
 }
 
     .field label {
         font-size: 0.75rem;
         font-weight: 600;
-        color: #6c757d;
+        color: var(--muted);
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
     }
 
     .field input {
-        padding: 0.5rem;
-        border: 1px solid var(--kendo-color-border, #e5e7eb);
-        border-radius: 4px;
-        font-size: 0.875rem;
-        background: white;
+        padding: var(--spacing-2, 0.5rem) var(--spacing-3, 0.75rem);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md, 4px);
+        font-size: var(--base-font-size, 0.875rem);
+        font-family: var(--base-font-family, inherit);
+        background: var(--card-bg);
+        color: var(--text);
+        transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease, color var(--transition-normal, 150ms) ease, box-shadow var(--transition-fast, 100ms) ease;
     }
+
+        .field input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.15);
+        }
 
         .field input:read-only {
             background: transparent;
             cursor: default;
-            border: 1px solid var(--nav-border);
-            color: var(--muted);
+            border: 1px solid var(--border);
+            color: var(--text);
         }
 
+            .field input:read-only:focus {
+                box-shadow: none;
+                border-color: var(--border);
+            }
+
+        /* Past due styling - uses error color from theme */
         .field input.past-due {
-            color: #dc3545;
+            color: var(--kendo-color-error, #dc3545);
             font-weight: 600;
+            background: rgba(239, 68, 68, 0.08);
+            border-color: var(--kendo-color-error, #dc3545);
         }
 
+/* ============================================================
+   SALES AUTHORIZATION SECTION
+   ============================================================ */
 .sales-auth {
+    /* Additional styling for sales auth section */
 }
 
 .sales-auth-layout {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
+    gap: var(--spacing-6, 1.5rem);
+    margin-bottom: var(--spacing-4, 1rem);
 }
 
-.blue-ribbon-section strong {
-    display: block;
-    margin-bottom: 0.75rem;
-    color: #495057;
+.blue-ribbon-section {
+    background: var(--accent-weak);
+    padding: var(--spacing-4, 1rem);
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid var(--accent);
+    border-left-width: 4px;
+    transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
 }
 
+    .blue-ribbon-section strong {
+        display: block;
+        margin-bottom: var(--spacing-3, 0.75rem);
+        color: var(--accent);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+.auth-details-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3, 0.75rem);
+}
+
+/* ============================================================
+   PAYMENT SUMMARY
+   ============================================================ */
 .payment-summary {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    padding-top: 1rem;
-border-top: 1px solid var(--nav-border);
+    gap: var(--spacing-4, 1rem);
+    padding-top: var(--spacing-4, 1rem);
+    border-top: 1px solid var(--border);
+    margin-top: var(--spacing-4, 1rem);
+    transition: border-color var(--transition-normal, 150ms) ease;
 }
 
+    .payment-summary .field {
+        padding: var(--spacing-3, 0.75rem);
+        background: var(--card-bg);
+        border-radius: var(--radius-md, 6px);
+        border: 1px solid var(--border);
+        transition: background-color var(--transition-normal, 150ms) ease, border-color var(--transition-normal, 150ms) ease;
+    }
+
+        .payment-summary .field:hover {
+            border-color: var(--accent);
+        }
+
+/* ============================================================
+   TRANSACTIONS SECTION
+   ============================================================ */
+.transactions {
+    /* Transactions grid container */
+}
+
+    .transactions .k-grid {
+        border-radius: var(--radius-md, 8px);
+        overflow: hidden;
+    }
+
+/* ============================================================
+   TEXT COLOR UTILITIES - Using theme variables
+   ============================================================ */
 .text-danger {
-    color: #dc3545 !important;
+    color: var(--kendo-color-error, #dc3545) !important;
 }
 
 .text-success {
-    color: #28a745 !important;
+    color: var(--kendo-color-success, #28a745) !important;
 }
 
+.text-warning {
+    color: var(--kendo-color-warning, #ffc107) !important;
+}
+
+.text-info {
+    color: var(--kendo-color-info, #17a2b8) !important;
+}
+
+.text-muted {
+    color: var(--muted) !important;
+}
+
+.text-accent {
+    color: var(--accent) !important;
+}
+
+/* ============================================================
+   BADGE STYLES - Using theme variables
+   ============================================================ */
 .badge {
     padding: 0.25em 0.6em;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-full, 9999px);
     font-size: 0.75rem;
     font-weight: 600;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-1, 0.25rem);
+    font-family: var(--base-font-family, inherit);
+    transition: background-color var(--transition-fast, 100ms) ease, color var(--transition-fast, 100ms) ease;
 }
 
 .badge-info {
-    background: #17a2b8;
+    background: var(--kendo-color-info, #17a2b8);
     color: white;
 }
 
 .badge-warning {
-    background: #ffc107;
+    background: var(--kendo-color-warning, #ffc107);
     color: #212529;
 }
 
-@media (max-width: 968px) {
-    .techcredit-layout {
-        grid-template-columns: 1fr;
+.badge-success {
+    background: var(--kendo-color-success, #22c55e);
+    color: white;
+}
+
+.badge-danger {
+    background: var(--kendo-color-error, #ef4444);
+    color: white;
+}
+
+.badge-primary {
+    background: var(--accent);
+    color: white;
+}
+
+.badge-secondary {
+    background: var(--muted);
+    color: white;
+}
+
+/* ============================================================
+   HEADER STYLING
+   ============================================================ */
+.wrap > .header {
+    margin-bottom: var(--spacing-4, 1rem);
+    padding-bottom: var(--spacing-3, 0.75rem);
+    border-bottom: 2px solid var(--border);
+    transition: border-color var(--transition-normal, 150ms) ease;
+}
+
+    .wrap > .header .title {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        font-family: var(--base-font-family, inherit);
+        transition: color var(--transition-normal, 150ms) ease;
     }
 
+/* ============================================================
+   DENSITY ADJUSTMENTS
+   ============================================================ */
+[data-density="compact"] .detail-panel {
+    padding: var(--spacing-4, 1rem);
+}
+
+[data-density="compact"] .info-section {
+    padding: var(--spacing-4, 1rem);
+    margin-bottom: var(--spacing-4, 1rem);
+}
+
+[data-density="compact"] .field input {
+    padding: var(--spacing-1, 0.25rem) var(--spacing-2, 0.5rem);
+    font-size: 0.8rem;
+}
+
+[data-density="compact"] .field label {
+    font-size: 0.7rem;
+}
+
+[data-density="compact"] .field-row,
+[data-density="compact"] .field-grid {
+    gap: var(--spacing-2, 0.5rem);
+}
+
+[data-density="spacious"] .detail-panel {
+    padding: var(--spacing-8, 2rem);
+}
+
+[data-density="spacious"] .info-section {
+    padding: var(--spacing-8, 2rem);
+    margin-bottom: var(--spacing-10, 2.5rem);
+}
+
+[data-density="spacious"] .field input {
+    padding: var(--spacing-3, 0.75rem) var(--spacing-4, 1rem);
+    font-size: 1rem;
+}
+
+[data-density="spacious"] .field label {
+    font-size: 0.8rem;
+    margin-bottom: var(--spacing-1, 0.25rem);
+}
+
+[data-density="spacious"] .field-row,
+[data-density="spacious"] .field-grid {
+    gap: var(--spacing-6, 1.5rem);
+}
+
+/* ============================================================
+   BORDER RADIUS ADJUSTMENTS
+   ============================================================ */
+[data-radius="none"] .techcredit-layout,
+[data-radius="none"] .info-section,
+[data-radius="none"] .field input,
+[data-radius="none"] .badge {
+    border-radius: 0;
+}
+
+[data-radius="pill"] .badge {
+    border-radius: 9999px;
+}
+
+[data-radius="rounded"] .techcredit-layout {
+    border-radius: 16px;
+}
+
+[data-radius="rounded"] .info-section {
+    border-radius: 12px;
+}
+
+[data-radius="rounded"] .field input {
+    border-radius: 8px;
+}
+
+/* ============================================================
+   HIGH CONTRAST MODE ADJUSTMENTS
+   ============================================================ */
+.high-contrast .info-section {
+    border-width: 2px;
+}
+
+.high-contrast .field input {
+    border-width: 2px;
+}
+
+    .high-contrast .field input.past-due {
+        background: #fee2e2;
+        border-width: 2px;
+    }
+
+.high-contrast .blue-ribbon-section {
+    border-width: 2px;
+    border-left-width: 6px;
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+.reduce-motion .techcredit-layout,
+.reduce-motion .info-section,
+.reduce-motion .field input,
+.reduce-motion .badge,
+.reduce-motion .detail-panel {
+    transition: none !important;
+}
+
+/* ============================================================
+   NO ANIMATIONS
+   ============================================================ */
+.no-animations .techcredit-layout,
+.no-animations .info-section,
+.no-animations .field input,
+.no-animations .badge,
+.no-animations .detail-panel {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* ============================================================
+   GRID LINES SETTING
+   ============================================================ */
+.show-grid-lines .field-grid {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md, 8px);
+    padding: var(--spacing-3, 0.75rem);
+}
+
+    .show-grid-lines .field-grid .field {
+        padding: var(--spacing-2, 0.5rem);
+        border-bottom: 1px solid var(--border);
+    }
+
+        .show-grid-lines .field-grid .field:last-child,
+        .show-grid-lines .field-grid .field:nth-last-child(2):nth-child(odd) {
+            border-bottom: none;
+        }
+
+/* ============================================================
+   FOCUS INDICATORS (Enhanced Accessibility)
+   ============================================================ */
+.enhanced-focus .field input:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.enhanced-focus .info-section:focus-within {
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.2);
+}
+
+/* ============================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================ */
+@media (max-width: 1200px) {
     .sales-auth-layout {
         grid-template-columns: 1fr;
     }
@@ -148,8 +488,104 @@ border-top: 1px solid var(--nav-border);
     .payment-summary {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+@media (max-width: 968px) {
+    .techcredit-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-panel {
+        max-height: none;
+    }
 
     .field-grid {
         grid-template-columns: 1fr;
+    }
+
+    .field-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-panel {
+        padding: var(--spacing-4, 1rem);
+    }
+
+    .info-section {
+        padding: var(--spacing-4, 1rem);
+    }
+
+    .payment-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .sales-auth-layout {
+        gap: var(--spacing-4, 1rem);
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-panel {
+        padding: var(--spacing-3, 0.75rem);
+    }
+
+    .info-section {
+        padding: var(--spacing-3, 0.75rem);
+        margin-bottom: var(--spacing-4, 1rem);
+    }
+
+        .info-section h4 {
+            font-size: 1rem;
+        }
+
+    .field label {
+        font-size: 0.7rem;
+    }
+
+    .field input {
+        font-size: 0.85rem;
+        padding: var(--spacing-2, 0.5rem);
+    }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+@media print {
+    .techcredit-layout {
+        display: block;
+        border: none;
+        box-shadow: none;
+    }
+
+    .detail-panel {
+        max-height: none;
+        padding: 0;
+    }
+
+    .info-section {
+        break-inside: avoid;
+        border: 1px solid #ccc;
+        background: white;
+    }
+
+    .field input {
+        border: none;
+        padding: 0;
+        background: transparent;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }

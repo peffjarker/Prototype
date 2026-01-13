@@ -38,13 +38,13 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    border-top: 1px solid var(--nav-border);
-    background: #f8f9fa;
+    border-top: 1px solid var(--border);
+    background: var(--hover-bg);
 }
 
 .filter-summary {
     font-weight: 600;
-    color: #6c757d;
+    color: var(--muted);
 }
 
 .items-section {
@@ -58,23 +58,32 @@
 }
 
 .items-list {
-    border-right: 1px solid #dee2e6;
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
 }
 
 .list-header {
     padding: 1rem;
-    border-bottom: 1px solid var(--nav-border);
-    background: #f8f9fa;
+    border-bottom: 1px solid var(--border);
+    background: var(--hover-bg);
 }
 
 .search-box {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid var(--nav-border);
-    border-radius: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    color: var(--text);
+    transition: border-color var(--transition-fast) ease;
 }
+
+    .search-box:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+    }
 
 .list-body {
     flex: 1;
@@ -86,33 +95,36 @@
     display: flex;
     align-items: center;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
     gap: 0.5rem;
     position: relative;
+    transition: background-color var(--transition-fast) ease;
 }
 
     .item-row:hover {
-        background-color: #f8f9fa;
+        background-color: var(--hover-bg);
     }
 
     .item-row.selected {
-        background-color: #e7f3ff;
-        border-left: 3px solid #007bff;
+        background-color: var(--accent-weak);
+        border-left: 3px solid var(--accent);
     }
 
     .item-row.item-discontinued {
-        color: #6c757d;
+        color: var(--muted);
     }
 
 .item-number {
     font-weight: 600;
     min-width: 120px;
+    color: var(--text);
 }
 
 .item-name {
     flex: 1;
     font-size: 0.875rem;
+    color: var(--text);
 }
 
 .item-badge {
@@ -125,7 +137,7 @@
     }
 
     .item-badge.price {
-        color: #111827;
+        color: var(--text);
     }
 
     .item-badge.ds {
@@ -143,13 +155,14 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #6c757d;
+    color: var(--muted);
 }
 
 .detail-header h4 {
     margin: 0 0 1.5rem 0;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--nav-border);
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
 }
 
 .detail-grid {
@@ -171,13 +184,13 @@
 }
 
 .inventory-summary {
-    border: 1px solid var(--nav-border);
-    border-radius: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     overflow: hidden;
 }
 
 .inventory-header {
-    background: #007bff;
+    background: var(--accent);
     color: white;
     padding: 0.5rem 1rem;
     font-weight: 600;
@@ -187,36 +200,36 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1px;
-    background: #dee2e6;
+    background: var(--border);
     padding: 1px;
 }
 
 .inv-col {
-    background: white;
+    background: var(--card-bg);
     padding: 0.75rem;
     text-align: center;
 }
 
 .inv-label {
     font-size: 0.75rem;
-    color: #6c757d;
+    color: var(--muted);
     margin-bottom: 0.25rem;
 }
 
 .inv-value {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #212529;
+    color: var(--text);
 }
 
 .pricing-section {
-    border: 1px solid var(--nav-border);
-    border-radius: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     overflow: hidden;
 }
 
 .pricing-header {
-    background: #007bff;
+    background: var(--accent);
     color: white;
     padding: 0.5rem 1rem;
     font-weight: 600;
@@ -227,6 +240,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    background: var(--card-bg);
 }
 
 .pricing-row {
@@ -236,22 +250,23 @@
 
 .pricing-label {
     font-weight: 600;
-    color: #6c757d;
+    color: var(--muted);
 }
 
 .pricing-value {
     font-weight: 600;
+    color: var(--text);
 }
 
 .other-inventory-section {
-    border: 1px solid var(--nav-border);
-    border-radius: 0.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
     overflow: hidden;
 }
 
 .collapsible-header {
     width: 100%;
-    background: #f8f9fa;
+    background: var(--hover-bg);
     border: none;
     padding: 0.75rem 1rem;
     text-align: left;
@@ -260,26 +275,27 @@
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
-    transition: background-color 0.2s;
+    color: var(--text);
+    transition: background-color var(--transition-normal) ease;
 }
 
     .collapsible-header:hover {
-        background: #e9ecef;
+        background: var(--border-strong);
     }
 
     .collapsible-header.expanded {
-        background: #e9ecef;
-        border-bottom: 1px solid var(--nav-border);
+        background: var(--border-strong);
+        border-bottom: 1px solid var(--border);
     }
 
 .chevron {
     font-size: 0.75em;
-    color: #6c757d;
+    color: var(--muted);
 }
 
 .other-inventory-content {
     padding: 1rem;
-    background: white;
+    background: var(--card-bg);
 }
 
 .inventory-warehouse-section {
@@ -287,7 +303,7 @@
 }
 
 .shared-dealers-section {
-border-top: 1px solid var(--nav-border);
+    border-top: 1px solid var(--border);
     padding-top: 1rem;
 }
 
@@ -295,9 +311,9 @@ border-top: 1px solid var(--nav-border);
     display: grid;
     grid-template-columns: 1fr 100px;
     padding: 0.5rem;
-    background: #f8f9fa;
+    background: var(--hover-bg);
     font-weight: 600;
-    border-radius: 0.25rem;
+    border-radius: var(--radius-sm);
     margin-bottom: 0.5rem;
 }
 
@@ -305,7 +321,7 @@ border-top: 1px solid var(--nav-border);
     display: grid;
     grid-template-columns: 1fr 100px;
     padding: 0.5rem;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--border);
 }
 
     .shared-dealer-row:last-child {
@@ -325,9 +341,17 @@ border-top: 1px solid var(--nav-border);
     .catalog-section textarea {
         width: 100%;
         padding: 0.75rem;
-        border: 1px solid var(--nav-border);
-        border-radius: 0.25rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
         resize: vertical;
         font-family: inherit;
-        background: transparent;
+        background: var(--card-bg);
+        color: var(--text);
+        transition: border-color var(--transition-fast) ease;
     }
+
+        .catalog-section textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+        }
