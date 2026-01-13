@@ -1,4 +1,5 @@
 ﻿@page "/product/set-maintenance"
+@attribute [Authorize(Policy = AppPolicies.Purchasing)]
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar

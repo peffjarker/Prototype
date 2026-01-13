@@ -4,8 +4,10 @@
 @using System.Collections.Generic
 @using System.Threading.Tasks
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
 @using Prototype.Components.SharedComponents.Search
+@using Prototype.Models
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 @using Services
@@ -13,6 +15,7 @@
 @implements IDisposable
 @inject NavigationManager Nav
 @inject IUrlState Url
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <TelerikAppBar Position="AppBarPosition.Top" Class="appbar">
     <AppBarSection Class="appbar-left">
@@ -27,7 +30,7 @@
         <div class="nav-divider" role="presentation"></div>
 
         <nav class="primary-nav" aria-label="Primary">
-            @foreach (var item in PrimaryMenuItems)
+            @foreach (var item in FilteredMenuItems)
             {
                 <button type="button"
                         class="nav-item @GetActiveClass(item.Href)"
@@ -41,53 +44,68 @@
     </AppBarSection>
 
     <AppBarSection Class="appbar-center">
-        <GlobalSearch />
+        <AuthorizeView Policy="@AppPolicies.Admin">
+            <Authorized>
+                <GlobalSearch />
+            </Authorized>
+        </AuthorizeView>
     </AppBarSection>
 
     <AppBarSection Class="appbar-right">
-        <div class="quick-actions" aria-label="Quick actions">
-            <button type="button" class="action-btn" title="Help & Documentation" @onclick="NavigateToHelp">
-                <TelerikSvgIcon Icon="@SvgIcon.QuestionCircle" />
-            </button>
+        <AuthorizeView>
+            <Authorized>
+                <div class="quick-actions" aria-label="Quick actions">
+                    <button type="button" class="action-btn" title="Help & Documentation" @onclick="NavigateToHelp">
+                        <TelerikSvgIcon Icon="@SvgIcon.QuestionCircle" />
+                    </button>
 
-            <button type="button"
-                    class="action-btn notification-btn"
-                    title="Notifications"
-                    @onclick="ToggleNotifications"
-                    @onclick:stopPropagation="true">
-                <TelerikSvgIcon Icon="@SvgIcon.Bell" />
-                @if (_unreadCount > 0)
-                {
-                    <span class="notification-badge">@(_unreadCount > 9 ? "9+" : _unreadCount.ToString())</span>
-                }
-            </button>
+                    <button type="button"
+                            class="action-btn notification-btn"
+                            title="Notifications"
+                            @onclick="ToggleNotifications"
+                            @onclick:stopPropagation="true">
+                        <TelerikSvgIcon Icon="@SvgIcon.Bell" />
+                        @if (_unreadCount > 0)
+                        {
+                            <span class="notification-badge">@(_unreadCount > 9 ? "9+" : _unreadCount.ToString())</span>
+                        }
+                    </button>
 
-            <button type="button" class="action-btn" title="Settings" @onclick="NavigateToSettings">
-                <TelerikSvgIcon Icon="@SvgIcon.Gear" />
-            </button>
-        </div>
-
-        <div class="nav-divider" role="presentation"></div>
-
-        <TelerikDropDownButton Class="user-menu" ShowArrowButton="false">
-            <DropDownButtonContent>
-                <div class="user-menu-trigger" title="Account">
-                    <div class="user-avatar large">
-                        <span>JP</span>
-                    </div>
+                    <button type="button" class="action-btn" title="Settings" @onclick="NavigateToSettings">
+                        <TelerikSvgIcon Icon="@SvgIcon.Gear" />
+                    </button>
                 </div>
-            </DropDownButtonContent>
-            <DropDownButtonItems>
-                <DropDownButtonItem OnClick="@(() => NavigateToProfile())">
-                    <TelerikSvgIcon Icon="@SvgIcon.User" />
-                    <span>My Profile</span>
-                </DropDownButtonItem>
-                <DropDownButtonItem OnClick="@(() => NavigateToAppearance())">
-                    <TelerikSvgIcon Icon="@SvgIcon.Palette" />
-                    <span>Appearance</span>
-                </DropDownButtonItem>
-            </DropDownButtonItems>
-        </TelerikDropDownButton>
+
+                <div class="nav-divider" role="presentation"></div>
+
+                <TelerikDropDownButton Class="user-menu" ShowArrowButton="false">
+                    <DropDownButtonContent>
+                        <div class="user-menu-trigger" title="Account">
+                            <div class="user-avatar large">
+                                <span><Prototype.Components.Layout.Navigation.LoginDisplay /></span>
+                            </div>
+                        </div>
+                    </DropDownButtonContent>
+                    <DropDownButtonItems>
+                        <DropDownButtonItem OnClick="@(() => NavigateToProfile())">
+                            <TelerikSvgIcon Icon="@SvgIcon.User" />
+                            <span>My Profile</span>
+                        </DropDownButtonItem>
+                        <DropDownButtonItem OnClick="@(() => NavigateToAppearance())">
+                            <TelerikSvgIcon Icon="@SvgIcon.Palette" />
+                            <span>Appearance</span>
+                        </DropDownButtonItem>
+                        <DropDownButtonItem OnClick="@SignOut">
+                            <TelerikSvgIcon Icon="@SvgIcon.Logout" />
+                            <span>Sign Out</span>
+                        </DropDownButtonItem>
+                    </DropDownButtonItems>
+                </TelerikDropDownButton>
+            </Authorized>
+            <NotAuthorized>
+                <a href="MicrosoftIdentity/Account/SignIn" class="sign-in-btn">Sign In</a>
+            </NotAuthorized>
+        </AuthorizeView>
     </AppBarSection>
 </TelerikAppBar>
 
@@ -147,23 +165,31 @@
             </button>
         </div>
 
-        <div class="drawer-user">
-            <div class="user-avatar">
-                <span>JD</span>
-            </div>
-            <div class="user-info">
-                <div class="user-name">John Doe</div>
-                <div class="user-role">Administrator</div>
-            </div>
-        </div>
+        <AuthorizeView>
+            <Authorized Context="authContext">
+                <div class="drawer-user">
+                    <div class="user-avatar">
+                        <span><Prototype.Components.Layout.Navigation.LoginDisplay /></span>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">@authContext.User.Identity?.Name</div>
+                        <div class="user-role">@GetUserRole(authContext.User)</div>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
 
-        <div class="drawer-search">
-            <GlobalSearch />
-        </div>
+        <AuthorizeView Policy="@AppPolicies.Admin">
+            <Authorized Context="searchAuthContext">
+                <div class="drawer-search">
+                    <GlobalSearch />
+                </div>
+            </Authorized>
+        </AuthorizeView>
 
         <div class="drawer-nav">
             <div class="drawer-section-title">Navigation</div>
-            @foreach (var item in PrimaryMenuItems)
+            @foreach (var item in FilteredMenuItems)
             {
                 <div class="drawer-item @GetActiveClass(item.Href)"
                      @onclick="@(() => OnMobileMenuClick(item.Href))">
@@ -223,19 +249,61 @@
     private int _unreadCount = 3;
     private string? currentPath;
     private List<NotificationItem> _notifications = new();
+    private System.Security.Claims.ClaimsPrincipal? _user;
 
     private readonly List<MenuLink> PrimaryMenuItems =
     [
-        new("PO Transfer", "/po-transfer/items-on-order?status=All", SvgIcon.ArrowsSwap),
-        new("Product", "/product/webcat?class=All Items", SvgIcon.EditTools),
-        new("Tech Credit", "/techcredit/customerinformation?status=All", SvgIcon.Dollar)
+        new("PO Transfer", "/po-transfer/items-on-order?status=All", SvgIcon.ArrowsSwap, AppPolicies.CustomerService),
+        new("Product", "/product/webcat?class=All Items", SvgIcon.EditTools, AppPolicies.Purchasing),
+        new("Tech Credit", "/techcredit/customerinformation?status=All", SvgIcon.Dollar, AppPolicies.TechCredit)
     ];
 
-    protected override void OnInitialized()
+    private List<MenuLink> FilteredMenuItems => PrimaryMenuItems.Where(item => HasAccess(item.RequiredPolicy)).ToList();
+
+    protected override async Task OnInitializedAsync()
     {
+        // Subscribe to auth state changes
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _user = authState.User;
+
         currentPath = Nav.ToBaseRelativePath(Nav.Uri);
         Url.Changed += OnUrlChanged;
         LoadNotifications();
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        var authState = await task;
+        _user = authState.User;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private bool HasAccess(string policy)
+    {
+        if (_user == null) return false;
+
+        // Check if user is shadowing - if so, only check against shadow role
+        bool isShadowing = _user.HasClaim(c => c.Type == "shadow_role");
+
+        if (!isShadowing)
+        {
+            // Not shadowing - check if user is actual admin
+            bool isAdmin = _user.HasClaim("groups", "34292b7e-74b4-4c44-b0c8-deb3859f44b2") ||
+                           _user.HasClaim(c => c.Type == "preferred_username" && c.Value.Equals("jeffp@cornwelltools.com", StringComparison.OrdinalIgnoreCase));
+
+            if (isAdmin) return true;
+        }
+
+        // Check specific group access (works for both shadow and real roles)
+        return policy switch
+        {
+            AppPolicies.CustomerService => _user.HasClaim("groups", "84b76a76-52e2-4310-9767-3f40b7515ae6"),
+            AppPolicies.Purchasing => _user.HasClaim("groups", "5076c722-89d1-4afb-bfa0-e261a37728c2"),
+            AppPolicies.TechCredit => _user.HasClaim("groups", "2780fc34-4d65-4445-b4b5-1fe59780f5a6"),
+            _ => false
+        };
     }
 
     private void OnUrlChanged()
@@ -247,6 +315,7 @@
     public void Dispose()
     {
         Url.Changed -= OnUrlChanged;
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 
     private void OnMenuLinkClick(string hrefBase)
@@ -334,7 +403,20 @@
     private void NavigateToAppearance() => Nav.NavigateTo(Url.BuildHref("/settings/appearance"));
     private void NavigateToSecurity() => Nav.NavigateTo(Url.BuildHref("/settings/security"));
 
-    private void SignOut() => Nav.NavigateTo("/auth/signout", forceLoad: true);
+    private void SignOut() => Nav.NavigateTo("MicrosoftIdentity/Account/SignOut", forceLoad: true);
+
+    private string GetUserRole(System.Security.Claims.ClaimsPrincipal user)
+    {
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "34292b7e-74b4-4c44-b0c8-deb3859f44b2"))
+            return "Administrator";
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "84b76a76-52e2-4310-9767-3f40b7515ae6"))
+            return "Customer Service";
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "5076c722-89d1-4afb-bfa0-e261a37728c2"))
+            return "Purchasing";
+        if (user.HasClaim(c => c.Type == "groups" && c.Value == "2780fc34-4d65-4445-b4b5-1fe59780f5a6"))
+            return "Tech Credit";
+        return "User";
+    }
 
     private void LoadNotifications()
     {
@@ -348,11 +430,12 @@
         _unreadCount = _notifications.Count(n => !n.IsRead);
     }
 
-    public sealed class MenuLink(string text, string href, ISvgIcon icon)
+    public sealed class MenuLink(string text, string href, ISvgIcon icon, string requiredPolicy = "")
     {
         public string Text { get; } = text;
         public string Href { get; } = href;
         public ISvgIcon Icon { get; } = icon;
+        public string RequiredPolicy { get; } = requiredPolicy;
     }
 
     public class NotificationItem
@@ -955,6 +1038,25 @@
         display: grid;
         place-items: center;
     }
+
+    /* --- Sign In Button --- */
+    .sign-in-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        background: var(--accent);
+        color: white;
+        text-decoration: none;
+        border-radius: var(--border-radius);
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.15s ease;
+    }
+
+        .sign-in-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
 
     /* --- Responsive Breakpoints --- */
 

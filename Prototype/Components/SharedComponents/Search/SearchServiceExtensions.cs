@@ -14,14 +14,15 @@ public static class SearchServiceExtensions
     /// </summary>
     public static IServiceCollection AddSearchServices(this IServiceCollection services)
     {
-        // Register the main search service as singleton
-        services.AddSingleton<ISearchService>(sp =>
+        // Register the main search service as scoped (needs access to auth services)
+        services.AddScoped<ISearchService>(sp =>
         {
-            var searchService = new SearchService();
+            var authService = sp.GetRequiredService<Microsoft.AspNetCore.Authorization.IAuthorizationService>();
+            var authStateProvider = sp.GetRequiredService<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>();
+            var searchService = new SearchService(authService, authStateProvider);
 
             // Register all search providers
             searchService.RegisterProvider(new ItemsOnOrderSearchProvider());
-            searchService.RegisterProvider(new ItemsOnOrderSearchProvider()); // NEW
             searchService.RegisterProvider(new POSearchProvider());
 
             // TechCredit/Collections providers

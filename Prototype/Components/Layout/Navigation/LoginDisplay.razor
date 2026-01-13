@@ -1,0 +1,53 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+    <Authorized>
+        @if (context.User.Identity?.Name != null)
+        {
+            <span class="user-display-name">@GetUserInitials(context.User.Identity.Name)</span>
+        }
+        else
+        {
+            <span class="user-display-name">??</span>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <a href="MicrosoftIdentity/Account/SignIn">Sign in</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private static string GetUserInitials(string identifier)
+    {
+        if (string.IsNullOrWhiteSpace(identifier))
+            return "??";
+
+        // Strip domain if this is an email
+        var localPart = identifier
+            .Split('@', StringSplitOptions.RemoveEmptyEntries)[0]
+            .ToLowerInvariant();
+
+        // Handle explicit separators (first.last, first_last, etc.)
+        var parts = localPart
+            .Split(new[] { '.', '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length >= 2)
+        {
+            return $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant();
+        }
+
+        var token = parts[0];
+
+        // Enterprise heuristic: jeffp -> Jeff P -> JP
+        if (token.Length >= 3 && char.IsLetter(token[^1]))
+        {
+            return $"{token[0]}{token[^1]}".ToUpperInvariant();
+        }
+
+        // Absolute fallback
+        if (token.Length >= 2)
+            return token.Substring(0, 2).ToUpperInvariant();
+
+        return token[0].ToString().ToUpperInvariant();
+    }
+}

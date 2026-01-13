@@ -1,4 +1,5 @@
 ﻿@page "/po-transfer/purchase-orders"
+@attribute [Authorize(Policy = AppPolicies.CustomerService)]
 
 @using Microsoft.AspNetCore.WebUtilities
 @using Prototype.Components.Layout.Navigation.Sidebar

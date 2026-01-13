@@ -2,9 +2,13 @@
 @using Telerik.Blazor
 @using Telerik.Blazor.Components
 @using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@implements IDisposable
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject ISidebarState Sidebar
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Home - IBN Dealer Suite</PageTitle>
 
@@ -77,50 +81,34 @@
             <h2>All Modules</h2>
         </div>
 
-        @foreach (var module in GetModules())
+        @if (_user == null)
         {
-            <div class="module-group">
-                <div class="module-title">
-                    <TelerikSvgIcon Icon="@module.IconValue" />
-                    <h3>@module.Name</h3>
-                </div>
-
-                @if (currentDensity == "compact")
-                {
-                    <!-- Compact: Simple list view -->
-                    <div class="compact-list">
-                        @foreach (var Page in module.Pages)
-                        {
-                            var isFav = IsFavorite(Page.Id);
-                            <div class="compact-item" @onclick="@(() => NavigateToPage(Page.Url))">
-                                <div class="compact-icon @(isFav ? "favorite" : "")">
-                                    <TelerikSvgIcon Icon="@Page.IconValue" />
-                                </div>
-                                <div class="compact-content">
-                                    <h3>@Page.Title</h3>
-                                    <span class="compact-category">@Page.Category</span>
-                                </div>
-                                <button class="favorite-btn @(isFav ? "active" : "")"
-                                        @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
-                                        @onclick:stopPropagation="true"
-                                        title="@(isFav ? "Remove from favorites" : "Add to favorites")">
-                                    <TelerikSvgIcon Icon="@SvgIcon.Star" />
-                                </button>
-                            </div>
-                        }
+            <p>Loading...</p>
+        }
+        else
+        {
+            @foreach (var module in GetModules())
+            {
+                <div class="module-group">
+                    <div class="module-title">
+                        <TelerikSvgIcon Icon="@module.IconValue" />
+                        <h3>@module.Name</h3>
                     </div>
-                }
-                else
-                {
-                    <!-- Comfortable & Spacious: Card grid -->
-                    <div class="page-grid">
-                        @foreach (var Page in module.Pages)
-                        {
-                            var isFav = IsFavorite(Page.Id);
-                            <div class="page-card" @onclick="@(() => NavigateToPage(Page.Url))">
-                                <div class="card-header">
-                                    <div class="card-icon-wrapper @(isFav ? "favorite" : "")">
+
+                    @if (currentDensity == "compact")
+                    {
+                        <!-- Compact: Simple list view -->
+                        <div class="compact-list">
+                            @foreach (var Page in module.Pages)
+                            {
+                                var isFav = IsFavorite(Page.Id);
+                                <div class="compact-item" @onclick="@(() => NavigateToPage(Page.Url))">
+                                    <div class="compact-icon @(isFav ? "favorite" : "")">
                                         <TelerikSvgIcon Icon="@Page.IconValue" />
+                                    </div>
+                                    <div class="compact-content">
+                                        <h3>@Page.Title</h3>
+                                        <span class="compact-category">@Page.Category</span>
                                     </div>
                                     <button class="favorite-btn @(isFav ? "active" : "")"
                                             @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
@@ -129,16 +117,39 @@
                                         <TelerikSvgIcon Icon="@SvgIcon.Star" />
                                     </button>
                                 </div>
-                                <h3>@Page.Title</h3>
-                                <p class="card-description">@Page.Description</p>
-                                <div class="card-meta">
-                                    <span class="badge">@Page.Category</span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Comfortable & Spacious: Card grid -->
+                        <div class="page-grid">
+                            @foreach (var Page in module.Pages)
+                            {
+                                var isFav = IsFavorite(Page.Id);
+                                <div class="page-card" @onclick="@(() => NavigateToPage(Page.Url))">
+                                    <div class="card-header">
+                                        <div class="card-icon-wrapper @(isFav ? "favorite" : "")">
+                                            <TelerikSvgIcon Icon="@Page.IconValue" />
+                                        </div>
+                                        <button class="favorite-btn @(isFav ? "active" : "")"
+                                                @onclick="@(() => ToggleFavoriteAsync(Page.Id))"
+                                                @onclick:stopPropagation="true"
+                                                title="@(isFav ? "Remove from favorites" : "Add to favorites")">
+                                            <TelerikSvgIcon Icon="@SvgIcon.Star" />
+                                        </button>
+                                    </div>
+                                    <h3>@Page.Title</h3>
+                                    <p class="card-description">@Page.Description</p>
+                                    <div class="card-meta">
+                                        <span class="badge">@Page.Category</span>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
         }
     </section>
 </main>
@@ -146,6 +157,7 @@
 @code {
     private HashSet<string> FavoritePageIds = new();
     private string currentDensity = "comfortable";
+    private System.Security.Claims.ClaimsPrincipal? _user;
 
     private List<PageLink> FavoritePages
     {
@@ -156,8 +168,14 @@
         }
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        // Subscribe to auth state changes
+        AuthenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        _user = authState.User;
+
         Sidebar.ItemSelectedHandler = async (item) =>
         {
             if (!string.IsNullOrWhiteSpace(item.Url))
@@ -166,6 +184,18 @@
             }
             await Task.CompletedTask;
         };
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        var authState = await task;
+        _user = authState.User;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        AuthenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -303,14 +333,41 @@
         Nav.NavigateTo(url);
     }
 
+    private bool HasAccess(string policy)
+    {
+        if (_user == null) return false;
+
+        // Check if user is shadowing - if so, only check against shadow role
+        bool isShadowing = _user.HasClaim(c => c.Type == "shadow_role");
+
+        if (!isShadowing)
+        {
+            // Not shadowing - check if user is actual admin
+            bool isAdmin = _user.HasClaim("groups", "34292b7e-74b4-4c44-b0c8-deb3859f44b2") ||
+                           _user.HasClaim(c => c.Type == "preferred_username" && c.Value.Equals("jeffp@cornwelltools.com", StringComparison.OrdinalIgnoreCase));
+
+            if (isAdmin) return true;
+        }
+
+        // Check specific group access (works for both shadow and real roles)
+        return policy switch
+        {
+            AppPolicies.CustomerService => _user.HasClaim("groups", "84b76a76-52e2-4310-9767-3f40b7515ae6"),
+            AppPolicies.Purchasing => _user.HasClaim("groups", "5076c722-89d1-4afb-bfa0-e261a37728c2"),
+            AppPolicies.TechCredit => _user.HasClaim("groups", "2780fc34-4d65-4445-b4b5-1fe59780f5a6"),
+            _ => false
+        };
+    }
+
     private List<Module> GetModules()
     {
-        return new List<Module>
+        var allModules = new List<Module>
         {
             new Module
             {
                 Name = "PO / Transfer",
                 IconValue = SvgIcon.ArrowsSwap,
+                RequiredPolicy = AppPolicies.CustomerService,
                 Pages = new List<PageLink>
                 {
                     new PageLink
@@ -346,6 +403,7 @@
             {
                 Name = "Product Management",
                 IconValue = SvgIcon.Cart,
+                RequiredPolicy = AppPolicies.Purchasing,
                 Pages = new List<PageLink>
                 {
                     new PageLink
@@ -381,6 +439,7 @@
             {
                 Name = "TechCredit",
                 IconValue = SvgIcon.Dollar,
+                RequiredPolicy = AppPolicies.TechCredit,
                 Pages = new List<PageLink>
                 {
                     new PageLink
@@ -431,6 +490,28 @@
                 }
             }
         };
+
+        // Check if user is a non-shadowing admin - if so, return all modules
+        if (_user != null)
+        {
+            bool isShadowing = _user.HasClaim(c => c.Type == "shadow_role");
+
+            if (!isShadowing)
+            {
+                bool hasAdminGroup = _user.HasClaim("groups", "34292b7e-74b4-4c44-b0c8-deb3859f44b2");
+                bool hasAdminUsername = _user.HasClaim(c => c.Type == "preferred_username" && c.Value.Equals("jeffp@cornwelltools.com", StringComparison.OrdinalIgnoreCase));
+                bool isAdmin = hasAdminGroup || hasAdminUsername;
+
+                if (isAdmin)
+                {
+                    // Admin users see all modules
+                    return allModules;
+                }
+            }
+        }
+
+        // Filter modules based on user's access
+        return allModules.Where(m => HasAccess(m.RequiredPolicy)).ToList();
     }
 
     public class Module
@@ -438,6 +519,7 @@
         public string Name { get; set; } = "";
         public ISvgIcon IconValue { get; set; } = SvgIcon.Grid;
         public List<PageLink> Pages { get; set; } = new();
+        public string RequiredPolicy { get; set; } = "";
     }
 
     public class PageLink

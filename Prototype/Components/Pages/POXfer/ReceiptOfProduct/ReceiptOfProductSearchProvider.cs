@@ -1,4 +1,5 @@
 ﻿using Prototype.Components.Services.Search;
+using Prototype.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Prototype.Components.Pages.POXfer.ReceiptOfProduct;
 
 /// <summary>
 /// EXAMPLE: Search provider for Receipt of Product data
-/// 
+///
 /// This is a template showing how to create a new search provider.
 /// To use this:
 /// 1. Update the data source (currently uses seed data)
@@ -22,6 +23,7 @@ public sealed class ReceiptOfProductSearchProvider : ISearchProvider
     public string ProviderName => "Receipts";
     public SearchResultType ResultType => SearchResultType.Receipt;
     public bool IsEnabled => true;
+    public string? RequiredPolicy => AppPolicies.CustomerService;
 
     // TODO: Replace with actual repository/service injection
     // private readonly IReceiptRepository _receiptRepo;
