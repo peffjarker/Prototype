@@ -58,7 +58,7 @@
         .rop-meta .field > input:focus,
         .rop-meta .field > select:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.15);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
         }
 
         .rop-meta .field > input[readonly],

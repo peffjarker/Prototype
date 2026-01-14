@@ -194,7 +194,7 @@
     .form-field input:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.15);
+        box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
     }
 
     .form-field input:read-only {
@@ -331,9 +331,7 @@
    HEADER STYLING
    ============================================================ */
 .wrap > .header {
-    margin-bottom: var(--spacing-4, 1rem);
-    padding-bottom: var(--spacing-3, 0.75rem);
-    border-bottom: 2px solid var(--border);
+    margin: 0 0 var(--spacing-2) 0;
     transition: border-color var(--transition-normal, 150ms) ease;
 }
 
@@ -504,7 +502,7 @@
 }
 
 .enhanced-focus .form-section:focus-within {
-    box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), 0.2);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.2);
 }
 
 /* ============================================================

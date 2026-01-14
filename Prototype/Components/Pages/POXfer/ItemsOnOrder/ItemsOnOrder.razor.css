@@ -54,8 +54,8 @@
         .field > input:focus,
         .field > textarea:focus,
         .field > select:focus {
-            border-color: var(--accent); /* ✅ Changed from #8ab4ff */
-            box-shadow: 0 0 0 3px rgba(var(--accent-rgb, 12, 94, 168), .25); /* ✅ Dynamic */
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
         }
 
         .field > input[readonly],

@@ -211,11 +211,30 @@
     private decimal _totalBalance = 580605.92m;
     private decimal _totalAmtDue = 3347.62m;
     private decimal _totalPastDue = 1470.11m;
+    private bool _selectionApplied = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync(); // This handles sidebar setup
+        await base.OnInitializedAsync();
         await LoadBorrowersAsync();
+        ApplySelection();
+    }
+
+    private void ApplySelection()
+    {
+        if (_selectionApplied || _borrowers.Count == 0) return;
+        _selectionApplied = true;
+
+        if (!string.IsNullOrWhiteSpace(Params.SelectedCustomer))
+        {
+            var borrowerToSelect = _borrowers.FirstOrDefault(b =>
+                b.BorrowerID.Equals(Params.SelectedCustomer, StringComparison.OrdinalIgnoreCase));
+
+            if (borrowerToSelect != null)
+            {
+                _selectedBorrowers = new List<BorrowerRecord> { borrowerToSelect };
+            }
+        }
     }
 
     private async Task LoadBorrowersAsync()

@@ -38,37 +38,37 @@
         <div class="rop-detail-grid">
             <!-- Left column -->
             <div class="col col-left">
-                <div class="field">
+                <div class="field field--po-number">
                     <label>PO#:</label>
                     <input readonly value="@Model.PoNumber" />
                 </div>
 
-                <div class="field">
+                <div class="field field--vendor">
                     <label>Vendor:</label>
                     <input readonly value="@Model.VendorName" />
                 </div>
 
-                <div class="field">
+                <div class="field field--ship-to">
                     <label>Ship To Name:</label>
                     <input readonly value="@Model.ShipToName" />
                 </div>
 
-                <div class="field">
+                <div class="field field--attention">
                     <label>Attention/Address:</label>
                     <input readonly value="@Model.Attention" />
                 </div>
 
-                <div class="field">
+                <div class="field field--address1">
                     <label>Address 1:</label>
                     <input readonly value="@Model.Address1" />
                 </div>
 
-                <div class="field">
+                <div class="field field--address2">
                     <label>Address 2:</label>
                     <input readonly value="@Model.Address2" />
                 </div>
 
-                <div class="field-row">
+                <div class="field-row field--citystatezip">
                     <div class="field-col sm">
                         <label>City</label>
                         <input id="city" readonly value="@Model.City" />
@@ -83,82 +83,91 @@
                     </div>
                 </div>
 
-                <div class="field">
+                <div class="field field--special-instructions">
                     <label>Special Instructions:</label>
-                    <textarea readonly>@Model.SpecialInstructions</textarea>
+                    <textarea readonly title="@Model.SpecialInstructions">@Model.SpecialInstructions</textarea>
                 </div>
 
-                <div class="field">
+                <div class="field field--view-activities">
                     <a class="link" href="javascript:void(0)" @onclick="ViewActivities">View Activities</a>
                 </div>
             </div>
 
             <!-- Right column -->
             <div class="col col-right">
-                <div class="field">
+                <div class="field field--po-date">
                     <label>PO Date:</label>
                     <input readonly value="@Model.PoDate.ToString("MM/dd/yyyy")" />
                 </div>
 
-                <div class="field">
+                <div class="field field--sales-order">
                     <label>Sales Order #:</label>
                     <input readonly value="@Model.SalesOrderNumber" />
                 </div>
 
-                <div class="field">
+                <div class="field field--po-status">
                     <label>PO Status:</label>
                     <input readonly value="@Model.PoStatus" />
                 </div>
 
-                <div class="field">
+                <div class="field field--default-ship">
                     <label>Default Ship Method:</label>
                     <input readonly value="@Model.DefaultShipMethod" />
                 </div>
 
-                <div class="field">
+                <div class="field field--premium-ship">
                     <label>Premium Ship Method:</label>
                     <input readonly value="@Model.PremiumShipMethod" />
                 </div>
 
-                <div class="field check">
+                <div class="field check field--rally-pricing">
                     <label>Rally Pricing:</label>
                     <input type="checkbox" checked="@Model.RallyPricing" disabled />
                 </div>
 
-                <div class="field">
+                <div class="field field--no-paperwork">
                     <label>No Paperwork:</label>
                     <input readonly value="@BoolText(Model.NoPaperwork)" />
                 </div>
 
-                <div class="field">
+                <div class="field field--lift-gate">
                     <label>Lift Gate Req:</label>
                     <input readonly value="@BoolText(Model.LiftGateRequired)" />
                 </div>
 
-                <div class="field">
+                <div class="field field--total-cost">
                     <label>Total Cost:</label>
                     <input readonly value="@Model.TotalCost.ToString("C")" />
                 </div>
 
-                <div class="field">
+                <div class="field field--open-cost">
                     <label>Open Cost:</label>
                     <input readonly value="@Model.OpenCost.ToString("C")" />
                 </div>
 
-                <div class="field">
+                <div class="field field--comments">
                     <label>Comments:</label>
-                    <input readonly value="@Model.Comments" />
+                    <input readonly value="@Model.Comments" title="@Model.Comments" />
                 </div>
 
-                <div class="field">
+                <div class="field field--release-bkos">
                     <label>Release BKO's:</label>
                     <input readonly value="@BoolText(Model.ReleaseBackorders)" />
                 </div>
 
-                <div class="field">
+                <div class="field field--bko-unfilled">
                     <label>BKO Unfilled:</label>
                     <input readonly value="@BoolText(Model.BackorderUnfilled)" />
                 </div>
+            </div>
+
+            <!-- Flags group - compact mode only -->
+            <div class="flags-group">
+                <span class="flag-chip @(Model.RallyPricing ? "is-on" : "is-off")">Rally Pricing: @(Model.RallyPricing ? "Yes" : "No")</span>
+                <span class="flag-chip @(Model.NoPaperwork ? "is-on" : "is-off")">No Paperwork: @(Model.NoPaperwork ? "Yes" : "No")</span>
+                <span class="flag-chip @(Model.LiftGateRequired ? "is-on" : "is-off")">Lift Gate: @(Model.LiftGateRequired ? "Yes" : "No")</span>
+                <span class="flag-chip @(Model.ReleaseBackorders ? "is-on" : "is-off")">Release BKO's: @(Model.ReleaseBackorders ? "Yes" : "No")</span>
+                <span class="flag-chip @(Model.BackorderUnfilled ? "is-on" : "is-off")">BKO Unfilled: @(Model.BackorderUnfilled ? "Yes" : "No")</span>
             </div>
         </div>
     </section>

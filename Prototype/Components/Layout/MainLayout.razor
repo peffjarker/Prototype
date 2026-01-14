@@ -84,7 +84,7 @@
     .ptl-page {
         display: grid;
         grid-template-columns: 260px 1fr;
-        height: calc(100vh - 52px);
+        height: calc(100vh - var(--navbar-height, 64px));
         transition: grid-template-columns 0.25s ease;
         background-color: var(--app-bg);
     }
@@ -99,10 +99,11 @@
         flex-direction: column;
         transition: all 0.25s ease;
         overflow: hidden;
+        height: 100%;
     }
 
     .sidebar-content {
-        flex: 1;
+        flex: 1 1 0;
         overflow-y: auto;
         overflow-x: hidden;
         min-height: 0; /* Important for flex children with scroll */

@@ -344,11 +344,6 @@
         }
 
         Params = rawParams;
-
-        if (string.IsNullOrEmpty(Params.SelectedCustomer))
-        {
-            Params.SelectedCustomer = FilteredCustomers.FirstOrDefault()?.BorrowerId;
-        }
     }
 
     // ============================================================
@@ -398,10 +393,24 @@
     // ============================================================
     // Lifecycle
     // ============================================================
+    private bool _selectionApplied = false;
+
     protected override void OnInitialized()
     {
         AllApplications = CreditApplicationSeedData.GetApplications();
         base.OnInitialized();
+        ApplySelection();
+    }
+
+    private void ApplySelection()
+    {
+        if (_selectionApplied) return;
+        _selectionApplied = true;
+
+        if (string.IsNullOrEmpty(Params.SelectedCustomer))
+        {
+            Params.SelectedCustomer = FilteredCustomers.FirstOrDefault()?.BorrowerId;
+        }
     }
 
     // ============================================================

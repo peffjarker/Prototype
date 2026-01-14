@@ -3,74 +3,73 @@
 
 <section class="card filter-panel">
     <div class="filter-grid">
-        <div class="filter-col">
-            <div class="field">
-                <label>Class:</label>
-                <select @bind="LocalParams.Class" @bind:after="OnFilterChanged">
-                    <option value="All Items">All Items</option>
-                    <option value="CQT Stock">CQT Stock</option>
-                    <option value="Local Only">Local Only</option>
-                </select>
-            </div>
-
-            <div class="field">
-                <label>Category:</label>
-                <select @bind="LocalParams.Category" @bind:after="OnCategoryChanged">
-                    <option value="">All Categories</option>
-                    @foreach (var cat in Categories)
-                    {
-                        <option value="@cat">@cat</option>
-                    }
-                </select>
-            </div>
-
-            <div class="field">
-                <label>Subcategory:</label>
-                <select @bind="LocalParams.Subcategory"
-                        @bind:after="OnFilterChanged"
-                        disabled="@string.IsNullOrEmpty(LocalParams.Category)">
-                    <option value="">All Subcategories</option>
-                    @foreach (var sub in Subcategories)
-                    {
-                        <option value="@sub">@sub</option>
-                    }
-                </select>
-            </div>
-
-            <div class="field">
-                <label>Brand:</label>
-                <select @bind="LocalParams.Brand" @bind:after="OnFilterChanged">
-                    <option value="">All Brands</option>
-                    @foreach (var brand in Brands)
-                    {
-                        <option value="@brand">@brand</option>
-                    }
-                </select>
-            </div>
+        <div class="field">
+            <label for="filter-class">Class:</label>
+            <select id="filter-class" @bind="LocalParams.Class" @bind:after="OnFilterChanged">
+                <option value="All Items">All Items</option>
+                <option value="CQT Stock">CQT Stock</option>
+                <option value="Local Only">Local Only</option>
+            </select>
         </div>
 
-        <div class="filter-col">
-            <div class="field">
-                <label>Ship From:</label>
-                <select @bind="LocalParams.ShipFrom" @bind:after="OnFilterChanged">
-                    <option value="">All Locations</option>
-                    @foreach (var loc in ShipFromLocations)
-                    {
-                        <option value="@loc">@loc</option>
-                    }
-                </select>
-            </div>
+        <div class="field">
+            <label for="filter-category">Category:</label>
+            <select id="filter-category" @bind="LocalParams.Category" @bind:after="OnCategoryChanged">
+                <option value="">All Categories</option>
+                @foreach (var cat in Categories)
+                {
+                    <option value="@cat">@cat</option>
+                }
+            </select>
+        </div>
 
-            <div class="field checkbox-field">
-                <label>
-                    <input type="checkbox" @bind="LocalParams.DisplayDiscontinued" @bind:after="OnFilterChanged" />
+        <div class="field">
+            <label for="filter-subcategory">Subcategory:</label>
+            <select id="filter-subcategory"
+                    @bind="LocalParams.Subcategory"
+                    @bind:after="OnFilterChanged"
+                    disabled="@string.IsNullOrEmpty(LocalParams.Category)">
+                <option value="">All Subcategories</option>
+                @foreach (var sub in Subcategories)
+                {
+                    <option value="@sub">@sub</option>
+                }
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="filter-brand">Brand:</label>
+            <select id="filter-brand" @bind="LocalParams.Brand" @bind:after="OnFilterChanged">
+                <option value="">All Brands</option>
+                @foreach (var brand in Brands)
+                {
+                    <option value="@brand">@brand</option>
+                }
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="filter-shipfrom">Ship From:</label>
+            <select id="filter-shipfrom" @bind="LocalParams.ShipFrom" @bind:after="OnFilterChanged">
+                <option value="">All Locations</option>
+                @foreach (var loc in ShipFromLocations)
+                {
+                    <option value="@loc">@loc</option>
+                }
+            </select>
+        </div>
+
+        <div class="field checkbox-group">
+            <div class="checkbox-field">
+                <label for="filter-discontinued">
+                    <input id="filter-discontinued" type="checkbox" @bind="LocalParams.DisplayDiscontinued" @bind:after="OnFilterChanged" />
                     Display Discontinued
                 </label>
             </div>
 
-            <div class="field checkbox-field">
-                <label>
-                    <input type="checkbox" @bind="LocalParams.OnlyShowInventory" @bind:after="OnFilterChanged" />
+            <div class="checkbox-field">
+                <label for="filter-inventory">
+                    <input id="filter-inventory" type="checkbox" @bind="LocalParams.OnlyShowInventory" @bind:after="OnFilterChanged" />
                     Only Show Items with Inventory
                 </label>
             </div>

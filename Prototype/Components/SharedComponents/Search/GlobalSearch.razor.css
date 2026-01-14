@@ -16,8 +16,8 @@
 }
 
     .search-input-wrapper:focus-within {
-        border-color: var(--kendo-color-primary, #2563eb);
-        box-shadow: 0 0 0 3px color-mix(in oklab, var(--kendo-color-primary, #2563eb) 15%, transparent);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
     }
 
 .search-icon {

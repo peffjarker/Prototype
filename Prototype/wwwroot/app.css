@@ -152,6 +152,33 @@ a {
     }
 
 /* ========== FOCUS INDICATORS ========== */
+/*
+   Canonical Focus Style: Solid Accent Border + Subtle Glow
+   - Border: solid accent color (no jump on focus)
+   - Glow: subtle 3px ring with 0.15 opacity
+   - Applied consistently across all input types
+*/
+
+/* Standard focus for form inputs - Border + Glow */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+    outline: none;
+}
+
+/* Standard focus for buttons and interactive elements - Outline only */
+button:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Enhanced accessibility mode - Uses stronger outline */
 .enhanced-focus *:focus-visible {
     outline: var(--focus-ring-width) solid var(--focus-ring-color);
     outline-offset: var(--focus-ring-offset);
@@ -160,16 +187,6 @@ a {
 .enhanced-focus .k-focus,
 .enhanced-focus .k-state-focused {
     box-shadow: 0 0 0 var(--focus-ring-width) rgba(var(--accent-rgb), 0.4) !important;
-}
-
-/* Standard focus for all interactive elements */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-[tabindex]:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
 }
 
 /* ========== REDUCED MOTION ========== */
@@ -420,9 +437,7 @@ select {
     }
 
     .form-control:focus,
-    input:focus,
-    textarea:focus,
-    select:focus {
+    .form-control:focus-visible {
         border-color: var(--accent);
         box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
         outline: none;
@@ -950,6 +965,25 @@ header,
         border-color: var(--accent);
         box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
     }
+
+/* Kendo Input Wrappers with nested inputs - use :focus-within */
+.k-input:focus-within,
+.k-textbox:focus-within,
+.k-textarea:focus-within,
+.k-picker:focus-within,
+.k-searchbox:focus-within,
+.k-grid-search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
+}
+
+/* Inner input elements - remove border/outline since wrapper handles it */
+.k-input-inner:focus,
+.k-input-inner:focus-visible {
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
 
 /* Dropdowns & Popups */
 .k-popup,

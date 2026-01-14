@@ -15,11 +15,22 @@ namespace Prototype.Pages.POTransfer
         // === Factory: read directly from the URL service ===
         public static ItemsOnOrderParameters FromUrl(IUrlState url)
         {
+            // Support both "item" (from global search) and "items" (from page navigation)
+            var itemList = url.GetMulti("items");
+            if (!itemList.Any())
+            {
+                var singleItem = url.Get("item");
+                if (!string.IsNullOrWhiteSpace(singleItem))
+                {
+                    itemList = new[] { singleItem };
+                }
+            }
+
             return new ItemsOnOrderParameters
             {
                 Dealer = url.Get("dealer"),
                 Status = ParseStatus(url.Get("status")),
-                SelectedItems = url.GetMulti("items")
+                SelectedItems = itemList
                     .Where(v => !string.IsNullOrWhiteSpace(v))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList()

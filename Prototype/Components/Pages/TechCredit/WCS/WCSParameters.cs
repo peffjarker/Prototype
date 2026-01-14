@@ -14,12 +14,19 @@ namespace Prototype.Pages.Collections
         // === Factory: read directly from the URL service ===
         public static WCSParameters FromUrl(IUrlState url)
         {
+            // Support both "borrower" (from global search) and "customer" (from page navigation)
+            var selectedCustomer = url.Get("customer");
+            if (string.IsNullOrWhiteSpace(selectedCustomer))
+            {
+                selectedCustomer = url.Get("borrower");
+            }
+
             return new WCSParameters
             {
                 Dealer = url.Get("dealer"),
                 Option = url.Get("option") ?? "WCS",
                 CustomerStatus = url.Get("status") ?? "All",
-                SelectedCustomer = url.Get("customer")
+                SelectedCustomer = selectedCustomer
             };
         }
 

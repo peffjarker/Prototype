@@ -248,7 +248,6 @@
 
     protected override void ReadFromUrl()
     {
-        // Only process if we're on a TechCredit page
         var uri = new Uri(Nav.Uri);
         var path = uri.AbsolutePath.ToLowerInvariant();
 
@@ -257,10 +256,8 @@
             return;
         }
 
-        // Read params from URL
         var rawParams = TechCreditParameters.FromUrl(Url);
 
-        // 🔧 VALIDATE option parameter - must be a valid TechCredit option
         var validOptions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "Customer Information",
@@ -270,20 +267,13 @@
             "Payments"
         };
 
-        // If the option from URL is not a valid TechCredit option, use default based on current page
         if (!validOptions.Contains(rawParams.Option))
         {
             Console.WriteLine($"  Invalid option '{rawParams.Option}' for TechCredit, using default");
-            rawParams.Option = "Customer Information"; // Default for this page
+            rawParams.Option = "Customer Information";
         }
 
         Params = rawParams;
-
-        // Select first customer if none selected
-        if (string.IsNullOrEmpty(Params.SelectedCustomer))
-        {
-            Params.SelectedCustomer = FilteredCustomers.FirstOrDefault()?.CustomerId;
-        }
     }
 
     // ============================================================
@@ -333,10 +323,24 @@
     // ============================================================
     // Lifecycle
     // ============================================================
+    private bool _selectionApplied = false;
+
     protected override void OnInitialized()
     {
         AllCustomers = CustomerInformationSeedData.GetCustomers();
         base.OnInitialized();
+        ApplySelection();
+    }
+
+    private void ApplySelection()
+    {
+        if (_selectionApplied) return;
+        _selectionApplied = true;
+
+        if (string.IsNullOrEmpty(Params.SelectedCustomer))
+        {
+            Params.SelectedCustomer = FilteredCustomers.FirstOrDefault()?.CustomerId;
+        }
     }
 
     // ============================================================

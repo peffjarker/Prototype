@@ -72,11 +72,11 @@
 .search-box {
     width: 100%;
     padding: 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--card-bg);
-    color: var(--text);
-    transition: border-color var(--transition-fast) ease;
+    padding-right: 2rem;
+    border: 1px solid var(--nav-border);
+    background-color: transparent;
+    color: var(--muted);
+    border-radius: 0.25rem;
 }
 
     .search-box:focus {
@@ -84,6 +84,8 @@
         border-color: var(--accent);
         box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15);
     }
+
+    .search-box:se
 
 .list-body {
     flex: 1;
