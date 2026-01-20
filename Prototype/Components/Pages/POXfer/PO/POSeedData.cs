@@ -6,6 +6,125 @@ namespace Prototype.Components.Pages.POXfer.PO;
 
 public static class PurchaseOrdersSeedData
 {
+    // Central mapping of all PO data: PO# -> (DealerID, DealerName, SO#)
+    private static readonly Dictionary<string, (string dealerId, string dealerName, string soNumber)> PoMasterData = new()
+    {
+        ["PO-0000100802"] = ("88d9", "Adams Auto Parts", "SO-2024-10801"),
+        ["PO-0000100805"] = ("b741", "Baker Supply Co", "SO-2024-10824"),
+        ["PO-0000100807"] = ("88d9", "Adams Auto Parts", "SO-2024-10847"),
+        ["PO-0000100810"] = ("a926", "Carter Industries", "SO-2024-10865"),
+        ["PO-0000100812"] = ("c3f2", "Davis Equipment", "SO-2024-10892"),
+        ["PO-0000100815"] = ("d154", "Evans Distributors", "SO-2024-10918"),
+        ["PO-0000100818"] = ("e8b7", "Fisher Tools LLC", "SO-2024-10945"),
+        ["PO-0000100821"] = ("b741", "Baker Supply Co", "SO-2024-10971"),
+        ["PO-0000100825"] = ("f2c9", "Garcia Motors", "SO-2024-10998"),
+        ["PO-0000100830"] = ("88d9", "Adams Auto Parts", "SO-2024-11024"),
+        ["PO-0000100855"] = ("a926", "Carter Industries", "SO-2024-11051"),
+        ["PO-0000100860"] = ("c3f2", "Davis Equipment", "SO-2024-11089"),
+        ["PO-0000100870"] = ("d154", "Evans Distributors", "SO-2024-11115"),
+        ["PO-0000100875"] = ("e8b7", "Fisher Tools LLC", "SO-2024-11142"),
+        ["PO-0000100880"] = ("f2c9", "Garcia Motors", "SO-2024-11168"),
+        ["PO-0000100890"] = ("b741", "Baker Supply Co", "SO-2024-11195"),
+        ["PO-0000100895"] = ("88d9", "Adams Auto Parts", "SO-2024-11221"),
+        ["PO-0000100900"] = ("a926", "Carter Industries", "SO-2024-11248")
+    };
+
+    // Search POs by Sales Order Number (flexible partial matching)
+    public static async Task<List<PoSearchResult>> SearchPurchaseOrdersBySalesOrderAsync(string soNumber)
+    {
+        await Task.Delay(300); // Simulate network call
+
+        if (string.IsNullOrWhiteSpace(soNumber))
+            return new List<PoSearchResult>();
+
+        var results = new List<PoSearchResult>();
+        var summaries = GetPoSummaries();
+
+        // Clean up search term - remove any non-alphanumeric except hyphens
+        var searchTerm = new string(soNumber.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
+
+        foreach (var summary in summaries)
+        {
+            if (PoMasterData.TryGetValue(summary.Number, out var data))
+            {
+                // Clean the SO number for comparison
+                var cleanSoNumber = new string(data.soNumber.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
+
+                // Flexible matching - check if search term appears anywhere in SO number
+                if (cleanSoNumber.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                {
+                    var detail = GetPoDetail(summary.Number, summary.Status);
+                    results.Add(new PoSearchResult(
+                        summary.Number,
+                        data.soNumber,
+                        $"{data.dealerName} ({data.dealerId})",
+                        summary.Date,
+                        summary.Status,
+                        detail.VendorName,
+                        detail.TotalCost,
+                        detail.OpenCost
+                    ));
+                }
+            }
+        }
+
+        return results;
+    }
+
+    // Search POs by PO Number and Dealer (flexible partial matching)
+    public static async Task<List<PoSearchResult>> SearchPurchaseOrdersByPoAsync(string dealerId, string poNumber)
+    {
+        await Task.Delay(300); // Simulate network call
+
+        if (string.IsNullOrWhiteSpace(dealerId) && string.IsNullOrWhiteSpace(poNumber))
+            return new List<PoSearchResult>();
+
+        var results = new List<PoSearchResult>();
+        var summaries = GetPoSummaries();
+
+        // Clean up search terms - remove any non-alphanumeric except hyphens
+        var cleanPoSearch = string.IsNullOrWhiteSpace(poNumber) ? "" :
+            new string(poNumber.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
+        var cleanDealerSearch = string.IsNullOrWhiteSpace(dealerId) ? "" :
+            new string(dealerId.Where(c => char.IsLetterOrDigit(c)).ToArray());
+
+        foreach (var summary in summaries)
+        {
+            if (PoMasterData.TryGetValue(summary.Number, out var data))
+            {
+                // Clean the PO number and dealer info for comparison
+                var cleanPoNumber = new string(summary.Number.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray());
+                var cleanDealerId = new string(data.dealerId.Where(c => char.IsLetterOrDigit(c)).ToArray());
+                var cleanDealerName = new string(data.dealerName.Where(c => char.IsLetterOrDigit(c)).ToArray());
+
+                // Flexible matching - allow partial matches
+                bool poMatches = string.IsNullOrWhiteSpace(cleanPoSearch) ||
+                    cleanPoNumber.Contains(cleanPoSearch, StringComparison.OrdinalIgnoreCase);
+
+                bool dealerMatches = string.IsNullOrWhiteSpace(cleanDealerSearch) ||
+                    cleanDealerId.Contains(cleanDealerSearch, StringComparison.OrdinalIgnoreCase) ||
+                    cleanDealerName.Contains(cleanDealerSearch, StringComparison.OrdinalIgnoreCase);
+
+                if (poMatches && dealerMatches)
+                {
+                    var detail = GetPoDetail(summary.Number, summary.Status);
+                    results.Add(new PoSearchResult(
+                        summary.Number,
+                        data.soNumber,
+                        $"{data.dealerName} ({data.dealerId})",
+                        summary.Date,
+                        summary.Status,
+                        detail.VendorName,
+                        detail.TotalCost,
+                        detail.OpenCost
+                    ));
+                }
+            }
+        }
+
+        return results;
+    }
+
     public static List<PoSummary> GetPoSummaries()
     {
         return new List<PoSummary>
@@ -36,6 +155,10 @@ public static class PurchaseOrdersSeedData
 
     public static PurchaseOrder GetPoDetail(string poNumber, string status)
     {
+        // Get SO number and dealer info from master data
+        var soNumber = PoMasterData.TryGetValue(poNumber, out var data) ? data.soNumber : "Unknown";
+        var dealerName = PoMasterData.TryGetValue(poNumber, out var dealerData) ? dealerData.dealerName : "Unknown";
+
         // CQT Stock POs
         if (poNumber == "PO-0000100807")
         {
@@ -45,12 +168,12 @@ public static class PurchaseOrdersSeedData
                 PoStatus = status,
                 PoDate = new DateTime(2025, 09, 30),
                 VendorName = "Cornwell Quality Tools",
-                ShipToName = "PRECISION AUTO SERVICE",
+                ShipToName = dealerName,
                 Attention = "1200 Commerce Dr",
                 City = "Canton",
                 State = "OH",
                 Zip = "44720",
-                SalesOrderNumber = "0002916666",
+                SalesOrderNumber = soNumber,
                 DefaultShipMethod = "UPS Ground",
                 PremiumShipMethod = "UPS Next Day",
                 Comments = "Orbital sander order",
@@ -79,12 +202,12 @@ public static class PurchaseOrdersSeedData
                 PoStatus = status,
                 PoDate = new DateTime(2025, 09, 28),
                 VendorName = "Cornwell Quality Tools",
-                ShipToName = "JOHNSON AUTO REPAIR",
+                ShipToName = dealerName,
                 Attention = "2340 Main Street",
                 City = "Akron",
                 State = "OH",
                 Zip = "44310",
-                SalesOrderNumber = "0002917777",
+                SalesOrderNumber = soNumber,
                 DefaultShipMethod = "UPS Ground",
                 PremiumShipMethod = "UPS 2-Day",
                 Comments = "Adapter set order",
@@ -640,14 +763,39 @@ public static class PurchaseOrdersSeedData
             return po;
         }
 
-        // Return empty PO if not found
-        return new PurchaseOrder();
+        // Return generic PO for any unhandled PO numbers
+        return new PurchaseOrder
+        {
+            PoNumber = poNumber,
+            PoStatus = status,
+            PoDate = DateTime.Today,
+            VendorName = "Cornwell Quality Tools",
+            ShipToName = dealerName,
+            SalesOrderNumber = soNumber,
+            Attention = "N/A",
+            City = "N/A",
+            State = "N/A",
+            Zip = "00000",
+            DefaultShipMethod = "UPS Ground",
+            Comments = "No detail data available",
+            Lines = new List<PurchaseOrderLine>()
+        };
     }
 
     public sealed record PoSummary(string Number, DateTime Date, string Status, string Class)
     {
         public string Display => $"{Number} - {Date:MM/dd/yyyy}";
     }
+
+    public sealed record PoSearchResult(
+        string PoNumber,
+        string SalesOrderNumber,
+        string Dealer,
+        DateTime Date,
+        string Status,
+        string Vendor,
+        decimal TotalCost,
+        decimal OpenCost);
 
     public sealed class PurchaseOrder
     {

@@ -1,0 +1,612 @@
+@page "/po-transfer/purchase-orders-internal"
+@attribute [Authorize(Policy = AppPolicies.AdminOrCustomerService)]
+
+@using Microsoft.AspNetCore.WebUtilities
+@using Prototype.Components.Layout.Navigation.Sidebar
+@using Prototype.Components.Pages.POXfer.PO
+@using Prototype.Components.Pages.Product.Webcat
+@using Prototype.Components.Services
+@using Prototype.Components.SharedComponents.Sidepanel
+@using Prototype.Pages.POTransfer
+@using Telerik.Blazor
+@using Telerik.Blazor.Components
+@using static Prototype.Components.Pages.POXfer.PO.PurchaseOrdersSeedData
+@using static Prototype.Pages.POTransfer.POInternalParameters
+
+@inherits PageWithSidebarBase
+@inject SidePanelService SidePanelService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<div class="wrap po-internal-page-wrapper">
+    <!-- Inline Search Panel -->
+    <PurchaseOrderSearchPanel Mode="@Params.Mode"
+                              ModeChanged="@HandleModeChanged"
+                              SalesOrderNumber="@Params.SalesOrder"
+                              SalesOrderNumberChanged="@(value => { Params.SalesOrder = value; })"
+                              Dealer="@Params.Dealer"
+                              DealerChanged="@(value => { Params.Dealer = value; })"
+                              PoNumber="@Params.PoNumber"
+                              PoNumberChanged="@(value => { Params.PoNumber = value; })"
+                              OnSearch="@HandleSearch" />
+
+    <!-- Search Results -->
+    @if (_hasSearched)
+    {
+        <PurchaseOrderSearchResults Results="@_searchResults"
+                                    IsLoading="@_isSearching"
+                                    ErrorMessage="@_errorMessage"
+                                    HasSearched="@_hasSearched"
+                                    SelectedPoNumber="@_selectedPoNumber"
+                                    OnResultSelect="@HandleResultSelected" />
+    }
+
+    <!-- PO Detail Section (only shown when PO is selected) -->
+    @if (!string.IsNullOrWhiteSpace(_selectedPoNumber) && Model != null)
+    {
+        <header class="header">
+            <h3 class="title">
+                Purchase Order Detail
+                <button class="detail-toggle-btn @(IsDetailCollapsed ? "collapsed" : "")"
+                        @onclick="ToggleDetailSection">
+                    <svg class="toggle-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span class="toggle-text">@(IsDetailCollapsed ? "Show" : "Hide") Details</span>
+                </button>
+            </h3>
+
+        </header>
+
+
+        <section class="card rop-detail @(IsDetailCollapsed ? "collapsed" : "")">
+            <div class="rop-detail-grid">
+                <!-- Left column -->
+                <div class="col col-left">
+                    <div class="field field--po-number">
+                        <label>PO#:</label>
+                        <input readonly value="@Model.PoNumber" />
+                    </div>
+
+                    <div class="field field--vendor">
+                        <label>Vendor:</label>
+                        <input readonly value="@Model.VendorName" />
+                    </div>
+
+                    <div class="field field--ship-to">
+                        <label>Ship To Name:</label>
+                        <input readonly value="@Model.ShipToName" />
+                    </div>
+
+                    <div class="field field--attention">
+                        <label>Attention/Address:</label>
+                        <input readonly value="@Model.Attention" />
+                    </div>
+
+                    <div class="field field--address1">
+                        <label>Address 1:</label>
+                        <input readonly value="@Model.Address1" />
+                    </div>
+
+                    <div class="field field--address2">
+                        <label>Address 2:</label>
+                        <input readonly value="@Model.Address2" />
+                    </div>
+
+                    <div class="field-row field--citystatezip">
+                        <div class="field-col sm">
+                            <label>City</label>
+                            <input id="city" readonly value="@Model.City" />
+                        </div>
+                        <div class="field-col sm">
+                            <label>State</label>
+                            <input id="state" readonly value="@Model.State" />
+                        </div>
+                        <div class="field-col sm">
+                            <label>Zip</label>
+                            <input id="zip" readonly value="@Model.Zip" />
+                        </div>
+                    </div>
+
+                    <div class="field field--special-instructions">
+                        <label>Special Instructions:</label>
+                        <textarea readonly title="@Model.SpecialInstructions">@Model.SpecialInstructions</textarea>
+                    </div>
+
+                    <div class="field field--view-activities">
+                        <a class="link" href="javascript:void(0)" @onclick="ViewActivities">View Activities</a>
+                    </div>
+                </div>
+
+                <!-- Right column -->
+                <div class="col col-right">
+                    <div class="field field--po-date">
+                        <label>PO Date:</label>
+                        <input readonly value="@Model.PoDate.ToString("MM/dd/yyyy")" />
+                    </div>
+
+                    <div class="field field--sales-order">
+                        <label>Sales Order #:</label>
+                        <input readonly value="@Model.SalesOrderNumber" />
+                    </div>
+
+                    <div class="field field--po-status">
+                        <label>PO Status:</label>
+                        <input readonly value="@Model.PoStatus" />
+                    </div>
+
+                    <div class="field field--default-ship">
+                        <label>Default Ship Method:</label>
+                        <input readonly value="@Model.DefaultShipMethod" />
+                    </div>
+
+                    <div class="field field--premium-ship">
+                        <label>Premium Ship Method:</label>
+                        <input readonly value="@Model.PremiumShipMethod" />
+                    </div>
+
+                    <div class="field check field--rally-pricing">
+                        <label>Rally Pricing:</label>
+                        <input type="checkbox" checked="@Model.RallyPricing" disabled />
+                    </div>
+
+                    <div class="field field--no-paperwork">
+                        <label>No Paperwork:</label>
+                        <input readonly value="@BoolText(Model.NoPaperwork)" />
+                    </div>
+
+                    <div class="field field--lift-gate">
+                        <label>Lift Gate Req:</label>
+                        <input readonly value="@BoolText(Model.LiftGateRequired)" />
+                    </div>
+
+                    <div class="field field--total-cost">
+                        <label>Total Cost:</label>
+                        <input readonly value="@Model.TotalCost.ToString("C")" />
+                    </div>
+
+                    <div class="field field--open-cost">
+                        <label>Open Cost:</label>
+                        <input readonly value="@Model.OpenCost.ToString("C")" />
+                    </div>
+
+                    <div class="field field--comments">
+                        <label>Comments:</label>
+                        <input readonly value="@Model.Comments" title="@Model.Comments" />
+                    </div>
+
+                    <div class="field field--release-bkos">
+                        <label>Release BKO's:</label>
+                        <input readonly value="@BoolText(Model.ReleaseBackorders)" />
+                    </div>
+
+                    <div class="field field--bko-unfilled">
+                        <label>BKO Unfilled:</label>
+                        <input readonly value="@BoolText(Model.BackorderUnfilled)" />
+                    </div>
+                </div>
+
+                <!-- Flags group - compact mode only -->
+                <div class="flags-group">
+                    <span class="flag-chip @(Model.RallyPricing ? "is-on" : "is-off")">Rally Pricing: @(Model.RallyPricing ? "Yes" : "No")</span>
+                    <span class="flag-chip @(Model.NoPaperwork ? "is-on" : "is-off")">No Paperwork: @(Model.NoPaperwork ? "Yes" : "No")</span>
+                    <span class="flag-chip @(Model.LiftGateRequired ? "is-on" : "is-off")">Lift Gate: @(Model.LiftGateRequired ? "Yes" : "No")</span>
+                    <span class="flag-chip @(Model.ReleaseBackorders ? "is-on" : "is-off")">Release BKO's: @(Model.ReleaseBackorders ? "Yes" : "No")</span>
+                    <span class="flag-chip @(Model.BackorderUnfilled ? "is-on" : "is-off")">BKO Unfilled: @(Model.BackorderUnfilled ? "Yes" : "No")</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lines Grid Section -->
+        <section class="card grid-section">
+            <div class="grid-container">
+                <TelerikGrid @ref="@GridRef"
+                             Data="@Model.Lines"
+                             SelectionMode="@GridSelectionMode.Multiple"
+                             SelectedItems="@_selectedLinesCollection"
+                             SelectedItemsChanged="@((IEnumerable<PurchaseOrderLine> selected) => HandleSelectionChanged(selected))"
+                             Sortable="true"
+                             Resizable="true"
+                             Reorderable="true"
+                             FilterMode="@GridFilterMode.FilterRow"
+                             ShowColumnMenu="true"
+                             Pageable="true"
+                             PageSize="20">
+                    <GridToolBarTemplate>
+                        <GridCommandButton Command="ExcelExport" Icon="@SvgIcon.FileExcel">Export to Excel</GridCommandButton>
+                        <GridCommandButton Command="CsvExport" Icon="@SvgIcon.FileCsv">Export to CSV</GridCommandButton>
+                        <GridSearchBox />
+                    </GridToolBarTemplate>
+                    <GridExport>
+                        <GridExcelExport FileName="purchase-order-lines" AllPages="true" />
+                        <GridCsvExport FileName="purchase-order-lines" AllPages="true" />
+                    </GridExport>
+                    <GridColumns>
+                        <GridCheckboxColumn SelectAll="true" Width="60px" Locked="true" />
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Item)" Title="Item" Width="140px" Locked="true">
+                            <Template>
+                                @{
+                                    var row = (PurchaseOrderLine)context;
+                                    <button class="link-button" @onclick="() => HandleItemClick(row.Item)" @onclick:stopPropagation="true">
+                                        @row.Item
+                                    </button>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Description)" Title="Description" Width="300px" />
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Comment)" Title="Comment" Width="200px" />
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Ordered)" Title="Ord" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                            <FooterTemplate>
+                                @{
+                                    var total = Model.Lines.Sum(x => x.Ordered);
+                                    <strong>@total</strong>
+                                }
+                            </FooterTemplate>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Received)" Title="Rcv" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                            <FooterTemplate>
+                                @{
+                                    var total = Model.Lines.Sum(x => x.Received);
+                                    <strong>@total</strong>
+                                }
+                            </FooterTemplate>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Open)" Title="Open" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                            <FooterTemplate>
+                                @{
+                                    var total = Model.Lines.Sum(x => x.Open);
+                                    <strong>@total</strong>
+                                }
+                            </FooterTemplate>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.DefCbx)" Title="DEF/CBX" Width="100px" />
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Transit)" Title="Transit" Width="90px" TextAlign="@ColumnTextAlign.Right">
+                            <FooterTemplate>
+                                @{
+                                    var total = Model.Lines.Sum(x => x.Transit);
+                                    <strong>@total</strong>
+                                }
+                            </FooterTemplate>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.SalesOrderLine)" Title="SO Line" Width="100px" TextAlign="@ColumnTextAlign.Right" />
+                        <GridColumn Field="@nameof(PurchaseOrderLine.UnitCost)" Title="Unit Cost" Width="120px" TextAlign="@ColumnTextAlign.Right" DisplayFormat="{0:C}">
+                            <Template>
+                                @{
+                                    var line = (PurchaseOrderLine)context;
+                                    @line.UnitCost.ToString("C")
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.TotalCost)" Title="Total Cost" Width="130px" TextAlign="@ColumnTextAlign.Right">
+                            <Template>
+                                @{
+                                    var line = (PurchaseOrderLine)context;
+                                    @line.TotalCost.ToString("C")
+                                }
+                            </Template>
+                            <FooterTemplate>
+                                @{
+                                    var total = Model.Lines.Sum(x => x.TotalCost);
+                                    <strong>@total.ToString("C")</strong>
+                                }
+                            </FooterTemplate>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.RallyUnit)" Title="Rally Unit" Width="110px" TextAlign="@ColumnTextAlign.Right" />
+                        <GridColumn Field="@nameof(PurchaseOrderLine.RallyExt)" Title="Rally Ext" Width="110px" TextAlign="@ColumnTextAlign.Right">
+                            <FooterTemplate>
+                                @{
+                                    var total = Model.Lines.Sum(x => x.RallyExt);
+                                    <strong>@total</strong>
+                                }
+                            </FooterTemplate>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.Status)" Title="Status" Width="120px">
+                            <Template>
+                                @{
+                                    var line = (PurchaseOrderLine)context;
+                                    var statusClass = line.Status.ToLower() switch
+                                    {
+                                        "open" => "badge badge-success",
+                                        "closed" => "badge badge-secondary",
+                                        "cancelled" => "badge badge-danger",
+                                        _ => "badge badge-info"
+                                    };
+                                    <span class="@statusClass">@line.Status</span>
+                                }
+                            </Template>
+                        </GridColumn>
+                        <GridColumn Field="@nameof(PurchaseOrderLine.CancelFlag)" Title="Cancel" Width="90px" TextAlign="@ColumnTextAlign.Right" />
+                    </GridColumns>
+                    <GridSettings>
+                        <GridPagerSettings InputType="PagerInputType.Input"
+                                           PageSizes="@(new List<int?> { 10, 20, 50, 100, null })" />
+                    </GridSettings>
+                </TelerikGrid>
+            </div>
+
+            <!-- Footer actions - Always visible at bottom -->
+            <footer class="card-footer actions">
+                <button class="btn" @onclick="PrintPo">Print</button>
+                <button class="btn" @onclick="CreateNewPo">Create New</button>
+                <button class="btn btn-warn" @onclick="CancelSelectedLines" disabled="@(!Params.SelectedLines.Any())">
+                    Cancel PO Line(s) @(Params.SelectedLines.Any() ? $"({Params.SelectedLines.Count})" : "")
+                </button>
+                <button class="btn btn-danger" @onclick="CancelPo">Cancel PO</button>
+            </footer>
+        </section>
+    }
+</div>
+
+<!-- Side Panel for Item Preview -->
+<SidePanel IsOpen="@SidePanelService.IsOpen"
+           IsOpenChanged="@((value) => { if (!value) SidePanelService.Close(); })"
+           Title="@GetSidePanelTitle()"
+           NavigateUrl="@GetWebcatUrl()"
+           OnNavigate="@NavigateToWebcat">
+    <WebcatItemPreviewPanel ItemNumber="@SidePanelService.CurrentItemNumber"
+                            Item="@SidePanelService.CurrentItem"
+                            ErrorMessage="@SidePanelService.ErrorMessage" />
+</SidePanel>
+
+@code {
+    // Parameters - using POInternalParameters for URL state
+    private POInternalParameters Params = new();
+
+    // State
+    private bool IsDetailCollapsed = false;
+    private PurchaseOrder Model = new();
+    private TelerikGrid<PurchaseOrderLine>? GridRef;
+    private IEnumerable<PurchaseOrderLine> _selectedLinesCollection = new List<PurchaseOrderLine>();
+
+    // Search state
+    private List<PoSearchResult>? _searchResults;
+    private bool _isSearching = false;
+    private string? _errorMessage;
+    private bool _hasSearched = false;
+    private string? _selectedPoNumber;
+    private bool _hasAutoSearched = false; // Prevent infinite loop
+
+    // ============================================================
+    // PageWithSidebarBase contract
+    // ============================================================
+    protected override string BasePath => "/po-transfer/purchase-orders-internal";
+
+    protected override IReadOnlyDictionary<string, string?> Scalars => Params.ToScalars();
+
+    protected override IReadOnlyCollection<string> MultiValues => Params.SelectedLines;
+
+    protected override void ReadFromUrl()
+    {
+        // Read parameters from URL
+        Params = POInternalParameters.FromUrl(Url);
+
+        // If we have search parameters in URL, auto-execute search on load (only once)
+        if (!_hasAutoSearched &&
+            (!string.IsNullOrWhiteSpace(Params.SalesOrder) ||
+             (!string.IsNullOrWhiteSpace(Params.Dealer) && !string.IsNullOrWhiteSpace(Params.PoNumber))))
+        {
+            _hasAutoSearched = true;
+            // Auto-execute search on load
+            _ = Task.Run(async () =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await HandleSearch();
+                });
+            });
+        }
+    }
+
+    protected override IEnumerable<Facet> Facets()
+    {
+        yield return new Facet(
+            Key: "option",
+            Title: "Option",
+            Options: () => new[]
+            {
+                new FacetOption("Items On Order", "Items On Order",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/items-on-order",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
+
+                new FacetOption("Purchase Orders", "Purchase Orders",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
+                        new Dictionary<string, string?> { ["status"] = "All" }))),
+
+                new FacetOption("PO Search (Internal)", "PO Search (Internal)",
+                    Href: "/po-transfer/purchase-orders-internal"),
+
+                new FacetOption("Receipt of Product", "Receipt of Product",
+                    Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
+                        new Dictionary<string, string?> { ["status"] = "All" })))
+            }
+        );
+
+        // Note: Intentionally NOT including status or PO facets - search is primary interface
+    }
+
+    private async Task HandleModeChanged(SearchMode newMode)
+    {
+        Params.Mode = newMode;
+        // Clear search results when mode changes
+        _searchResults = null;
+        _hasSearched = false;
+        _errorMessage = null;
+        _selectedPoNumber = null;
+        Model = new();
+    }
+
+    private async Task HandleSearch()
+    {
+        _isSearching = true;
+        _errorMessage = null;
+        _searchResults = null;
+        StateHasChanged();
+
+        try
+        {
+            if (Params.Mode == SearchMode.SalesOrder)
+            {
+                if (!string.IsNullOrWhiteSpace(Params.SalesOrder))
+                {
+                    _searchResults = await PurchaseOrdersSeedData.SearchPurchaseOrdersBySalesOrderAsync(Params.SalesOrder);
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(Params.Dealer) || !string.IsNullOrWhiteSpace(Params.PoNumber))
+                {
+                    // Parse dealer input - handle both "Dealer Name (id)" format and plain dealer ID/name
+                    string dealerSearch = ParseDealerInput(Params.Dealer ?? "");
+                    _searchResults = await PurchaseOrdersSeedData.SearchPurchaseOrdersByPoAsync(dealerSearch, Params.PoNumber ?? "");
+                }
+            }
+
+            _hasSearched = true;
+
+            // Auto-select if exactly one result
+            if (_searchResults != null && _searchResults.Count == 1)
+            {
+                await HandleResultSelected(_searchResults[0]);
+            }
+
+            NavigateWithPageState();
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            _isSearching = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Parses dealer input to extract searchable dealer ID or name.
+    /// Handles formats like "Adams Auto Parts (88d9)" by extracting the ID from parentheses.
+    /// </summary>
+    private string ParseDealerInput(string dealerInput)
+    {
+        if (string.IsNullOrWhiteSpace(dealerInput))
+            return dealerInput;
+
+        // Check if input has format "Name (ID)"
+        var parenIndex = dealerInput.IndexOf('(');
+        if (parenIndex > 0 && dealerInput.EndsWith(')'))
+        {
+            // Extract ID from parentheses: "Adams Auto Parts (88d9)" -> "88d9"
+            var dealerId = dealerInput.Substring(parenIndex + 1, dealerInput.Length - parenIndex - 2).Trim();
+            if (!string.IsNullOrWhiteSpace(dealerId))
+                return dealerId;
+        }
+
+        // Otherwise use as-is (plain dealer ID or name)
+        return dealerInput.Trim();
+    }
+
+    private async Task HandleResultSelected(PoSearchResult result)
+    {
+        _selectedPoNumber = result.PoNumber;
+        LoadPoDetail(result.PoNumber, result.Status);
+
+        // Update URL with selected PO
+        if (Params.Mode == SearchMode.SalesOrder)
+        {
+            Params.SalesOrder = result.SalesOrderNumber;
+        }
+        else
+        {
+            Params.Dealer = result.Dealer;
+            Params.PoNumber = result.PoNumber;
+        }
+
+        NavigateWithPageState();
+        StateHasChanged();
+    }
+
+    private void LoadPoDetail(string poNumber, string status)
+    {
+        if (string.IsNullOrWhiteSpace(poNumber))
+        {
+            Model = new();
+            return;
+        }
+
+        Model = PurchaseOrdersSeedData.GetPoDetail(poNumber, status);
+
+        // Restore grid selection
+        _selectedLinesCollection = Model.Lines.Where(l => Params.SelectedLines.Contains(l.Item)).ToList();
+    }
+
+    private async Task HandleSelectionChanged(IEnumerable<PurchaseOrderLine> selected)
+    {
+        _selectedLinesCollection = selected;
+        Params.SelectedLines = selected.Select(l => l.Item).ToList();
+        NavigateWithPageState();
+        await Task.CompletedTask;
+    }
+
+    private void ToggleDetailSection()
+    {
+        IsDetailCollapsed = !IsDetailCollapsed;
+    }
+
+    private async Task HandleItemClick(string itemNumber)
+    {
+        SidePanelService.OpenItemPreview(itemNumber);
+    }
+
+    private string GetSidePanelTitle()
+    {
+        return SidePanelService.ContentType == SidePanelContentType.Item
+            ? $"Item Preview - {SidePanelService.CurrentItemNumber}"
+            : "Preview";
+    }
+
+    private string GetWebcatUrl()
+    {
+        if (SidePanelService.ContentType == SidePanelContentType.Item && !string.IsNullOrWhiteSpace(SidePanelService.CurrentItemNumber))
+        {
+            return $"/product/webcat?item={Uri.EscapeDataString(SidePanelService.CurrentItemNumber)}";
+        }
+        return "/product/webcat";
+    }
+
+    private void NavigateToWebcat()
+    {
+        NavigationManager.NavigateTo(GetWebcatUrl());
+    }
+
+    // Action handlers
+    private async Task PrintPo()
+    {
+        await JS.InvokeVoidAsync("console.log", "Print PO:", Model.PoNumber);
+    }
+
+    private async Task CreateNewPo()
+    {
+        await JS.InvokeVoidAsync("console.log", "Create New PO");
+    }
+
+    private async Task CancelSelectedLines()
+    {
+        var selectedItems = string.Join(", ", Params.SelectedLines);
+        await JS.InvokeVoidAsync("console.log", $"Cancel Selected Lines: {selectedItems}");
+    }
+
+    private async Task CancelPo()
+    {
+        await JS.InvokeVoidAsync("console.log", "Cancel PO:", Model.PoNumber);
+    }
+
+    private async Task ViewActivities()
+    {
+        await JS.InvokeVoidAsync("console.log", "View Activities for PO:", Model.PoNumber);
+    }
+
+    // ============================================================
+    // Helpers
+    // ============================================================
+    private static string BoolText(bool v) => v ? "Yes" : "No";
+}

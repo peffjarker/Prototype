@@ -1,0 +1,182 @@
+@using Prototype.Pages.POTransfer
+
+<div class="po-search-panel">
+    <div class="search-mode-tabs">
+        <button class="mode-tab @(Mode == POInternalParameters.SearchMode.SalesOrder ? "active" : "")"
+                @onclick="() => OnModeChanged(POInternalParameters.SearchMode.SalesOrder)">
+            Sales Order Search
+        </button>
+        <button class="mode-tab @(Mode == POInternalParameters.SearchMode.PurchaseOrder ? "active" : "")"
+                @onclick="() => OnModeChanged(POInternalParameters.SearchMode.PurchaseOrder)">
+            Purchase Order Search
+        </button>
+    </div>
+
+    <div class="search-controls">
+        @if (Mode == POInternalParameters.SearchMode.SalesOrder)
+        {
+            <div class="search-field">
+                <label for="so-input">Sales Order #</label>
+                <input id="so-input"
+                       type="text"
+                       class="form-input"
+                       placeholder="Enter sales order number (partial ok)"
+                       value="@SalesOrderNumber"
+                       @oninput="@(e => HandleSalesOrderChange(e.Value?.ToString()))"
+                       @onkeydown="HandleKeyDown" />
+            </div>
+        }
+        else
+        {
+            <div class="search-field">
+                <label for="dealer-select">Dealer</label>
+                <select id="dealer-select"
+                        class="form-input"
+                        value="@Dealer"
+                        @onchange="@(e => HandleDealerChange(e.Value?.ToString()))">
+                    <option value="">All Dealers</option>
+                    @foreach (var dealer in AvailableDealers)
+                    {
+                        <option value="@dealer.Id">@dealer.Name (@dealer.Id)</option>
+                    }
+                </select>
+            </div>
+            <div class="search-field">
+                <label for="po-input">PO #</label>
+                <input id="po-input"
+                       type="text"
+                       class="form-input"
+                       placeholder="Enter PO number (partial ok)"
+                       value="@PoNumber"
+                       @oninput="@(e => HandlePoNumberChange(e.Value?.ToString()))"
+                       @onkeydown="HandleKeyDown" />
+            </div>
+        }
+
+        <div class="search-actions">
+            <button class="btn btn-primary"
+                    @onclick="HandleSearch"
+                    disabled="@(!CanSearch)">
+                Search
+            </button>
+            @if (!string.IsNullOrWhiteSpace(SalesOrderNumber) || !string.IsNullOrWhiteSpace(Dealer) || !string.IsNullOrWhiteSpace(PoNumber))
+            {
+                <button class="btn btn-secondary" @onclick="HandleClear">
+                    Clear
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ValidationMessage))
+    {
+        <div class="validation-message">
+            @ValidationMessage
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public POInternalParameters.SearchMode Mode { get; set; } = POInternalParameters.SearchMode.SalesOrder;
+    [Parameter] public EventCallback<POInternalParameters.SearchMode> ModeChanged { get; set; }
+    [Parameter] public EventCallback OnSearch { get; set; }
+    [Parameter] public string? SalesOrderNumber { get; set; }
+    [Parameter] public EventCallback<string?> SalesOrderNumberChanged { get; set; }
+    [Parameter] public string? Dealer { get; set; }
+    [Parameter] public EventCallback<string?> DealerChanged { get; set; }
+    [Parameter] public string? PoNumber { get; set; }
+    [Parameter] public EventCallback<string?> PoNumberChanged { get; set; }
+
+    private string? ValidationMessage { get; set; }
+
+    private List<(string Id, string Name)> AvailableDealers = new()
+    {
+        ("88d9", "Adams Auto Parts"),
+        ("a926", "Carter Industries"),
+        ("b741", "Baker Supply Co"),
+        ("c3f2", "Davis Equipment"),
+        ("d154", "Evans Distributors"),
+        ("e8b7", "Fisher Tools LLC"),
+        ("f2c9", "Garcia Motors")
+    };
+
+    private bool CanSearch
+    {
+        get
+        {
+            if (Mode == POInternalParameters.SearchMode.SalesOrder)
+            {
+                return !string.IsNullOrWhiteSpace(SalesOrderNumber);
+            }
+            else
+            {
+                // Allow search with dealer OR po number (or both)
+                return !string.IsNullOrWhiteSpace(Dealer) || !string.IsNullOrWhiteSpace(PoNumber);
+            }
+        }
+    }
+
+    private async Task OnModeChanged(POInternalParameters.SearchMode newMode)
+    {
+        if (Mode != newMode)
+        {
+            ValidationMessage = null;
+            await ModeChanged.InvokeAsync(newMode);
+        }
+    }
+
+    private async Task HandleDealerChange(string? value)
+    {
+        await DealerChanged.InvokeAsync(value);
+    }
+
+    private async Task HandleSalesOrderChange(string? value)
+    {
+        await SalesOrderNumberChanged.InvokeAsync(value);
+    }
+
+    private async Task HandlePoNumberChange(string? value)
+    {
+        await PoNumberChanged.InvokeAsync(value);
+    }
+
+    private async Task HandleSearch()
+    {
+        ValidationMessage = null;
+
+        if (Mode == POInternalParameters.SearchMode.SalesOrder)
+        {
+            if (string.IsNullOrWhiteSpace(SalesOrderNumber))
+            {
+                ValidationMessage = "Please enter a sales order number.";
+                return;
+            }
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(Dealer) && string.IsNullOrWhiteSpace(PoNumber))
+            {
+                ValidationMessage = "Please enter either a dealer, PO number, or both.";
+                return;
+            }
+        }
+
+        await OnSearch.InvokeAsync();
+    }
+
+    private async Task HandleClear()
+    {
+        ValidationMessage = null;
+        await SalesOrderNumberChanged.InvokeAsync(null);
+        await DealerChanged.InvokeAsync(null);
+        await PoNumberChanged.InvokeAsync(null);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && CanSearch)
+        {
+            await HandleSearch();
+        }
+    }
+}

@@ -334,6 +334,77 @@
         text-align: right;
     }
 
+/* ========================================
+   DENSITY-AWARE OVERRIDES
+   Spacious (default above)
+   Comfortable (moderate tightening)
+   Compact (maximum density)
+   ======================================== */
+
+/* COMFORTABLE MODE - Other Inventory section */
+[data-density="comfortable"] .collapsible-header {
+    padding: 0.6rem 0.75rem;
+    gap: 0.4rem;
+    font-size: 0.95rem;
+}
+
+[data-density="comfortable"] .other-inventory-content {
+    padding: 0.75rem;
+}
+
+[data-density="comfortable"] .inventory-warehouse-section {
+    margin-bottom: 1rem;
+}
+
+[data-density="comfortable"] .shared-dealers-section {
+    padding-top: 0.75rem;
+}
+
+[data-density="comfortable"] .shared-dealers-header {
+    padding: 0.4rem;
+    font-size: 0.875rem;
+    margin-bottom: 0.4rem;
+}
+
+[data-density="comfortable"] .shared-dealer-row {
+    padding: 0.4rem;
+    font-size: 0.875rem;
+}
+
+/* COMPACT MODE - Other Inventory section (tight spacing) */
+[data-density="compact"] .collapsible-header {
+    padding: 0.5rem 0.6rem;
+    gap: 0.3rem;
+    font-size: 0.875rem;
+}
+
+[data-density="compact"] .chevron {
+    font-size: 0.7em;
+}
+
+[data-density="compact"] .other-inventory-content {
+    padding: 0.5rem;
+}
+
+[data-density="compact"] .inventory-warehouse-section {
+    margin-bottom: 0.75rem;
+}
+
+[data-density="compact"] .shared-dealers-section {
+    padding-top: 0.5rem;
+}
+
+[data-density="compact"] .shared-dealers-header {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.3rem;
+}
+
+[data-density="compact"] .shared-dealer-row {
+    padding: 0.3rem 0.4rem;
+    font-size: 0.75rem;
+}
+
 .catalog-section {
     display: flex;
     flex-direction: column;

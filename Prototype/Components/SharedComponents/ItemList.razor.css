@@ -80,3 +80,70 @@
     .item-badge.ds {
         color: #f59e0b;
     }
+
+/* ========================================
+   DENSITY-AWARE OVERRIDES
+   Spacious (default above)
+   Comfortable (moderate tightening)
+   Compact (maximum density)
+   ======================================== */
+
+/* COMFORTABLE MODE - Moderate reductions */
+[data-density="comfortable"] .list-header {
+    padding: 0.75rem;
+}
+
+[data-density="comfortable"] .search-box {
+    padding: 0.4rem;
+    font-size: 0.875rem;
+}
+
+[data-density="comfortable"] .item-row {
+    padding: 0.6rem 0.75rem;
+    gap: 0.4rem;
+}
+
+[data-density="comfortable"] .item-number {
+    min-width: 90px;
+    font-size: 0.875rem;
+}
+
+[data-density="comfortable"] .item-name {
+    font-size: 0.8125rem;
+}
+
+[data-density="comfortable"] .item-badge {
+    font-size: 1.1em;
+}
+
+/* COMPACT MODE - Maximum density for more visible items */
+[data-density="compact"] .list-header {
+    padding: 0.5rem;
+}
+
+[data-density="compact"] .search-box {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8125rem;
+}
+
+[data-density="compact"] .item-row {
+    padding: 0.4rem 0.6rem;
+    gap: 0.3rem;
+}
+
+[data-density="compact"] .item-row.selected {
+    border-left: 2px solid var(--accent);
+}
+
+[data-density="compact"] .item-number {
+    min-width: 80px;
+    font-size: 0.8125rem;
+}
+
+[data-density="compact"] .item-name {
+    font-size: 0.75rem;
+}
+
+[data-density="compact"] .item-badge {
+    font-size: 1em;
+}

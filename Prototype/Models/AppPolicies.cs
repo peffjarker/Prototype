@@ -6,5 +6,6 @@ namespace Prototype.Models
         public const string Purchasing = "Purchasing";
         public const string Admin = "Admin";
         public const string TechCredit = "TechCredit";
+        public const string AdminOrCustomerService = "AdminOrCustomerService";
     }
 }

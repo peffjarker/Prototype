@@ -73,6 +73,9 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(AppPolicies.Admin, policy =>
         policy.Requirements.Add(new ShadowAwareRequirement(AppPolicies.Admin)));
+
+    options.AddPolicy(AppPolicies.AdminOrCustomerService, policy =>
+        policy.Requirements.Add(new ShadowAwareRequirement(AppPolicies.AdminOrCustomerService)));
 });
 
 // Add services to the container.

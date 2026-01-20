@@ -1,0 +1,109 @@
+@using Prototype.Components.Pages.POXfer.PO
+@using static Prototype.Components.Pages.POXfer.PO.PurchaseOrdersSeedData
+
+<div class="po-search-results">
+    @if (IsLoading)
+    {
+        <div class="results-state">
+            <div class="loading-spinner"></div>
+            <p>Searching purchase orders...</p>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="results-state error">
+            <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p>@ErrorMessage</p>
+        </div>
+    }
+    else if (Results == null || !Results.Any())
+    {
+        @if (HasSearched)
+        {
+            <div class="results-state empty">
+                <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p>No purchase orders found</p>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="results-header">
+            <span class="results-count">@Results.Count result@(Results.Count != 1 ? "s" : "") found</span>
+        </div>
+
+        <div class="results-list">
+            @foreach (var result in Results)
+            {
+                <div class="result-card @(SelectedPoNumber == result.PoNumber ? "selected" : "")"
+                     @onclick="() => OnResultSelected(result)">
+                    <div class="result-main">
+                        <div class="result-header-row">
+                            <span class="result-po">@result.PoNumber</span>
+                            <span class="badge badge-@GetStatusClass(result.Status) result-badge">@result.Status</span>
+                        </div>
+                        <div class="result-details">
+                            <div class="result-field">
+                                <span class="field-label">SO #:</span>
+                                <span class="field-value">@result.SalesOrderNumber</span>
+                            </div>
+                            <div class="result-field">
+                                <span class="field-label">Dealer:</span>
+                                <span class="field-value">@result.Dealer</span>
+                            </div>
+                            <div class="result-field">
+                                <span class="field-label">Date:</span>
+                                <span class="field-value">@result.Date.ToString("MM/dd/yyyy")</span>
+                            </div>
+                            <div class="result-field">
+                                <span class="field-label">Vendor:</span>
+                                <span class="field-value">@result.Vendor</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-costs">
+                        <div class="cost-item">
+                            <span class="cost-label">Total</span>
+                            <span class="cost-value">@result.TotalCost.ToString("C2")</span>
+                        </div>
+                        <div class="cost-item">
+                            <span class="cost-label">Open</span>
+                            <span class="cost-value">@result.OpenCost.ToString("C2")</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<PoSearchResult>? Results { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+    [Parameter] public bool HasSearched { get; set; }
+    [Parameter] public string? SelectedPoNumber { get; set; }
+    [Parameter] public EventCallback<PoSearchResult> OnResultSelect { get; set; }
+
+    private async Task OnResultSelected(PoSearchResult result)
+    {
+        await OnResultSelect.InvokeAsync(result);
+    }
+
+    private string GetStatusClass(string status)
+    {
+        return status.ToLowerInvariant() switch
+        {
+            var s when s.Contains("open") || s.Contains("acknowledged") => "success",
+            var s when s.Contains("partial") => "warning",
+            var s when s.Contains("closed") => "secondary",
+            var s when s.Contains("cancelled") || s.Contains("canceled") => "danger",
+            var s when s.Contains("pending") => "info",
+            _ => "secondary"
+        };
+    }
+}

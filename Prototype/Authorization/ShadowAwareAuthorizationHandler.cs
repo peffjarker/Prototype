@@ -64,6 +64,10 @@ namespace Prototype.Authorization
                 AppPolicies.Admin => user.HasClaim("groups", "34292b7e-74b4-4c44-b0c8-deb3859f44b2") ||
                                      user.HasClaim(c => c.Type == "preferred_username" &&
                                          c.Value.Equals("jeffp@cornwelltools.com", StringComparison.OrdinalIgnoreCase)),
+                AppPolicies.AdminOrCustomerService => user.HasClaim("groups", "34292b7e-74b4-4c44-b0c8-deb3859f44b2") ||
+                                                      user.HasClaim(c => c.Type == "preferred_username" &&
+                                                          c.Value.Equals("jeffp@cornwelltools.com", StringComparison.OrdinalIgnoreCase)) ||
+                                                      user.HasClaim("groups", "84b76a76-52e2-4310-9767-3f40b7515ae6"),
                 _ => false
             };
         }

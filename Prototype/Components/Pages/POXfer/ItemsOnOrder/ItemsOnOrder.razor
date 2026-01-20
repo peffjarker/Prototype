@@ -500,6 +500,9 @@
                     Href: AppendPreserved(Url.BuildHref("/po-transfer/purchase-orders",
                         new Dictionary<string, string?> { ["status"] = "All" }))),
 
+                new FacetOption("PO Search (Internal)", "PO Search (Internal)",
+                    Href: "/po-transfer/purchase-orders-internal"),
+
                 new FacetOption("Receipt of Product", "Receipt of Product",
                     Href: AppendPreserved(Url.BuildHref("/po-transfer/receipt-of-product",
                         new Dictionary<string, string?> { ["status"] = "All" })))

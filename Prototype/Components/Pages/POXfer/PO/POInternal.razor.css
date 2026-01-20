@@ -1,0 +1,99 @@
+/* PO Internal Page - Layout Only */
+/* All primitives (.card, .btn, .badge, .link, .title) are defined in wwwroot/app.css */
+/* This file contains only page-specific layout rules */
+
+/* Note: Core detail styles (.rop-detail, .field, etc.) are defined in PO.razor.css
+   and will apply to this page as well since they use class selectors */
+
+/* Wrapper */
+.po-internal-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Detail toggle button behavior (unique to this page) */
+.detail-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.detail-toggle-btn.collapsed .toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.toggle-text {
+    white-space: nowrap;
+}
+
+/* Detail section collapse animation */
+.rop-detail {
+    padding: var(--po-detail-padding-y, 1.25rem) var(--po-detail-padding-x, 2rem);
+    transition: all 0.3s ease;
+    max-height: 2000px;
+    opacity: 1;
+    overflow: visible;
+}
+
+.rop-detail.collapsed {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+}
+
+/* Grid section layout */
+.grid-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    margin: var(--spacing-6) var(--spacing-6);
+}
+
+.grid-container {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+}
+
+/* Link button in grid (behavior-specific styling) */
+.link-button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    font-size: inherit;
+}
+
+.link-button:hover {
+    color: var(--accent-hover);
+}
+
+/* Density adjustments - layout spacing only */
+[data-density="compact"] .grid-section {
+    margin: var(--spacing-4) var(--spacing-4);
+}
+
+[data-density="comfortable"] .grid-section {
+    margin: var(--spacing-5) var(--spacing-5);
+}
+
+[data-density="spacious"] .grid-section {
+    margin: var(--spacing-8) var(--spacing-8);
+}
+
+/* Responsive layout adjustments */
+@media (max-width: 1024px) {
+    .grid-section {
+        margin: var(--spacing-4);
+    }
+}

@@ -40,6 +40,48 @@
     color: var(--text);
 }
 
+/* ========================================
+   DENSITY-AWARE OVERRIDES - Summary variant
+   ======================================== */
+
+/* COMFORTABLE MODE - Summary variant */
+[data-density="comfortable"] .inventory-header {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.95rem;
+}
+
+[data-density="comfortable"] .inv-col {
+    padding: 0.6rem;
+}
+
+[data-density="comfortable"] .inv-label {
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem;
+}
+
+[data-density="comfortable"] .inv-value {
+    font-size: 1.125rem;
+}
+
+/* COMPACT MODE - Summary variant (tighter spacing, smaller fonts) */
+[data-density="compact"] .inventory-header {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+[data-density="compact"] .inv-col {
+    padding: 0.5rem;
+}
+
+[data-density="compact"] .inv-label {
+    font-size: 0.65rem;
+    margin-bottom: 0.15rem;
+}
+
+[data-density="compact"] .inv-value {
+    font-size: 1rem;
+}
+
 /* ============================================================ */
 /* InventorySummaryBar - Set Maintenance "bar" variant */
 /* ============================================================ */
@@ -72,4 +114,38 @@
     font-size: 1.125rem;
     font-weight: 600;
     color: var(--text);
+}
+
+/* ========================================
+   DENSITY-AWARE OVERRIDES - Bar variant
+   ======================================== */
+
+/* COMFORTABLE MODE - Bar variant */
+[data-density="comfortable"] .inv-bar-col {
+    padding: 0.6rem;
+}
+
+[data-density="comfortable"] .inv-bar-header {
+    font-size: 0.7rem;
+    padding: 0.2rem;
+    margin: -0.6rem -0.6rem 0.4rem -0.6rem;
+}
+
+[data-density="comfortable"] .inv-bar-value {
+    font-size: 1rem;
+}
+
+/* COMPACT MODE - Bar variant */
+[data-density="compact"] .inv-bar-col {
+    padding: 0.5rem;
+}
+
+[data-density="compact"] .inv-bar-header {
+    font-size: 0.65rem;
+    padding: 0.15rem;
+    margin: -0.5rem -0.5rem 0.3rem -0.5rem;
+}
+
+[data-density="compact"] .inv-bar-value {
+    font-size: 0.95rem;
 }
